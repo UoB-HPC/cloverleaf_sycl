@@ -25,25 +25,28 @@
 //  @details Calculates the pressure and sound speed for the mesh chunk using
 //  the ideal gas equation of state, with a fixed gamma of 1.4.
 void ideal_gas_kernel(
+		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
-		Kokkos::View<double **> &density,
-		Kokkos::View<double **> &energy,
-		Kokkos::View<double **> &pressure,
-		Kokkos::View<double **> &soundspeed) {
+		const AccDP2RW::View &density,
+		const AccDP2RW::View &energy,
+		const AccDP2RW::View &pressure,
+		const AccDP2RW::View &soundspeed) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
+//	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
-	Kokkos::parallel_for("ideal_gas", policy, KOKKOS_LAMBDA(
-	const int j,
-	const int k) {
-		double v = 1.0 / density(j, k);
-		pressure(j, k) = (1.4 - 1.0) * density(j, k) * energy(j, k);
-		double pressurebyenergy = (1.4 - 1.0) * density(j, k);
-		double pressurebyvolume = -density(j, k) * pressure(j, k);
-		double sound_speed_squared = v * v * (pressure(j, k) * pressurebyenergy - pressurebyvolume);
-		soundspeed(j, k) = sqrt(sound_speed_squared);
+	h.parallel_for(range<2>(x_min + 1, y_min + 1), [=](id<2> id) {
+
+		// TODO compute offset
+
+
+		double v = 1.0 / density[id];
+		pressure[id] = (1.4 - 1.0) * density[id] * energy[id];
+		double pressurebyenergy = (1.4 - 1.0) * density[id];
+		double pressurebyvolume = -density[id] * pressure[id];
+		double sound_speed_squared = v * v * (pressure[id] * pressurebyenergy - pressurebyvolume);
+		soundspeed[id] = sqrt(sound_speed_squared);
 	});
 
 }
@@ -53,28 +56,38 @@ void ideal_gas_kernel(
 //  @details Invokes the user specified kernel for the ideal gas equation of
 //  state using the specified time level data.
 
-void ideal_gas(global_variables &globals, const int tile, bool predict) {
+void ideal_gas(global_variables &globals, const int tileI, bool predict) {
 
-	if (!predict) {
-		ideal_gas_kernel(
-				globals.chunk.tiles[tile].t_xmin,
-				globals.chunk.tiles[tile].t_xmax,
-				globals.chunk.tiles[tile].t_ymin,
-				globals.chunk.tiles[tile].t_ymax,
-				globals.chunk.tiles[tile].field.density0,
-				globals.chunk.tiles[tile].field.energy0,
-				globals.chunk.tiles[tile].field.pressure,
-				globals.chunk.tiles[tile].field.soundspeed);
-	} else {
-		ideal_gas_kernel(
-				globals.chunk.tiles[tile].t_xmin,
-				globals.chunk.tiles[tile].t_xmax,
-				globals.chunk.tiles[tile].t_ymin,
-				globals.chunk.tiles[tile].t_ymax,
-				globals.chunk.tiles[tile].field.density1,
-				globals.chunk.tiles[tile].field.energy1,
-				globals.chunk.tiles[tile].field.pressure,
-				globals.chunk.tiles[tile].field.soundspeed);
-	}
+	tile_type &tile = globals.chunk.tiles[tileI];
+
+	globals.queue.submit([&](handler &h) {
+
+		if (!predict) {
+			ideal_gas_kernel(
+					h,
+					tile.t_xmin,
+					tile.t_xmax,
+					tile.t_ymin,
+					tile.t_ymax,
+					tile.field.density0.access<RW>(h),
+					tile.field.energy0.access<RW>(h),
+					tile.field.pressure.access<RW>(h),
+					tile.field.soundspeed.access<RW>(h)
+			);
+		} else {
+			ideal_gas_kernel(
+					h,
+					tile.t_xmin,
+					tile.t_xmax,
+					tile.t_ymin,
+					tile.t_ymax,
+					tile.field.density1.access<RW>(h),
+					tile.field.energy1.access<RW>(h),
+					tile.field.pressure.access<RW>(h),
+					tile.field.soundspeed.access<RW>(h)
+			);
+		}
+	});
+
 }
 

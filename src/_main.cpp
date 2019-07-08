@@ -67,6 +67,20 @@ void doIt(
 	accessorC[wiID] = b * 10;
 }
 
+template<typename nameT = std::nullptr_t, typename functorT, int N>
+void
+par_ranged(cl::sycl::handler &cgh, cl::sycl::id<N> a, cl::sycl::id<N> b, const functorT &functor) {
+
+	auto size = (b - a);
+
+	std::cout << "Size=" << cl::sycl::range<N>(size).get(0) << "\n";
+
+	cgh.parallel_for<nameT>(
+			cl::sycl::range<N>(size),
+			cl::sycl::id<N>(1),
+			functor);
+}
+
 template<typename T, size_t N>
 void simple_vadd(const std::array<T, 2 * N> &VA,
                  std::array<T, N> &VC) {
@@ -96,17 +110,38 @@ void simple_vadd(const std::array<T, 2 * N> &VA,
 
 		auto kern = [=](cl::sycl::id<1> wiID) {
 
+			auto that = wiID - cl::sycl::id<1>(0);
 
-			accessorC[wiID] = -1;
-//			doIt<T, N>(os, wiID, accessorAB, accessorC);
-			auto i = wiID[0];
+			accessorC[that] = -1;
+//			doIt<T, N>(os, that, accessorAB, accessorC);
+			auto i = that[0];
 			auto b = accessorAB[0][i] + accessorAB[1][i];
-			os << i << ", " << wiID[1] << "\n";
-////			auto a = accessorAB[0][wiID.];
-			accessorC[wiID] = b;
-//			accessorC[wiID] = accessorAB[wiID] + accessorAB[wiID] + 1;
+			os << i << ", " << that[1] << "\n";
+////			auto a = accessorAB[0][that.];
+			accessorC[wiID] = accessorAB[0][i];
+//			accessorC[that] = accessorAB[that] + accessorAB[that] + 1;
 		};
-		cgh.parallel_for<class SimpleVadd<T>>(cl::sycl::range<1>(N), kern);
+
+//		par_ranged<class SimpleVadd<T>>(cgh, cl::sycl::id<1>(3), cl::sycl::id<1>(10), kern);
+
+		cgh.parallel_for<class AAA>(
+				cl::sycl::range<3>(3, 3, 3), // global range
+				cl::sycl::id<3>(0,0,0), // offset
+				[=](cl::sycl::item<3> a) {
+
+					auto it = a.get_id();
+
+
+					os <<  a.get_linear_id() << " ->" << it[0]  << "," << it[1] << "," << it[2]<<  "\n";
+
+				});
+
+
+
+//		cgh.parallel_for<class SimpleVadd<T>>(
+//				cl::sycl::range<1>(N-2),
+//				cl::sycl::id<1>(15),
+//				kern);
 
 
 //		cgh.parallel_for<class SimpleVadd<T>>(cl::sycl::range<1>(N),
@@ -120,14 +155,35 @@ void simple_vadd(const std::array<T, 2 * N> &VA,
 }
 
 int main() {
-	std::array<cl::sycl::cl_int, 8> A = {
+	std::array<cl::sycl::cl_int, 12> A = {
 			{
-					1, 2, 3, 4,
-					4, 3, 2, 1
+					1, 2, 3, 4, 5, 6,
+					7, 8, 9, 10, 11, 12
 			}
 	};
-	std::array<cl::sycl::cl_int, 4> Out = {};
-	simple_vadd(A, Out);
+	std::array<cl::sycl::cl_int, 6> Out = {};
+//	simple_vadd(A, Out);
+
+
+	cl::sycl::queue deviceQueue;
+
+	std::cout << "Device:" <<  deviceQueue.get_device().get_info<cl::sycl::info::device ::vendor>()<< std::endl;
+
+	deviceQueue.submit([&](cl::sycl::handler &cgh) {
+		cl::sycl::stream os(1024, 128, cgh);
+		cgh.parallel_for<class AAA>(
+				cl::sycl::range<3>(3, 3, 3), // global range
+				cl::sycl::id<3>(1,1,1), // offset
+				[=](cl::sycl::item<3> a) {
+
+					auto it = a.get_id();
+					// FIXME seems broken
+
+					os <<  a.get_linear_id() << " ->" << it[0]  << "," << it[1] << "," << it[2]<<  "\n";
+
+				});
+
+	});
 
 	for (const auto &x : Out) {
 		std::cout << "=" << x << std::endl;

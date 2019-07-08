@@ -38,7 +38,7 @@
 
 #include <mpi.h>
 
-#include <Kokkos_Core.hpp>
+//#include <Kokkos_Core.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 	MPI_Init(&argc, &argv);
 
 	// Initialise Kokkos
-	Kokkos::initialize();
+//	Kokkos::initialize();
 
 	// Initialise communications
 	struct parallel_ parallel;
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
 	delete globals;
 
 	// Finilise programming models
-	Kokkos::finalize();
+//	Kokkos::finalize();
 	MPI_Finalize();
 }
 

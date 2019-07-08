@@ -28,16 +28,16 @@
 void accelerate_kernel(
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		Kokkos::View<double **> &xarea,
-		Kokkos::View<double **> &yarea,
-		Kokkos::View<double **> &volume,
-		Kokkos::View<double **> &density0,
-		Kokkos::View<double **> &pressure,
-		Kokkos::View<double **> &viscosity,
-		Kokkos::View<double **> &xvel0,
-		Kokkos::View<double **> &yvel0,
-		Kokkos::View<double **> &xvel1,
-		Kokkos::View<double **> &yvel1) {
+		Accessor<double , 2, RW>::View &xarea,
+		Accessor<double , 2, RW>::View &yarea,
+		Accessor<double , 2, RW>::View &volume,
+		Accessor<double , 2, RW>::View &density0,
+		Accessor<double , 2, RW>::View &pressure,
+		Accessor<double , 2, RW>::View &viscosity,
+		Accessor<double , 2, RW>::View &xvel0,
+		Accessor<double , 2, RW>::View &yvel0,
+		Accessor<double , 2, RW>::View &xvel1,
+		Accessor<double , 2, RW>::View &yvel1) {
 
 	double halfdt = 0.5 * dt;
 

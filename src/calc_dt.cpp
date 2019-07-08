@@ -26,26 +26,28 @@
 //  condition, the velocity gradient and the velocity divergence. A safety
 //  factor is used to ensure numerical stability.
 void calc_dt_kernel(
+		queue &queue,
 		int x_min, int x_max, int y_min, int y_max,
 		double dtmin,
 		double dtc_safe,
 		double dtu_safe,
 		double dtv_safe,
 		double dtdiv_safe,
-		Kokkos::View<double **> &xarea,
-		Kokkos::View<double **> &yarea,
-		Kokkos::View<double *> &cellx,
-		Kokkos::View<double *> &celly,
-		Kokkos::View<double *> &celldx,
-		Kokkos::View<double *> &celldy,
-		Kokkos::View<double **> &volume,
-		Kokkos::View<double **> &density0,
-		Kokkos::View<double **> &energy0,
-		Kokkos::View<double **> &pressure,
-		Kokkos::View<double **> &viscosity_a,
-		Kokkos::View<double **> &soundspeed,
-		Kokkos::View<double **> &xvel0, Kokkos::View<double **> &yvel0,
-		Kokkos::View<double **> &dt_min,
+		Accessor<double, 2, RW>::View &xarea,
+		Accessor<double, 2, RW>::View &yarea,
+		Accessor<double, 1, RW>::View &cellx,
+		Accessor<double, 1, RW>::View &celly,
+		Accessor<double, 1, RW>::View &celldx,
+		Accessor<double, 1, RW>::View &celldy,
+		Accessor<double, 2, RW>::View &volume,
+		Accessor<double, 2, RW>::View &density0,
+		Accessor<double, 2, RW>::View &energy0,
+		Accessor<double, 2, RW>::View &pressure,
+		Accessor<double, 2, RW>::View &viscosity_a,
+		Accessor<double, 2, RW>::View &soundspeed,
+		Accessor<double, 2, RW>::View &xvel0,
+		Accessor<double, 2, RW>::View &yvel0,
+		Accessor<double, 2, RW>::View &dt_min,
 		double &dt_min_val,
 		int &dtl_control,
 		double &xl_pos,
@@ -58,6 +60,11 @@ void calc_dt_kernel(
 	small = 0;
 	dt_min_val = g_big;
 	double jk_control = 1.1;
+
+
+	queue.submit([&](handler &h){
+
+	});
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
@@ -152,7 +159,10 @@ void calc_dt(global_variables &globals, int tile, double &local_dt, std::string 
 	int l_control;
 	int small = 0;
 
+
+
 	calc_dt_kernel(
+			globals.queue,
 			globals.chunk.tiles[tile].t_xmin,
 			globals.chunk.tiles[tile].t_xmax,
 			globals.chunk.tiles[tile].t_ymin,
@@ -183,7 +193,7 @@ void calc_dt(global_variables &globals, int tile, double &local_dt, std::string 
 			yl_pos,
 			jldt,
 			kldt,
-			small
+			small,
 	);
 
 	if (l_control == 1) local_control = "sound";

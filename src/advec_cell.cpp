@@ -20,6 +20,7 @@
 
 #include "advec_cell.h"
 
+
 //  @brief Fortran cell advection kernel.
 //  @author Wayne Gaudin
 //  @details Performs a second order advective remap using van-Leer limiting
@@ -31,22 +32,22 @@ void advec_cell_kernel(
 		int y_max,
 		int dir,
 		int sweep_number,
-		Kokkos::View<double *> &vertexdx,
-		Kokkos::View<double *> &vertexdy,
-		Kokkos::View<double **> &volume,
-		Kokkos::View<double **> &density1,
-		Kokkos::View<double **> &energy1,
-		Kokkos::View<double **> &mass_flux_x,
-		Kokkos::View<double **> &vol_flux_x,
-		Kokkos::View<double **> &mass_flux_y,
-		Kokkos::View<double **> &vol_flux_y,
-		Kokkos::View<double **> &pre_vol,
-		Kokkos::View<double **> &post_vol,
-		Kokkos::View<double **> &pre_mass,
-		Kokkos::View<double **> &post_mass,
-		Kokkos::View<double **> &advec_vol,
-		Kokkos::View<double **> &post_ener,
-		Kokkos::View<double **> &ener_flux) {
+		Accessor<double, 1, RW>::View &vertexdx,
+		Accessor<double, 1, RW>::View &vertexdy,
+		Accessor<double, 2, RW>::View &volume,
+		Accessor<double, 2, RW>::View &density1,
+		Accessor<double, 2, RW>::View &energy1,
+		Accessor<double, 2, RW>::View &mass_flux_x,
+		Accessor<double, 2, RW>::View &vol_flux_x,
+		Accessor<double, 2, RW>::View &mass_flux_y,
+		Accessor<double, 2, RW>::View &vol_flux_y,
+		Accessor<double, 2, RW>::View &pre_vol,
+		Accessor<double, 2, RW>::View &post_vol,
+		Accessor<double, 2, RW>::View &pre_mass,
+		Accessor<double, 2, RW>::View &post_mass,
+		Accessor<double, 2, RW>::View &advec_vol,
+		Accessor<double, 2, RW>::View &post_ener,
+		Accessor<double, 2, RW>::View &ener_flux) {
 
 	const double one_by_six = 1.0 / 6.0;
 
@@ -56,6 +57,10 @@ void advec_cell_kernel(
 		//   DO j=x_min-2,x_max+2
 		Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min - 2 + 1, y_min - 2 + 1},
 		                                               {x_max + 2 + 2, y_max + 2 + 2});
+
+
+		pre_vol.getacc
+
 
 		if (sweep_number == 1) {
 			Kokkos::parallel_for("advec_cell xdir sweep_number=1", policy, KOKKOS_LAMBDA(
@@ -113,10 +118,10 @@ void advec_cell_kernel(
 			if (diffdw <= 0.0) wind = -1.0;
 			if (diffuw * diffdw > 0.0) {
 				limiter = (1.0 - sigmav) * wind * MIN(MIN(fabs(diffuw), fabs(diffdw)), one_by_six *
-				                                                                       (sigma3 *
-				                                                                        fabs(diffuw) +
-				                                                                        sigma4 *
-				                                                                        fabs(diffdw)));
+						(sigma3 *
+						 fabs(diffuw) +
+						 sigma4 *
+						 fabs(diffdw)));
 			} else {
 				limiter = 0.0;
 			}
@@ -129,10 +134,10 @@ void advec_cell_kernel(
 			if (diffdw <= 0.0) wind = -1.0;
 			if (diffuw * diffdw > 0.0) {
 				limiter = (1.0 - sigmam) * wind * MIN(MIN(fabs(diffuw), fabs(diffdw)), one_by_six *
-				                                                                       (sigma3 *
-				                                                                        fabs(diffuw) +
-				                                                                        sigma4 *
-				                                                                        fabs(diffdw)));
+						(sigma3 *
+						 fabs(diffuw) +
+						 sigma4 *
+						 fabs(diffdw)));
 			} else {
 				limiter = 0.0;
 			}
