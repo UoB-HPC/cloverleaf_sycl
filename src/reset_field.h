@@ -23,7 +23,7 @@
 
 #include "definitions.h"
 
-void reset_field(global_variables& globals);
+void reset_field(global_variables &globals);
 
 #endif
 

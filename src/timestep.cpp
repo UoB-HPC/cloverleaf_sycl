@@ -35,73 +35,77 @@
 
 extern std::ostream g_out;
 
-void timestep(global_variables& globals, parallel_& parallel) {
+void timestep(global_variables &globals, parallel_ &parallel) {
 
-  globals.dt = g_big;
-  int small = 0;
+	globals.dt = g_big;
+	int small = 0;
 
-  int fields[NUM_FIELDS];
+	int fields[NUM_FIELDS];
 
-  double kernel_time;
-  if (globals.profiler_on) kernel_time = timer();
+	double kernel_time;
+	if (globals.profiler_on) kernel_time = timer();
 
-  for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
-    ideal_gas(globals, tile, false);
-  }
+	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+		ideal_gas(globals, tile, false);
+	}
 
-  if (globals.profiler_on) globals.profiler.ideal_gas += timer()-kernel_time;
+	if (globals.profiler_on) globals.profiler.ideal_gas += timer() - kernel_time;
 
-  for (int i = 0; i < NUM_FIELDS; ++i) fields[i] = 0;
-  fields[field_pressure] = 1;
-  fields[field_energy0] = 1;
-  fields[field_density0] = 1;
-  fields[field_xvel0] = 1;
-  fields[field_yvel0] = 1;
-  update_halo(globals, fields, 1);
+	for (int i = 0; i < NUM_FIELDS; ++i) fields[i] = 0;
+	fields[field_pressure] = 1;
+	fields[field_energy0] = 1;
+	fields[field_density0] = 1;
+	fields[field_xvel0] = 1;
+	fields[field_yvel0] = 1;
+	update_halo(globals, fields, 1);
 
-  if (globals.profiler_on) kernel_time = timer();
-  viscosity(globals);
-  if (globals.profiler_on) globals.profiler.viscosity += timer()-kernel_time;
+	if (globals.profiler_on) kernel_time = timer();
+	viscosity(globals);
+	if (globals.profiler_on) globals.profiler.viscosity += timer() - kernel_time;
 
-  for (int i = 0; i < NUM_FIELDS; ++i) fields[i] = 0;
-  fields[field_viscosity] = 1;
-  update_halo(globals, fields, 1);
+	for (int i = 0; i < NUM_FIELDS; ++i) fields[i] = 0;
+	fields[field_viscosity] = 1;
+	update_halo(globals, fields, 1);
 
-  if (globals.profiler_on) kernel_time = timer();
+	if (globals.profiler_on) kernel_time = timer();
 
-  int jldt, kldt;
-  double dtlp;
-  double x_pos, y_pos, xl_pos, yl_pos;
-  std::string dt_control, dtl_control;
-  for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
-    calc_dt(globals, tile, dtlp, dtl_control, xl_pos, yl_pos, jldt, kldt);
+	int jldt, kldt;
+	double dtlp;
+	double x_pos, y_pos, xl_pos, yl_pos;
+	std::string dt_control, dtl_control;
+	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+		calc_dt(globals, tile, dtlp, dtl_control, xl_pos, yl_pos, jldt, kldt);
 
-    if (dtlp <= globals.dt) {
-      globals.dt = dtlp;
-      dt_control = dtl_control;
-      x_pos = xl_pos;
-      y_pos = yl_pos;
-      globals.jdt = jldt;
-      globals.kdt = kldt;
-    }
-  }
+		if (dtlp <= globals.dt) {
+			globals.dt = dtlp;
+			dt_control = dtl_control;
+			x_pos = xl_pos;
+			y_pos = yl_pos;
+			globals.jdt = jldt;
+			globals.kdt = kldt;
+		}
+	}
 
-  globals.dt = std::min(std::min(globals.dt, globals.dtold * globals.dtrise), globals.dtmax);
+	globals.dt = std::min(std::min(globals.dt, globals.dtold * globals.dtrise), globals.dtmax);
 
-  clover_min(globals.dt);
-  if (globals.profiler_on) globals.profiler.timestep += timer() - kernel_time;
+	clover_min(globals.dt);
+	if (globals.profiler_on) globals.profiler.timestep += timer() - kernel_time;
 
-  if (globals.dt < globals.dtmin) small = 1;
+	if (globals.dt < globals.dtmin) small = 1;
 
-  if (parallel.boss) {
-    g_out << " Step " << globals.step << " time " << globals.time << " control " << dt_control << " timestep  " << globals.dt << " " << globals.jdt << "," << globals.kdt << " x " << x_pos << " y " << y_pos << std::endl;
-    std::cout << " Step " << globals.step << " time " << globals.time << " control " << dt_control << " timestep  " << globals.dt << " " << globals.jdt << "," << globals.kdt << " x " << x_pos << " y " << y_pos << std::endl;
-  }
+	if (parallel.boss) {
+		g_out << " Step " << globals.step << " time " << globals.time << " control " << dt_control
+		      << " timestep  " << globals.dt << " " << globals.jdt << "," << globals.kdt << " x "
+		      << x_pos << " y " << y_pos << std::endl;
+		std::cout << " Step " << globals.step << " time " << globals.time << " control "
+		          << dt_control << " timestep  " << globals.dt << " " << globals.jdt << ","
+		          << globals.kdt << " x " << x_pos << " y " << y_pos << std::endl;
+	}
 
-  if (small == 1) {
-    report_error((char*)"timestep", (char*)"small timestep");
-  }
+	if (small == 1) {
+		report_error((char *) "timestep", (char *) "small timestep");
+	}
 
-  globals.dtold = globals.dt;
+	globals.dtold = globals.dt;
 }
 

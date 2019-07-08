@@ -23,7 +23,7 @@
 
 #include "definitions.h"
 
-void update_halo(global_variables& globals, int fields[NUM_FIELDS], const int depth);
+void update_halo(global_variables &globals, int fields[NUM_FIELDS], const int depth);
 
 #endif
 

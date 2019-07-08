@@ -23,7 +23,7 @@
 
 #include "definitions.h"
 
-void revert(global_variables& globals);
+void revert(global_variables &globals);
 
 #endif
 

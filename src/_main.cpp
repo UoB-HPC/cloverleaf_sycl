@@ -97,8 +97,6 @@ void simple_vadd(const std::array<T, 2 * N> &VA,
 		auto kern = [=](cl::sycl::id<1> wiID) {
 
 
-
-
 			accessorC[wiID] = -1;
 //			doIt<T, N>(os, wiID, accessorAB, accessorC);
 			auto i = wiID[0];

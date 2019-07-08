@@ -23,7 +23,7 @@
 
 #include "definitions.h"
 
-void generate_chunk(const int tile, global_variables& globals);
+void generate_chunk(const int tile, global_variables &globals);
 
 #endif
 

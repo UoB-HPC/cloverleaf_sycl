@@ -23,7 +23,7 @@
 
 #include "definitions.h"
 
-void accelerate(global_variables& globals);
+void accelerate(global_variables &globals);
 
 #endif
 

@@ -24,7 +24,7 @@
 #include "definitions.h"
 #include "comms.h"
 
-void field_summary(global_variables& globals, parallel_ &parallel);
+void field_summary(global_variables &globals, parallel_ &parallel);
 
 #endif
 

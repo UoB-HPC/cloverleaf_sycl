@@ -25,7 +25,7 @@
 
 #include <fstream>
 
-void read_input(std::ifstream& g_in, parallel_& parallel, global_variables& globals);
+void read_input(std::ifstream &g_in, parallel_ &parallel, global_variables &globals);
 
 #endif
 

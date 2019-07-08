@@ -23,7 +23,7 @@
 
 #include "definitions.h"
 
-void flux_calc(global_variables& globals);
+void flux_calc(global_variables &globals);
 
 #endif
 

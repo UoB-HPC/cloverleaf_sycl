@@ -34,174 +34,197 @@
 //  The ideal gas and viscosity routines are invoked to make sure this data is
 //  up to data with the current energy, density and velocity.
 
-static bool first_call=true;
+static bool first_call = true;
 
-void visit(global_variables& globals, parallel_& parallel) {
+void visit(global_variables &globals, parallel_ &parallel) {
 
-  std::string name = "clover";
-  if (parallel.boss) {
+	std::string name = "clover";
+	if (parallel.boss) {
 
-    if (first_call) {
+		if (first_call) {
 
-      int nblocks = globals.number_of_chunks*globals.tiles_per_chunk;
-      std::string filename = "clover.visit";
-      std::ofstream u;
-      u.open(filename);
-      u << "!NBLOCKS " << nblocks << std::endl;
-      u.close();
-      first_call = false;
-    }
-  }
+			int nblocks = globals.number_of_chunks * globals.tiles_per_chunk;
+			std::string filename = "clover.visit";
+			std::ofstream u;
+			u.open(filename);
+			u << "!NBLOCKS " << nblocks << std::endl;
+			u.close();
+			first_call = false;
+		}
+	}
 
-  double kernel_time;
-  if (globals.profiler_on) kernel_time=timer();
-  for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
-    ideal_gas(globals, tile, false);
-  }
-  if (globals.profiler_on) globals.profiler.ideal_gas += timer()-kernel_time;
+	double kernel_time;
+	if (globals.profiler_on) kernel_time = timer();
+	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+		ideal_gas(globals, tile, false);
+	}
+	if (globals.profiler_on) globals.profiler.ideal_gas += timer() - kernel_time;
 
-  int fields[NUM_FIELDS];
-  for (int i = 0; i < NUM_FIELDS; ++i) fields[i] = 0;
-  fields[field_pressure] = 1;
-  fields[field_xvel0] = 1;
-  fields[field_yvel0] = 1;
-  update_halo(globals, fields, 1);
+	int fields[NUM_FIELDS];
+	for (int i = 0; i < NUM_FIELDS; ++i) fields[i] = 0;
+	fields[field_pressure] = 1;
+	fields[field_xvel0] = 1;
+	fields[field_yvel0] = 1;
+	update_halo(globals, fields, 1);
 
-  if (globals.profiler_on) kernel_time=timer();
-  viscosity(globals);
-  if (globals.profiler_on) globals.profiler.viscosity += timer()-kernel_time;
+	if (globals.profiler_on) kernel_time = timer();
+	viscosity(globals);
+	if (globals.profiler_on) globals.profiler.viscosity += timer() - kernel_time;
 
-  if (parallel.boss)  {
+	if (parallel.boss) {
 
-    std::string filename = "clover.visit";
-    std::ofstream u;
-    u.open(filename, std::ios::app);
-    for (int c = 0; c < parallel.max_task; ++c) {
-      std::stringstream namestream;
-      namestream << "." << std::setfill('0') << std::setw(5) << c;
-      for (int tile = 1; tile <= globals.tiles_per_chunk; ++tile) {
-        namestream << "." << std::setfill('0') << std::setw(5) << tile;
-        namestream << "." << std::setfill('0') << std::setw(5) << globals.step;
-        namestream << ".vtk";
-        u << name << namestream.str() << std::endl;
-      }
-    }
-    u.close();
-  }
+		std::string filename = "clover.visit";
+		std::ofstream u;
+		u.open(filename, std::ios::app);
+		for (int c = 0; c < parallel.max_task; ++c) {
+			std::stringstream namestream;
+			namestream << "." << std::setfill('0') << std::setw(5) << c;
+			for (int tile = 1; tile <= globals.tiles_per_chunk; ++tile) {
+				namestream << "." << std::setfill('0') << std::setw(5) << tile;
+				namestream << "." << std::setfill('0') << std::setw(5) << globals.step;
+				namestream << ".vtk";
+				u << name << namestream.str() << std::endl;
+			}
+		}
+		u.close();
+	}
 
-  if (globals.profiler_on) kernel_time=timer();
+	if (globals.profiler_on) kernel_time = timer();
 
-  for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
-    if (globals.chunk.task == parallel.task) {
-      int nxc = globals.chunk.tiles[tile].t_xmax-globals.chunk.tiles[tile].t_xmin+1;
-      int nyc = globals.chunk.tiles[tile].t_ymax-globals.chunk.tiles[tile].t_ymin+1;
-      int nxv=nxc+1;
-      int nyv=nyc+1;
+	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+		if (globals.chunk.task == parallel.task) {
+			int nxc = globals.chunk.tiles[tile].t_xmax - globals.chunk.tiles[tile].t_xmin + 1;
+			int nyc = globals.chunk.tiles[tile].t_ymax - globals.chunk.tiles[tile].t_ymin + 1;
+			int nxv = nxc + 1;
+			int nyv = nyc + 1;
 
-      std::stringstream namestream;
-      namestream << name;
-      namestream << "." << std::setfill('0') << std::setw(5) << parallel.task;
-      namestream << "." << std::setfill('0') << std::setw(5) << tile+1;
-      namestream << "." << std::setfill('0') << std::setw(5) << globals.step;
-      namestream << ".vtk";
-      std::ofstream u;
-      u.open(namestream.str());
-      u << "# vtk DataFile Version 3.0" << std::endl;
-      u << "vtk output" << std::endl;
-      u << "ASCII" << std::endl;
-      u << "DATASET RECTILINEAR_GRID" << std::endl;
-      u << "DIMENSIONS " << nxv << " " << nyv << " 1" << std::endl;
-      u << "X_COORDINATES " << nxv << " double" << std::endl;
+			std::stringstream namestream;
+			namestream << name;
+			namestream << "." << std::setfill('0') << std::setw(5) << parallel.task;
+			namestream << "." << std::setfill('0') << std::setw(5) << tile + 1;
+			namestream << "." << std::setfill('0') << std::setw(5) << globals.step;
+			namestream << ".vtk";
+			std::ofstream u;
+			u.open(namestream.str());
+			u << "# vtk DataFile Version 3.0" << std::endl;
+			u << "vtk output" << std::endl;
+			u << "ASCII" << std::endl;
+			u << "DATASET RECTILINEAR_GRID" << std::endl;
+			u << "DIMENSIONS " << nxv << " " << nyv << " 1" << std::endl;
+			u << "X_COORDINATES " << nxv << " double" << std::endl;
 
-      typename Kokkos::View<double*>::HostMirror hm_vertexx = Kokkos::create_mirror_view(globals.chunk.tiles[tile].field.vertexx);
-      Kokkos::deep_copy(hm_vertexx, globals.chunk.tiles[tile].field.vertexx);
+			typename Kokkos::View<double *>::HostMirror hm_vertexx = Kokkos::create_mirror_view(
+					globals.chunk.tiles[tile].field.vertexx);
+			Kokkos::deep_copy(hm_vertexx, globals.chunk.tiles[tile].field.vertexx);
 
-      for (int j=globals.chunk.tiles[tile].t_xmin+1; j <= globals.chunk.tiles[tile].t_xmax+1+1; ++j) {
-        u << hm_vertexx(j) << std::endl;
-      }
+			for (int j = globals.chunk.tiles[tile].t_xmin + 1;
+			     j <= globals.chunk.tiles[tile].t_xmax + 1 + 1; ++j) {
+				u << hm_vertexx(j) << std::endl;
+			}
 
-      u << "Y_COORDINATES " << nyv << " double" << std::endl;
+			u << "Y_COORDINATES " << nyv << " double" << std::endl;
 
-      typename Kokkos::View<double*>::HostMirror hm_vertexy = Kokkos::create_mirror_view(globals.chunk.tiles[tile].field.vertexy);
-      Kokkos::deep_copy(hm_vertexy, globals.chunk.tiles[tile].field.vertexy);
+			typename Kokkos::View<double *>::HostMirror hm_vertexy = Kokkos::create_mirror_view(
+					globals.chunk.tiles[tile].field.vertexy);
+			Kokkos::deep_copy(hm_vertexy, globals.chunk.tiles[tile].field.vertexy);
 
-      for (int k = globals.chunk.tiles[tile].t_ymin+1; k <= globals.chunk.tiles[tile].t_ymax+1+1; ++k) {
-        u << hm_vertexy(k) << std::endl;
-      }
+			for (int k = globals.chunk.tiles[tile].t_ymin + 1;
+			     k <= globals.chunk.tiles[tile].t_ymax + 1 + 1; ++k) {
+				u << hm_vertexy(k) << std::endl;
+			}
 
-      u << "Z_COORDINATES 1 double" << std::endl;
-      u << "0" << std::endl;
+			u << "Z_COORDINATES 1 double" << std::endl;
+			u << "0" << std::endl;
 
-      u << "CELL_DATA " << nxc*nyc << std::endl;
-      u << "FIELD FieldData 4" << std::endl;
-      u << "density 1 " << nxc*nyc << " double" << std::endl;
-      typename Kokkos::View<double**>::HostMirror hm_density0 = Kokkos::create_mirror_view(globals.chunk.tiles[tile].field.density0);
-      Kokkos::deep_copy(hm_density0, globals.chunk.tiles[tile].field.density0);
+			u << "CELL_DATA " << nxc * nyc << std::endl;
+			u << "FIELD FieldData 4" << std::endl;
+			u << "density 1 " << nxc * nyc << " double" << std::endl;
+			typename Kokkos::View<double **>::HostMirror hm_density0 = Kokkos::create_mirror_view(
+					globals.chunk.tiles[tile].field.density0);
+			Kokkos::deep_copy(hm_density0, globals.chunk.tiles[tile].field.density0);
 
-      for (int k = globals.chunk.tiles[tile].t_ymin+1; k <= globals.chunk.tiles[tile].t_ymax+1; ++k) {
-        for (int j = globals.chunk.tiles[tile].t_xmin+1; j <= globals.chunk.tiles[tile].t_xmax+1; ++j) {
-          u << std::scientific << std::setprecision(3) << hm_density0(j,k) << std::endl;
-        }
-      }
+			for (int k = globals.chunk.tiles[tile].t_ymin + 1;
+			     k <= globals.chunk.tiles[tile].t_ymax + 1; ++k) {
+				for (int j = globals.chunk.tiles[tile].t_xmin + 1;
+				     j <= globals.chunk.tiles[tile].t_xmax + 1; ++j) {
+					u << std::scientific << std::setprecision(3) << hm_density0(j, k) << std::endl;
+				}
+			}
 
-      u << "energy 1 " << nxc*nyc << " double" << std::endl;
-      typename Kokkos::View<double**>::HostMirror hm_energy0 = Kokkos::create_mirror_view(globals.chunk.tiles[tile].field.energy0);
-      Kokkos::deep_copy(hm_energy0, globals.chunk.tiles[tile].field.energy0);
+			u << "energy 1 " << nxc * nyc << " double" << std::endl;
+			typename Kokkos::View<double **>::HostMirror hm_energy0 = Kokkos::create_mirror_view(
+					globals.chunk.tiles[tile].field.energy0);
+			Kokkos::deep_copy(hm_energy0, globals.chunk.tiles[tile].field.energy0);
 
-      for (int k = globals.chunk.tiles[tile].t_ymin+1; k <= globals.chunk.tiles[tile].t_ymax+1; ++k) {
-        for (int j = globals.chunk.tiles[tile].t_xmin+1; j <= globals.chunk.tiles[tile].t_xmax+1; ++j) {
-          u << std::scientific << std::setprecision(3) << hm_energy0(j,k) << std::endl;
-        }
-      }
+			for (int k = globals.chunk.tiles[tile].t_ymin + 1;
+			     k <= globals.chunk.tiles[tile].t_ymax + 1; ++k) {
+				for (int j = globals.chunk.tiles[tile].t_xmin + 1;
+				     j <= globals.chunk.tiles[tile].t_xmax + 1; ++j) {
+					u << std::scientific << std::setprecision(3) << hm_energy0(j, k) << std::endl;
+				}
+			}
 
 
-      u << "pressure 1 " << nxc*nyc << " double" << std::endl;
-      typename Kokkos::View<double**>::HostMirror hm_pressure = Kokkos::create_mirror_view(globals.chunk.tiles[tile].field.pressure);
-      Kokkos::deep_copy(hm_pressure, globals.chunk.tiles[tile].field.pressure);
+			u << "pressure 1 " << nxc * nyc << " double" << std::endl;
+			typename Kokkos::View<double **>::HostMirror hm_pressure = Kokkos::create_mirror_view(
+					globals.chunk.tiles[tile].field.pressure);
+			Kokkos::deep_copy(hm_pressure, globals.chunk.tiles[tile].field.pressure);
 
-      for (int k = globals.chunk.tiles[tile].t_ymin+1; k <= globals.chunk.tiles[tile].t_ymax+1; ++k) {
-        for (int j = globals.chunk.tiles[tile].t_xmin+1; j <= globals.chunk.tiles[tile].t_xmax+1; ++j) {
-          u << std::scientific << std::setprecision(3) << hm_pressure(j,k) << std::endl;
-        }
-      }
+			for (int k = globals.chunk.tiles[tile].t_ymin + 1;
+			     k <= globals.chunk.tiles[tile].t_ymax + 1; ++k) {
+				for (int j = globals.chunk.tiles[tile].t_xmin + 1;
+				     j <= globals.chunk.tiles[tile].t_xmax + 1; ++j) {
+					u << std::scientific << std::setprecision(3) << hm_pressure(j, k) << std::endl;
+				}
+			}
 
-      u << "viscosity 1 " << nxc*nyc << " double" << std::endl;
-      typename Kokkos::View<double**>::HostMirror hm_viscosity = Kokkos::create_mirror_view(globals.chunk.tiles[tile].field.viscosity);
-      Kokkos::deep_copy(hm_viscosity, globals.chunk.tiles[tile].field.viscosity);
+			u << "viscosity 1 " << nxc * nyc << " double" << std::endl;
+			typename Kokkos::View<double **>::HostMirror hm_viscosity = Kokkos::create_mirror_view(
+					globals.chunk.tiles[tile].field.viscosity);
+			Kokkos::deep_copy(hm_viscosity, globals.chunk.tiles[tile].field.viscosity);
 
-      for (int k = globals.chunk.tiles[tile].t_ymin+1; k <= globals.chunk.tiles[tile].t_ymax+1; ++k) {
-        for (int j = globals.chunk.tiles[tile].t_xmin+1; j <= globals.chunk.tiles[tile].t_xmax+1; ++j) {
-          double temp = (fabs(hm_viscosity(j,k)) > 0.00000001) ? hm_viscosity(j,k) : 0.0;
-          u << std::scientific << std::setprecision(3) << temp << std::endl;
-        }
-      }
+			for (int k = globals.chunk.tiles[tile].t_ymin + 1;
+			     k <= globals.chunk.tiles[tile].t_ymax + 1; ++k) {
+				for (int j = globals.chunk.tiles[tile].t_xmin + 1;
+				     j <= globals.chunk.tiles[tile].t_xmax + 1; ++j) {
+					double temp = (fabs(hm_viscosity(j, k)) > 0.00000001) ? hm_viscosity(j, k)
+					                                                      : 0.0;
+					u << std::scientific << std::setprecision(3) << temp << std::endl;
+				}
+			}
 
-      u << "POINT_DATA " << nxv*nyv << std::endl;
-      u << "FIELD FieldData 2" << std::endl;
-      u << "x_vel 1 " << nxv*nyv << " double" << std::endl;
-      typename Kokkos::View<double**>::HostMirror hm_xvel0 = Kokkos::create_mirror_view(globals.chunk.tiles[tile].field.xvel0);
-      Kokkos::deep_copy(hm_xvel0, globals.chunk.tiles[tile].field.xvel0);
+			u << "POINT_DATA " << nxv * nyv << std::endl;
+			u << "FIELD FieldData 2" << std::endl;
+			u << "x_vel 1 " << nxv * nyv << " double" << std::endl;
+			typename Kokkos::View<double **>::HostMirror hm_xvel0 = Kokkos::create_mirror_view(
+					globals.chunk.tiles[tile].field.xvel0);
+			Kokkos::deep_copy(hm_xvel0, globals.chunk.tiles[tile].field.xvel0);
 
-      for (int k = globals.chunk.tiles[tile].t_ymin+1; k <= globals.chunk.tiles[tile].t_ymax+1+1; ++k) {
-        for (int j = globals.chunk.tiles[tile].t_xmin+1; j <= globals.chunk.tiles[tile].t_xmax+1+1; ++j) {
-          double temp = (fabs(hm_xvel0(j,k)) > 0.00000001) ? hm_xvel0(j,k) : 0.0;
-          u << std::scientific << std::setprecision(3) << temp << std::endl;
-        }
-      }
-      u << "y_vel 1 " << nxv*nyv << " double" << std::endl;
-      typename Kokkos::View<double**>::HostMirror hm_yvel0 = Kokkos::create_mirror_view(globals.chunk.tiles[tile].field.yvel0);
-      Kokkos::deep_copy(hm_yvel0, globals.chunk.tiles[tile].field.yvel0);
+			for (int k = globals.chunk.tiles[tile].t_ymin + 1;
+			     k <= globals.chunk.tiles[tile].t_ymax + 1 + 1; ++k) {
+				for (int j = globals.chunk.tiles[tile].t_xmin + 1;
+				     j <= globals.chunk.tiles[tile].t_xmax + 1 + 1; ++j) {
+					double temp = (fabs(hm_xvel0(j, k)) > 0.00000001) ? hm_xvel0(j, k) : 0.0;
+					u << std::scientific << std::setprecision(3) << temp << std::endl;
+				}
+			}
+			u << "y_vel 1 " << nxv * nyv << " double" << std::endl;
+			typename Kokkos::View<double **>::HostMirror hm_yvel0 = Kokkos::create_mirror_view(
+					globals.chunk.tiles[tile].field.yvel0);
+			Kokkos::deep_copy(hm_yvel0, globals.chunk.tiles[tile].field.yvel0);
 
-      for (int k = globals.chunk.tiles[tile].t_ymin+1; k <= globals.chunk.tiles[tile].t_ymax+1+1; ++k) {
-        for (int j = globals.chunk.tiles[tile].t_xmin+1; j <= globals.chunk.tiles[tile].t_xmax+1+1; ++j) {
-          double temp = (fabs(hm_yvel0(j,k)) > 0.00000001) ? hm_yvel0(j,k) : 0.0;
-          u << std::scientific << std::setprecision(3) << temp << std::endl;
-        }
-      }
-      u.close();
-    }
-  }
-  if (globals.profiler_on) globals.profiler.visit += timer()-kernel_time;
+			for (int k = globals.chunk.tiles[tile].t_ymin + 1;
+			     k <= globals.chunk.tiles[tile].t_ymax + 1 + 1; ++k) {
+				for (int j = globals.chunk.tiles[tile].t_xmin + 1;
+				     j <= globals.chunk.tiles[tile].t_xmax + 1 + 1; ++j) {
+					double temp = (fabs(hm_yvel0(j, k)) > 0.00000001) ? hm_yvel0(j, k) : 0.0;
+					u << std::scientific << std::setprecision(3) << temp << std::endl;
+				}
+			}
+			u.close();
+		}
+	}
+	if (globals.profiler_on) globals.profiler.visit += timer() - kernel_time;
 
 }
 

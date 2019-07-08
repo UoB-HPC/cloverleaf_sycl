@@ -54,35 +54,35 @@ std::ostream g_out(nullptr);
 
 int main(int argc, char *argv[]) {
 
-  // Initialise MPI first
-  MPI_Init(&argc, &argv);
+	// Initialise MPI first
+	MPI_Init(&argc, &argv);
 
-  // Initialise Kokkos
-  Kokkos::initialize();
+	// Initialise Kokkos
+	Kokkos::initialize();
 
-  // Initialise communications
-  struct parallel_ parallel;
+	// Initialise communications
+	struct parallel_ parallel;
 
-  if (parallel.boss) {
-    std::cout
-      << std::endl
-      << "Clover Version " << g_version << std::endl
-      << "Kokkos Version" << std::endl
-      << "Task Count " << parallel.max_task << std::endl
-      << std::endl;
-  }
+	if (parallel.boss) {
+		std::cout
+				<< std::endl
+				<< "Clover Version " << g_version << std::endl
+				<< "Kokkos Version" << std::endl
+				<< "Task Count " << parallel.max_task << std::endl
+				<< std::endl;
+	}
 
-  // Struct to hold many global scope variables, from original definitions.f90
-  global_variables *globals = new global_variables;
+	// Struct to hold many global scope variables, from original definitions.f90
+	global_variables *globals = new global_variables;
 
-  initialise(parallel, *globals);
+	initialise(parallel, *globals);
 
-  hydro(*globals, parallel);
+	hydro(*globals, parallel);
 
-  delete globals;
-  
-  // Finilise programming models
-  Kokkos::finalize();
-  MPI_Finalize();
+	delete globals;
+
+	// Finilise programming models
+	Kokkos::finalize();
+	MPI_Finalize();
 }
 

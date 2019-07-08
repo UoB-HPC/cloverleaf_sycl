@@ -23,7 +23,7 @@
 
 #include "definitions.h"
 
-void build_field(global_variables& globals);
+void build_field(global_variables &globals);
 
 #endif
 

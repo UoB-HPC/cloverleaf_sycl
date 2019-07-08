@@ -23,7 +23,7 @@
 
 #include "definitions.h"
 
-void ideal_gas(global_variables& globals, const int tile, bool predict);
+void ideal_gas(global_variables &globals, const int tile, bool predict);
 
 #endif
 

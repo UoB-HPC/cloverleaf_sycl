@@ -23,7 +23,7 @@
 
 #include "definitions.h"
 
-void advection(global_variables& globals);
+void advection(global_variables &globals);
 
 #endif
 

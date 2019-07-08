@@ -36,110 +36,111 @@
 
 extern std::ostream g_out;
 
-void start(parallel_& parallel, global_variables& globals) {
+void start(parallel_ &parallel, global_variables &globals) {
 
-  if (parallel.boss) {
-    g_out << "Setting up initial geometry" << std::endl
-      << std::endl;
-  }
+	if (parallel.boss) {
+		g_out << "Setting up initial geometry" << std::endl
+		      << std::endl;
+	}
 
-  globals.time = 0.0;
-  globals.step = 0.0;
-  globals.dtold = globals.dtinit;
-  globals.dt    = globals.dtinit;
+	globals.time = 0.0;
+	globals.step = 0.0;
+	globals.dtold = globals.dtinit;
+	globals.dt = globals.dtinit;
 
-  clover_barrier();
+	clover_barrier();
 
-  // clover_get_num_chunks()
-  globals.number_of_chunks = parallel.max_task;
+	// clover_get_num_chunks()
+	globals.number_of_chunks = parallel.max_task;
 
-  int left, right, bottom, top;
-  clover_decompose(globals, parallel, globals.grid.x_cells, globals.grid.y_cells, left, right, bottom, top);
+	int left, right, bottom, top;
+	clover_decompose(globals, parallel, globals.grid.x_cells, globals.grid.y_cells, left, right,
+	                 bottom, top);
 
-  // Create the chunks
-  globals.chunk.task = parallel.task;
+	// Create the chunks
+	globals.chunk.task = parallel.task;
 
-  int x_cells = right - left + 1;
-  int y_cells = top - bottom + 1;
+	int x_cells = right - left + 1;
+	int y_cells = top - bottom + 1;
 
-  
-  globals.chunk.left    = left;
-  globals.chunk.bottom  = bottom;
-  globals.chunk.right   = right;
-  globals.chunk.top     = top;
-  globals.chunk.left_boundary   = 1;
-  globals.chunk.bottom_boundary = 1;
-  globals.chunk.right_boundary  = globals.grid.x_cells;
-  globals.chunk.top_boundary    = globals.grid.y_cells;
-  globals.chunk.x_min = 1;
-  globals.chunk.y_min = 1;
-  globals.chunk.x_max = x_cells;
-  globals.chunk.y_max = y_cells;
 
-  // Create the tiles
-  globals.chunk.tiles = new tile_type[globals.tiles_per_chunk];
+	globals.chunk.left = left;
+	globals.chunk.bottom = bottom;
+	globals.chunk.right = right;
+	globals.chunk.top = top;
+	globals.chunk.left_boundary = 1;
+	globals.chunk.bottom_boundary = 1;
+	globals.chunk.right_boundary = globals.grid.x_cells;
+	globals.chunk.top_boundary = globals.grid.y_cells;
+	globals.chunk.x_min = 1;
+	globals.chunk.y_min = 1;
+	globals.chunk.x_max = x_cells;
+	globals.chunk.y_max = y_cells;
 
-  clover_tile_decompose(globals, x_cells, y_cells);
+	// Create the tiles
+	globals.chunk.tiles = new tile_type[globals.tiles_per_chunk];
 
-  // Line 92 start.f90
-  build_field(globals);
+	clover_tile_decompose(globals, x_cells, y_cells);
 
-  clover_barrier();
+	// Line 92 start.f90
+	build_field(globals);
 
-  clover_allocate_buffers(globals, parallel);
+	clover_barrier();
 
-  if (parallel.boss) {
-    g_out << "Generating chunks" << std::endl;
-  }
+	clover_allocate_buffers(globals, parallel);
 
-  for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
-    initialise_chunk(tile, globals);
-    generate_chunk(tile, globals);
-  }
+	if (parallel.boss) {
+		g_out << "Generating chunks" << std::endl;
+	}
 
-  globals.advect_x = true;
+	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+		initialise_chunk(tile, globals);
+		generate_chunk(tile, globals);
+	}
 
-  clover_barrier();
+	globals.advect_x = true;
 
-  // Do no profile the start up costs otherwise the total times will not add up
-  // at the end
-  bool profiler_off = globals.profiler_on;
-  globals.profiler_on = false;
+	clover_barrier();
 
-  for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
-    ideal_gas(globals, tile, false);
-  }
+	// Do no profile the start up costs otherwise the total times will not add up
+	// at the end
+	bool profiler_off = globals.profiler_on;
+	globals.profiler_on = false;
 
-  // Prime all halo data for the first step
-  int fields[NUM_FIELDS];
-  for (int i = 0; i < NUM_FIELDS; ++i)
-    fields[i] = 0;
+	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+		ideal_gas(globals, tile, false);
+	}
 
-  fields[field_density0]  = 1;
-  fields[field_energy0]   = 1;
-  fields[field_pressure]  = 1;
-  fields[field_viscosity] = 1;
-  fields[field_density1]  = 1;
-  fields[field_energy1]   = 1;
-  fields[field_xvel0]     = 1;
-  fields[field_yvel0]     = 1;
-  fields[field_xvel1]     = 1;
-  fields[field_yvel1]     = 1;
+	// Prime all halo data for the first step
+	int fields[NUM_FIELDS];
+	for (int i = 0; i < NUM_FIELDS; ++i)
+		fields[i] = 0;
 
-  update_halo(globals, fields, 2);
+	fields[field_density0] = 1;
+	fields[field_energy0] = 1;
+	fields[field_pressure] = 1;
+	fields[field_viscosity] = 1;
+	fields[field_density1] = 1;
+	fields[field_energy1] = 1;
+	fields[field_xvel0] = 1;
+	fields[field_yvel0] = 1;
+	fields[field_xvel1] = 1;
+	fields[field_yvel1] = 1;
 
-  if (parallel.boss) {
-    g_out << std::endl
-      << "Problem initialised and generated" << std::endl;
-  }
+	update_halo(globals, fields, 2);
 
-  field_summary(globals, parallel);
+	if (parallel.boss) {
+		g_out << std::endl
+		      << "Problem initialised and generated" << std::endl;
+	}
 
-  if (globals.visit_frequency != 0) visit(globals, parallel);
+	field_summary(globals, parallel);
 
-  clover_barrier();
+	if (globals.visit_frequency != 0) visit(globals, parallel);
 
-  globals.profiler_on = profiler_off;
+	clover_barrier();
+
+	globals.profiler_on = profiler_off;
 
 }
 

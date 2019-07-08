@@ -23,7 +23,7 @@
 
 #include "definitions.h"
 
-void PdV(global_variables& globals, bool predict);
+void PdV(global_variables &globals, bool predict);
 
 #endif
 

@@ -23,7 +23,7 @@
 
 #include "definitions.h"
 
-void update_tile_halo(global_variables& globals, int fields[NUM_FIELDS], int depth);
+void update_tile_halo(global_variables &globals, int fields[NUM_FIELDS], int depth);
 
 #endif
 

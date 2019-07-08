@@ -23,7 +23,7 @@
 
 #include "definitions.h"
 
-void viscosity(global_variables& globals);
+void viscosity(global_variables &globals);
 
 #endif
 
