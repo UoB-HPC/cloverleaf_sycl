@@ -34,13 +34,10 @@ void ideal_gas_kernel(
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
+
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
-	h.parallel_for(range<2>(x_min + 1, y_min + 1), [=](id<2> id) {
-
-		// TODO compute offset
-
-
+	par_ranged<class ideal_gas>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](id<2> id) {
 		double v = 1.0 / density[id];
 		pressure[id] = (1.4 - 1.0) * density[id] * energy[id];
 		double pressurebyenergy = (1.4 - 1.0) * density[id];
@@ -56,35 +53,35 @@ void ideal_gas_kernel(
 //  @details Invokes the user specified kernel for the ideal gas equation of
 //  state using the specified time level data.
 
-void ideal_gas(global_variables &globals, const int tileI, bool predict) {
+void ideal_gas(global_variables &globals, const int tile, bool predict) {
 
-	tile_type &tile = globals.chunk.tiles[tileI];
+	tile_type &t = globals.chunk.tiles[tile];
 
-	globals.queue.submit([&](handler &h) {
+	execute(globals.queue, [&](handler &h) {
 
 		if (!predict) {
 			ideal_gas_kernel(
 					h,
-					tile.t_xmin,
-					tile.t_xmax,
-					tile.t_ymin,
-					tile.t_ymax,
-					tile.field.density0.access<RW>(h),
-					tile.field.energy0.access<RW>(h),
-					tile.field.pressure.access<RW>(h),
-					tile.field.soundspeed.access<RW>(h)
+					t.t_xmin,
+					t.t_xmax,
+					t.t_ymin,
+					t.t_ymax,
+					t.field.density0.access<RW>(h),
+					t.field.energy0.access<RW>(h),
+					t.field.pressure.access<RW>(h),
+					t.field.soundspeed.access<RW>(h)
 			);
 		} else {
 			ideal_gas_kernel(
 					h,
-					tile.t_xmin,
-					tile.t_xmax,
-					tile.t_ymin,
-					tile.t_ymax,
-					tile.field.density1.access<RW>(h),
-					tile.field.energy1.access<RW>(h),
-					tile.field.pressure.access<RW>(h),
-					tile.field.soundspeed.access<RW>(h)
+					t.t_xmin,
+					t.t_xmax,
+					t.t_ymin,
+					t.t_ymax,
+					t.field.density1.access<RW>(h),
+					t.field.energy1.access<RW>(h),
+					t.field.pressure.access<RW>(h),
+					t.field.soundspeed.access<RW>(h)
 			);
 		}
 	});

@@ -26,50 +26,59 @@
 // @details The pressure and viscosity gradients are used to update the 
 // velocity field.
 void accelerate_kernel(
+		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		Accessor<double , 2, RW>::View &xarea,
-		Accessor<double , 2, RW>::View &yarea,
-		Accessor<double , 2, RW>::View &volume,
-		Accessor<double , 2, RW>::View &density0,
-		Accessor<double , 2, RW>::View &pressure,
-		Accessor<double , 2, RW>::View &viscosity,
-		Accessor<double , 2, RW>::View &xvel0,
-		Accessor<double , 2, RW>::View &yvel0,
-		Accessor<double , 2, RW>::View &xvel1,
-		Accessor<double , 2, RW>::View &yvel1) {
+		const AccDP2RW::View &xarea,
+		const AccDP2RW::View &yarea,
+		const AccDP2RW::View &volume,
+		const AccDP2RW::View &density0,
+		const AccDP2RW::View &pressure,
+		const AccDP2RW::View &viscosity,
+		const AccDP2RW::View &xvel0,
+		const AccDP2RW::View &yvel0,
+		const AccDP2RW::View &xvel1,
+		const AccDP2RW::View &yvel1) {
 
 	double halfdt = 0.5 * dt;
 
 	// DO k=y_min,y_max+1
 	//   DO j=x_min,x_max+1
-	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1},
-	                                               {x_max + 1 + 2, y_max + 1 + 2});
-	Kokkos::parallel_for("accelerate", policy, KOKKOS_LAMBDA(
-	const int j,
-	const int k) {
-		double stepbymass_s = halfdt / ((density0(j - 1, k - 1) * volume(j - 1, k - 1)
-		                                 + density0(j, k - 1) * volume(j, k - 1)
-		                                 + density0(j, k) * volume(j, k)
-		                                 + density0(j - 1, k) * volume(j - 1, k))
+//	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1},
+//	                                               {x_max + 1 + 2, y_max + 1 + 2});
+
+
+	par_ranged<class accelerate>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
+			id<2> id) {
+
+		double stepbymass_s = halfdt / ((density0[jk<-1, -1>(id)] * volume[jk<-1, -1>(id)]
+		                                 + density0[j<-1>(id)] * volume[j<-1>(id)]
+		                                 + density0[id] * volume[id]
+		                                 + density0[k<-1>(id)] * volume[k<-1>(id)])
 		                                * 0.25);
 
-		xvel1(j, k) =
-				xvel0(j, k) - stepbymass_s * (xarea(j, k) * (pressure(j, k) - pressure(j - 1, k))
-				                              + xarea(j, k - 1) *
-				                                (pressure(j, k - 1) - pressure(j - 1, k - 1)));
-		yvel1(j, k) =
-				yvel0(j, k) - stepbymass_s * (yarea(j, k) * (pressure(j, k) - pressure(j, k - 1))
-				                              + yarea(j - 1, k) *
-				                                (pressure(j - 1, k) - pressure(j - 1, k - 1)));
-		xvel1(j, k) =
-				xvel1(j, k) - stepbymass_s * (xarea(j, k) * (viscosity(j, k) - viscosity(j - 1, k))
-				                              + xarea(j, k - 1) *
-				                                (viscosity(j, k - 1) - viscosity(j - 1, k - 1)));
-		yvel1(j, k) =
-				yvel1(j, k) - stepbymass_s * (yarea(j, k) * (viscosity(j, k) - viscosity(j, k - 1))
-				                              + yarea(j - 1, k) *
-				                                (viscosity(j - 1, k) - viscosity(j - 1, k - 1)));
+		xvel1[id] =
+				xvel0[id] - stepbymass_s * (xarea[id] * (pressure[id] - pressure[k<-1>(id)])
+				                            + xarea[j<-1>(id)] *
+				                              (pressure[j<-1>(id)] -
+				                               pressure[jk<-1, -1>(id)]));
+		yvel1[id] =
+				yvel0[id] - stepbymass_s * (yarea[id] * (pressure[id] - pressure[j<-1>(id)])
+				                            + yarea[k<-1>(id)] *
+				                              (pressure[k<-1>(id)] -
+				                               pressure[jk<-1, -1>(id)]));
+		xvel1[id] =
+				xvel1[id] -
+				stepbymass_s * (xarea[id] * (viscosity[id] - viscosity[k<-1>(id)])
+				                + xarea[j<-1>(id)] *
+				                  (viscosity[j<-1>(id)] - viscosity[jk<-1, -1>(id)]));
+		yvel1[id] =
+				yvel1[id] -
+				stepbymass_s * (yarea[id] * (viscosity[id] - viscosity[j<-1>(id)])
+				                + yarea[k<-1>(id)] *
+				                  (viscosity[k<-1>(id)] - viscosity[jk<-1, -1>(id)]));
+
+
 	});
 }
 
@@ -82,24 +91,31 @@ void accelerate(global_variables &globals) {
 	double kernel_time;
 	if (globals.profiler_on) kernel_time = timer();
 
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
 
-		accelerate_kernel(
-				globals.chunk.tiles[tile].t_xmin,
-				globals.chunk.tiles[tile].t_xmax,
-				globals.chunk.tiles[tile].t_ymin,
-				globals.chunk.tiles[tile].t_ymax,
-				globals.dt,
-				globals.chunk.tiles[tile].field.xarea,
-				globals.chunk.tiles[tile].field.yarea,
-				globals.chunk.tiles[tile].field.volume,
-				globals.chunk.tiles[tile].field.density0,
-				globals.chunk.tiles[tile].field.pressure,
-				globals.chunk.tiles[tile].field.viscosity,
-				globals.chunk.tiles[tile].field.xvel0,
-				globals.chunk.tiles[tile].field.yvel0,
-				globals.chunk.tiles[tile].field.xvel1,
-				globals.chunk.tiles[tile].field.yvel1);
+	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+		tile_type &t = globals.chunk.tiles[tile];
+
+
+		execute(globals.queue, [&](handler &h) {
+			accelerate_kernel(
+					h,
+					t.t_xmin,
+					t.t_xmax,
+					t.t_ymin,
+					t.t_ymax,
+					globals.dt,
+					t.field.xarea.access<RW>(h),
+					t.field.yarea.access<RW>(h),
+					t.field.volume.access<RW>(h),
+					t.field.density0.access<RW>(h),
+					t.field.pressure.access<RW>(h),
+					t.field.viscosity.access<RW>(h),
+					t.field.xvel0.access<RW>(h),
+					t.field.yvel0.access<RW>(h),
+					t.field.xvel1.access<RW>(h),
+					t.field.yvel1.access<RW>(h));
+		});
+
 
 	}
 

@@ -27,22 +27,23 @@
 //  Note that although pre_vol is only set and not used in the update, please
 //  leave it in the method.
 void advec_mom_kernel(
+		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
-		Kokkos::View<double **> &vel1,
-		Kokkos::View<double **> &mass_flux_x,
-		Kokkos::View<double **> &vol_flux_x,
-		Kokkos::View<double **> &mass_flux_y,
-		Kokkos::View<double **> &vol_flux_y,
-		Kokkos::View<double **> &volume,
-		Kokkos::View<double **> &density1,
-		Kokkos::View<double **> &node_flux,
-		Kokkos::View<double **> &node_mass_post,
-		Kokkos::View<double **> &node_mass_pre,
-		Kokkos::View<double **> &mom_flux,
-		Kokkos::View<double **> &pre_vol,
-		Kokkos::View<double **> &post_vol,
-		Kokkos::View<double *> &celldx,
-		Kokkos::View<double *> &celldy,
+		const AccDP2RW::View &vel1,
+		const AccDP2RW::View &mass_flux_x,
+		const AccDP2RW::View &vol_flux_x,
+		const AccDP2RW::View &mass_flux_y,
+		const AccDP2RW::View &vol_flux_y,
+		const AccDP2RW::View &volume,
+		const AccDP2RW::View &density1,
+		const AccDP2RW::View &node_flux,
+		const AccDP2RW::View &node_mass_post,
+		const AccDP2RW::View &node_mass_pre,
+		const AccDP2RW::View &mom_flux,
+		const AccDP2RW::View &pre_vol,
+		const AccDP2RW::View &post_vol,
+		const AccDP1RW::View &celldx,
+		const AccDP1RW::View &celldy,
 		int which_vel,
 		int sweep_number,
 		int direction) {
@@ -51,36 +52,28 @@ void advec_mom_kernel(
 
 	// DO k=y_min-2,y_max+2
 	//   DO j=x_min-2,x_max+2
-	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min - 2 + 1, y_min - 2 + 1},
-	                                               {x_max + 2 + 2, y_max + 2 + 2});
+
+	Range2d policy(x_min - 2 + 1, y_min - 2 + 1, x_max + 2 + 2, y_max + 2 + 2);
 
 	if (mom_sweep == 1) { // x 1
-		Kokkos::parallel_for("advec_mom x1", policy, KOKKOS_LAMBDA(
-		const int j,
-		const int k) {
-			post_vol(j, k) = volume(j, k) + vol_flux_y(j, k + 1) - vol_flux_y(j, k);
-			pre_vol(j, k) = post_vol(j, k) + vol_flux_x(j + 1, k) - vol_flux_x(j, k);
+		par_ranged<class advec_mom_x1>(h, policy, [=](id<2> id) {
+			post_vol[id] = volume[id] + vol_flux_y[k<1>(id)] - vol_flux_y[id];
+			pre_vol[id] = post_vol[id] + vol_flux_x[j<1>(id)] - vol_flux_x[id];
 		});
 	} else if (mom_sweep == 2) { // y 1
-		Kokkos::parallel_for("advec_mom y1", policy, KOKKOS_LAMBDA(
-		const int j,
-		const int k) {
-			post_vol(j, k) = volume(j, k) + vol_flux_x(j + 1, k) - vol_flux_x(j, k);
-			pre_vol(j, k) = post_vol(j, k) + vol_flux_y(j, k + 1) - vol_flux_y(j, k);
+		par_ranged<class advec_mom_y1>(h, policy, [=](id<2> id) {
+			post_vol[id] = volume[id] + vol_flux_x[j<1>(id)] - vol_flux_x[id];
+			pre_vol[id] = post_vol[id] + vol_flux_y[k<1>(id)] - vol_flux_y[id];
 		});
 	} else if (mom_sweep == 3) { // x 2
-		Kokkos::parallel_for("advec_mom x1", policy, KOKKOS_LAMBDA(
-		const int j,
-		const int k) {
-			post_vol(j, k) = volume(j, k);
-			pre_vol(j, k) = post_vol(j, k) + vol_flux_y(j, k + 1) - vol_flux_y(j, k);
+		par_ranged<class advec_mom_x1>(h, policy, [=](id<2> id) {
+			post_vol[id] = volume[id];
+			pre_vol[id] = post_vol[id] + vol_flux_y[k<1>(id)] - vol_flux_y[id];
 		});
 	} else if (mom_sweep == 4) { // y 2
-		Kokkos::parallel_for("advec_mom y1", policy, KOKKOS_LAMBDA(
-		const int j,
-		const int k) {
-			post_vol(j, k) = volume(j, k);
-			pre_vol(j, k) = post_vol(j, k) + vol_flux_x(j + 1, k) - vol_flux_x(j, k);
+		par_ranged<class advec_mom_y1>(h, policy, [=](id<2> id) {
+			post_vol[id] = volume[id];
+			pre_vol[id] = post_vol[id] + vol_flux_x[j<1>(id)] - vol_flux_x[id];
 		});
 	}
 
@@ -88,177 +81,157 @@ void advec_mom_kernel(
 		if (which_vel == 1) {
 			// DO k=y_min,y_max+1
 			//   DO j=x_min-2,x_max+2
-			Kokkos::parallel_for("advec_mom dir1, vel1, node_flux",
-			                     Kokkos::MDRangePolicy < Kokkos::Rank <
-			                     2 >> ({ x_min - 2 + 1, y_min + 1 },
-			                     {x_max + 2 + 2, y_max + 1 + 2}),
-					KOKKOS_LAMBDA(
-			const int j,
-			const int k) {
-				// Find staggered mesh mass fluxes, nodal masses and volumes.
-				node_flux(j, k) = 0.25 * (mass_flux_x(j, k - 1) + mass_flux_x(j, k)
-				                          + mass_flux_x(j + 1, k - 1) + mass_flux_x(j + 1, k));
-			});
+			par_ranged<class advec_mom_dir1_vel1_node_flux>(
+					h, {x_min - 2 + 1, y_min + 1, x_max + 2 + 2, y_max + 1 + 2}, [=](id<2> id) {
+						// Find staggered mesh mass fluxes, nodal masses and volumes.
+						node_flux[id] = 0.25 * (mass_flux_x[k<-1>(id)] + mass_flux_x[id]
+						                        + mass_flux_x[jk<1, -1>(id)] +
+						                        mass_flux_x[j<1>(id)]);
+					});
 
 			// DO k=y_min,y_max+1
 			//   DO j=x_min-1,x_max+2
-			Kokkos::parallel_for("advec_mom dir1, vel1, node_mass_pre",
-			                     Kokkos::MDRangePolicy < Kokkos::Rank <
-			                     2 >> ({ x_min - 1 + 1, y_min + 1 },
-			                     {x_max + 2 + 2, y_max + 1 + 2}),
-					KOKKOS_LAMBDA(
-			const int j,
-			const int k) {
-				// Staggered cell mass post advection
-				node_mass_post(j, k) = 0.25 * (density1(j, k - 1) * post_vol(j, k - 1)
-				                               + density1(j, k) * post_vol(j, k)
-				                               + density1(j - 1, k - 1) * post_vol(j - 1, k - 1)
-				                               + density1(j - 1, k) * post_vol(j - 1, k));
-				node_mass_pre(j, k) = node_mass_post(j, k) - node_flux(j - 1, k) + node_flux(j, k);
-			});
+			par_ranged<class advec_mom_dir1_vel1_node_mass_pre>(
+					h, {x_min - 1 + 1, y_min + 1, x_max + 2 + 2, y_max + 1 + 2}, [=](id<2> id) {
+						// Staggered cell mass post advection
+						node_mass_post[id] = 0.25 * (density1[k<-1>(id)] * post_vol[k<-1>(id)]
+						                             + density1[id] * post_vol[id]
+						                             + density1[jk<-1, -1>(id)] *
+						                               post_vol[jk<-1, -1>(id)]
+						                             + density1[j<-1>(id)] * post_vol[j<-1>(id)]);
+						node_mass_pre[id] =
+								node_mass_post[id] - node_flux[j<-1>(id)] + node_flux[id];
+					});
 		}
 
 		// DO k=y_min,y_max+1
 		//  DO j=x_min-1,x_max+1
-		Kokkos::parallel_for("advec_mom dir1, mom_flux",
-		                     Kokkos::MDRangePolicy < Kokkos::Rank <
-		                     2 >> ({ x_min - 1 + 1, y_min + 1 }, {x_max + 1 + 2, y_max + 1 + 2}),
-				KOKKOS_LAMBDA(
-		const int j,
-		const int k) {
+		par_ranged<class advec_mom_dir1_mom_flux>(
+				h, {x_min - 1 + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](id<2> id) {
 
-			int upwind, donor, downwind, dif;
-			double sigma, width, limiter, vdiffuw, vdiffdw, auw, adw, wind, advec_vel_s;
+					int upwind, donor, downwind, dif;
+					double sigma, width, limiter, vdiffuw, vdiffdw, auw, adw, wind, advec_vel_s;
 
-			if (node_flux(j, k) < 0.0) {
-				upwind = j + 2;
-				donor = j + 1;
-				downwind = j;
-				dif = donor;
-			} else {
-				upwind = j - 1;
-				donor = j;
-				downwind = j + 1;
-				dif = upwind;
-			}
+					const int j = id.get(0);
+					const int k = id.get(1);
 
-			sigma = fabs(node_flux(j, k)) / (node_mass_pre(donor, k));
-			width = celldx(j);
-			vdiffuw = vel1(donor, k) - vel1(upwind, k);
-			vdiffdw = vel1(downwind, k) - vel1(donor, k);
-			limiter = 0.0;
-			if (vdiffuw * vdiffdw > 0.0) {
-				auw = fabs(vdiffuw);
-				adw = fabs(vdiffdw);
-				wind = 1.0;
-				if (vdiffdw <= 0.0) wind = -1.0;
-				limiter = wind * MIN(MIN(width * ((2.0 - sigma) * adw / width +
-				                                  (1.0 + sigma) * auw / celldx(dif)) / 6.0, auw),
-				                     adw);
-			}
-			advec_vel_s = vel1(donor, k) + (1.0 - sigma) * limiter;
-			mom_flux(j, k) = advec_vel_s * node_flux(j, k);
-		});
+					if (node_flux[id] < 0.0) {
+						upwind = j + 2;
+						donor = j + 1;
+						downwind = j;
+						dif = donor;
+					} else {
+						upwind = j - 1;
+						donor = j;
+						downwind = j + 1;
+						dif = upwind;
+					}
+
+					sigma = fabs(node_flux[id]) / (node_mass_pre[donor][k]);
+					width = celldx[j];
+					vdiffuw = vel1[donor][k] - vel1[upwind][k];
+					vdiffdw = vel1[downwind][k] - vel1[donor][k];
+					limiter = 0.0;
+					if (vdiffuw * vdiffdw > 0.0) {
+						auw = fabs(vdiffuw);
+						adw = fabs(vdiffdw);
+						wind = 1.0;
+						if (vdiffdw <= 0.0) wind = -1.0;
+						limiter = wind * MIN(MIN(width * ((2.0 - sigma) * adw / width +
+						                                  (1.0 + sigma) * auw / celldx[dif]) / 6.0,
+						                         auw),
+						                     adw);
+					}
+					advec_vel_s = vel1[donor][k] + (1.0 - sigma) * limiter;
+					mom_flux[id] = advec_vel_s * node_flux[id];
+				});
 
 		// DO k=y_min,y_max+1
 		//   DO j=x_min,x_max+1
-		Kokkos::parallel_for("advec_mom dir1, vel1",
-		                     Kokkos::MDRangePolicy < Kokkos::Rank < 2 >> ({ x_min + 1, y_min + 1 },
-		                     {x_max + 1 + 2, y_max + 1 + 2}),
-				KOKKOS_LAMBDA(
-		const int j,
-		const int k) {
-			vel1(j, k) = (vel1(j, k) * node_mass_pre(j, k) + mom_flux(j - 1, k) - mom_flux(j, k)) /
-			             node_mass_post(j, k);
-		});
+		par_ranged<class advec_mom_dir1_vel1>(
+				h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](id<2> id) {
+					vel1[id] = (vel1[id] * node_mass_pre[id] + mom_flux[j<-1>(id)] -
+					            mom_flux[id]) /
+					           node_mass_post[id];
+				});
 	} else if (direction == 2) {
 		if (which_vel == 1) {
 			// DO k=y_min-2,y_max+2
 			//   DO j=x_min,x_max+1
-			Kokkos::parallel_for("advec_mom dir2, vel1, node_flux",
-			                     Kokkos::MDRangePolicy < Kokkos::Rank <
-			                     2 >> ({ x_min + 1, y_min - 2 + 1 },
-			                     {x_max + 1 + 2, y_max + 2 + 2}),
-					KOKKOS_LAMBDA(
-			const int j,
-			const int k) {
-				// Find staggered mesh mass fluxes and nodal masses and volumes.
-				node_flux(j, k) = 0.25 * (mass_flux_y(j - 1, k) + mass_flux_y(j, k)
-				                          + mass_flux_y(j - 1, k + 1) + mass_flux_y(j, k + 1));
-			});
+			par_ranged<class advec_mom_dir2_vel1_node_flux>(
+					h, {x_min + 1, y_min - 2 + 1, x_max + 1 + 2, y_max + 2 + 2}, [=](id<2> id) {
+						// Find staggered mesh mass fluxes and nodal masses and volumes.
+						node_flux[id] = 0.25 * (mass_flux_y[j<-1>(id)] + mass_flux_y[id]
+						                        + mass_flux_y[jk<-1, 1>(id)] +
+						                        mass_flux_y[k<1>(id)]);
+					});
 
 
 			// DO k=y_min-1,y_max+2
 			//   DO j=x_min,x_max+1
-			Kokkos::parallel_for("advec_mom dir2, vel1, node_mass_pre",
-			                     Kokkos::MDRangePolicy < Kokkos::Rank <
-			                     2 >> ({ x_min + 1, y_min - 1 + 1 },
-			                     {x_max + 1 + 2, y_max + 2 + 2}),
-					KOKKOS_LAMBDA(
-			const int j,
-			const int k) {
-				node_mass_post(j, k) = 0.25 * (density1(j, k - 1) * post_vol(j, k - 1)
-				                               + density1(j, k) * post_vol(j, k)
-				                               + density1(j - 1, k - 1) * post_vol(j - 1, k - 1)
-				                               + density1(j - 1, k) * post_vol(j - 1, k));
-				node_mass_pre(j, k) = node_mass_post(j, k) - node_flux(j, k - 1) + node_flux(j, k);
-			});
+			par_ranged<class advec_mom_dir2_vel1_node_mass_pre>(
+					h, {x_min + 1, y_min - 1 + 1, x_max + 1 + 2, y_max + 2 + 2}, [=](id<2> id) {
+						node_mass_post[id] = 0.25 * (density1[k<-1>(id)] * post_vol[k<-1>(id)]
+						                             + density1[id] * post_vol[id]
+						                             + density1[jk<-1, -1>(id)] *
+						                               post_vol[jk<-1, -1>(id)]
+						                             + density1[j<-1>(id)] * post_vol[j<-1>(id)]);
+						node_mass_pre[id] =
+								node_mass_post[id] - node_flux[k<-1>(id)] + node_flux[id];
+					});
 		}
 
 		// DO k=y_min-1,y_max+1
 		//   DO j=x_min,x_max+1
-		Kokkos::parallel_for("advec_mom dir2, mom_flux",
-		                     Kokkos::MDRangePolicy < Kokkos::Rank <
-		                     2 >> ({ x_min + 1, y_min - 1 + 1 }, {x_max + 1 + 2, y_max + 1 + 2}),
-				KOKKOS_LAMBDA(
-		const int j,
-		const int k) {
+		par_ranged<class advec_mom_dir2_mom_flux>(
+				h, {x_min + 1, y_min - 1 + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](id<2> id) {
 
-			int upwind, donor, downwind, dif;
-			double sigma, width, limiter, vdiffuw, vdiffdw, auw, adw, wind, advec_vel_s;
+					int upwind, donor, downwind, dif;
+					double sigma, width, limiter, vdiffuw, vdiffdw, auw, adw, wind, advec_vel_s;
 
-			if (node_flux(j, k) < 0.0) {
-				upwind = k + 2;
-				donor = k + 1;
-				downwind = k;
-				dif = donor;
-			} else {
-				upwind = k - 1;
-				donor = k;
-				downwind = k + 1;
-				dif = upwind;
-			}
+					const int j = id.get(0);
+					const int k = id.get(1);
 
-			sigma = fabs(node_flux(j, k)) / (node_mass_pre(j, donor));
-			width = celldy(k);
-			vdiffuw = vel1(j, donor) - vel1(j, upwind);
-			vdiffdw = vel1(j, downwind) - vel1(j, donor);
-			limiter = 0.0;
-			if (vdiffuw * vdiffdw > 0.0) {
-				auw = fabs(vdiffuw);
-				adw = fabs(vdiffdw);
-				wind = 1.0;
-				if (vdiffdw <= 0.0) wind = -1.0;
-				limiter = wind * MIN(MIN(width * ((2.0 - sigma) * adw / width +
-				                                  (1.0 + sigma) * auw / celldy(dif)) / 6.0, auw),
-				                     adw);
-			}
-			advec_vel_s = vel1(j, donor) + (1.0 - sigma) * limiter;
-			mom_flux(j, k) = advec_vel_s * node_flux(j, k);
-		});
+					if (node_flux[id] < 0.0) {
+						upwind = k + 2;
+						donor = k + 1;
+						downwind = k;
+						dif = donor;
+					} else {
+						upwind = k - 1;
+						donor = k;
+						downwind = k + 1;
+						dif = upwind;
+					}
+
+
+					sigma = fabs(node_flux[id]) / (node_mass_pre[j][donor]);
+					width = celldy[k];
+					vdiffuw = vel1[j][donor] - vel1[j][upwind];
+					vdiffdw = vel1[j][downwind] - vel1[j][donor];
+					limiter = 0.0;
+					if (vdiffuw * vdiffdw > 0.0) {
+						auw = fabs(vdiffuw);
+						adw = fabs(vdiffdw);
+						wind = 1.0;
+						if (vdiffdw <= 0.0) wind = -1.0;
+						limiter = wind * MIN(MIN(width * ((2.0 - sigma) * adw / width +
+						                                  (1.0 + sigma) * auw / celldy[dif]) / 6.0,
+						                         auw),
+						                     adw);
+					}
+					advec_vel_s = vel1[j][donor] + (1.0 - sigma) * limiter;
+					mom_flux[id] = advec_vel_s * node_flux[id];
+				});
 
 
 		// DO k=y_min,y_max+1
 		//   DO j=x_min,x_max+1
-		Kokkos::parallel_for("advec_mom dir2, vel1",
-		                     Kokkos::MDRangePolicy < Kokkos::Rank < 2 >> ({ x_min + 1, y_min + 1 },
-		                     {x_max + 1 + 2, y_max + 1 + 2}),
-				KOKKOS_LAMBDA(
-		const int j,
-		const int k) {
-			vel1(j, k) = (vel1(j, k) * node_mass_pre(j, k) + mom_flux(j, k - 1) - mom_flux(j, k)) /
-			             node_mass_post(j, k);
-		});
+		par_ranged<class advec_mom_dir2_vel1>(
+				h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](id<2> id) {
+					vel1[id] = (vel1[id] * node_mass_pre[id] + mom_flux[k<-1>(id)] - mom_flux[id]) /
+					           node_mass_post[id];
+				});
 	}
 }
 
@@ -269,55 +242,60 @@ void advec_mom_kernel(
 void advec_mom_driver(global_variables &globals, int tile, int which_vel, int direction,
                       int sweep_number) {
 
-	if (which_vel == 1) {
-		advec_mom_kernel(
-				globals.chunk.tiles[tile].t_xmin,
-				globals.chunk.tiles[tile].t_xmax,
-				globals.chunk.tiles[tile].t_ymin,
-				globals.chunk.tiles[tile].t_ymax,
-				globals.chunk.tiles[tile].field.xvel1,
-				globals.chunk.tiles[tile].field.mass_flux_x,
-				globals.chunk.tiles[tile].field.vol_flux_x,
-				globals.chunk.tiles[tile].field.mass_flux_y,
-				globals.chunk.tiles[tile].field.vol_flux_y,
-				globals.chunk.tiles[tile].field.volume,
-				globals.chunk.tiles[tile].field.density1,
-				globals.chunk.tiles[tile].field.work_array1,
-				globals.chunk.tiles[tile].field.work_array2,
-				globals.chunk.tiles[tile].field.work_array3,
-				globals.chunk.tiles[tile].field.work_array4,
-				globals.chunk.tiles[tile].field.work_array5,
-				globals.chunk.tiles[tile].field.work_array6,
-				globals.chunk.tiles[tile].field.celldx,
-				globals.chunk.tiles[tile].field.celldy,
-				which_vel,
-				sweep_number,
-				direction);
-	} else {
-		advec_mom_kernel(
-				globals.chunk.tiles[tile].t_xmin,
-				globals.chunk.tiles[tile].t_xmax,
-				globals.chunk.tiles[tile].t_ymin,
-				globals.chunk.tiles[tile].t_ymax,
-				globals.chunk.tiles[tile].field.yvel1,
-				globals.chunk.tiles[tile].field.mass_flux_x,
-				globals.chunk.tiles[tile].field.vol_flux_x,
-				globals.chunk.tiles[tile].field.mass_flux_y,
-				globals.chunk.tiles[tile].field.vol_flux_y,
-				globals.chunk.tiles[tile].field.volume,
-				globals.chunk.tiles[tile].field.density1,
-				globals.chunk.tiles[tile].field.work_array1,
-				globals.chunk.tiles[tile].field.work_array2,
-				globals.chunk.tiles[tile].field.work_array3,
-				globals.chunk.tiles[tile].field.work_array4,
-				globals.chunk.tiles[tile].field.work_array5,
-				globals.chunk.tiles[tile].field.work_array6,
-				globals.chunk.tiles[tile].field.celldx,
-				globals.chunk.tiles[tile].field.celldy,
-				which_vel,
-				sweep_number,
-				direction);
-	}
+	execute(globals.queue, [&](handler &h) {
+		tile_type &t = globals.chunk.tiles[tile];
+		if (which_vel == 1) {
+			advec_mom_kernel(
+					h,
+					t.t_xmin,
+					t.t_xmax,
+					t.t_ymin,
+					t.t_ymax,
+					t.field.xvel1.access<RW>(h),
+					t.field.mass_flux_x.access<RW>(h),
+					t.field.vol_flux_x.access<RW>(h),
+					t.field.mass_flux_y.access<RW>(h),
+					t.field.vol_flux_y.access<RW>(h),
+					t.field.volume.access<RW>(h),
+					t.field.density1.access<RW>(h),
+					t.field.work_array1.access<RW>(h),
+					t.field.work_array2.access<RW>(h),
+					t.field.work_array3.access<RW>(h),
+					t.field.work_array4.access<RW>(h),
+					t.field.work_array5.access<RW>(h),
+					t.field.work_array6.access<RW>(h),
+					t.field.celldx.access<RW>(h),
+					t.field.celldy.access<RW>(h),
+					which_vel,
+					sweep_number,
+					direction);
+		} else {
+			advec_mom_kernel(
+					h,
+					t.t_xmin,
+					t.t_xmax,
+					t.t_ymin,
+					t.t_ymax,
+					t.field.yvel1.access<RW>(h),
+					t.field.mass_flux_x.access<RW>(h),
+					t.field.vol_flux_x.access<RW>(h),
+					t.field.mass_flux_y.access<RW>(h),
+					t.field.vol_flux_y.access<RW>(h),
+					t.field.volume.access<RW>(h),
+					t.field.density1.access<RW>(h),
+					t.field.work_array1.access<RW>(h),
+					t.field.work_array2.access<RW>(h),
+					t.field.work_array3.access<RW>(h),
+					t.field.work_array4.access<RW>(h),
+					t.field.work_array5.access<RW>(h),
+					t.field.work_array6.access<RW>(h),
+					t.field.celldx.access<RW>(h),
+					t.field.celldy.access<RW>(h),
+					which_vel,
+					sweep_number,
+					direction);
+		}
+	});
 
 }
 

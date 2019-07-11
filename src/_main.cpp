@@ -2,42 +2,9 @@
 
 #include <array>
 #include <iostream>
+#include "definitions.h"
 
 using cl::sycl::accessor;
-
-constexpr cl::sycl::access::mode R = cl::sycl::access::mode::read;
-constexpr cl::sycl::access::mode W = cl::sycl::access::mode::write;
-constexpr cl::sycl::access::mode RW = cl::sycl::access::mode::read_write;
-
-template<typename T,
-		int N,
-		cl::sycl::access::mode mode,
-		cl::sycl::access::target target = cl::sycl::access::target::global_buffer>
-struct Accessor {
-	typedef cl::sycl::accessor<T, N, mode, target> View;
-
-	inline static View from(cl::sycl::buffer<T, N> &b, cl::sycl::handler &cgh) {
-		return b.template get_access<mode, target>(cgh);
-	}
-
-};
-
-
-template<typename T, int N>
-struct Buffer {
-
-	cl::sycl::buffer<T, N> &buffer;
-
-	explicit Buffer(cl::sycl::buffer<T, N> &buffer) : buffer(buffer) {}
-
-	template<cl::sycl::access::mode mode,
-			cl::sycl::access::target target = cl::sycl::access::target::global_buffer>
-	inline typename Accessor<T, N, mode, target>::View
-	access(cl::sycl::handler &cgh) {
-		return Accessor<T, N, mode, target>::from(buffer, cgh);
-	}
-
-};
 
 
 template<typename T>
@@ -67,19 +34,10 @@ void doIt(
 	accessorC[wiID] = b * 10;
 }
 
-template<typename nameT = std::nullptr_t, typename functorT, int N>
-void
-par_ranged(cl::sycl::handler &cgh, cl::sycl::id<N> a, cl::sycl::id<N> b, const functorT &functor) {
+//	std::cout << "Size[" << from << "," << to << "]=" << (to-from) << "\n";
 
-	auto size = (b - a);
 
-	std::cout << "Size=" << cl::sycl::range<N>(size).get(0) << "\n";
 
-	cgh.parallel_for<nameT>(
-			cl::sycl::range<N>(size),
-			cl::sycl::id<N>(1),
-			functor);
-}
 
 template<typename T, size_t N>
 void simple_vadd(const std::array<T, 2 * N> &VA,
@@ -122,19 +80,35 @@ void simple_vadd(const std::array<T, 2 * N> &VA,
 //			accessorC[that] = accessorAB[that] + accessorAB[that] + 1;
 		};
 
-//		par_ranged<class SimpleVadd<T>>(cgh, cl::sycl::id<1>(3), cl::sycl::id<1>(10), kern);
+//		par_ranged1d<class SimpleVadd<T>>(cgh, 2, N - 2,
+//		                                  [=](cl::sycl::item<1> a) {
+//
+//			                                  auto it = a.get_id();
+//
+//
+//			                                  os << a.get_linear_id() << " ->" << it[0] << ","
+//			                                     << it[1] << "," << it[2] << "";
+//
+//			                                  accessorC[a] = it[0];
+//
+//		                                  });
 
-		cgh.parallel_for<class AAA>(
-				cl::sycl::range<3>(3, 3, 3), // global range
-				cl::sycl::id<3>(0,0,0), // offset
-				[=](cl::sycl::item<3> a) {
 
-					auto it = a.get_id();
-
-
-					os <<  a.get_linear_id() << " ->" << it[0]  << "," << it[1] << "," << it[2]<<  "\n";
-
-				});
+//		cgh.parallel_for<class AAA>(
+//				cl::sycl::range<1>(N - 2), // global range
+//				cl::sycl::id<1>(1), // offset
+//				[=](cl::sycl::item<1> a) {
+//
+//					auto it = a.get_id();
+//
+//
+//					os << a.get_linear_id() << " ->" << it[0] << "," << it[1] << "," << it[2] << "";
+////					   << "\n";
+//
+//
+//					accessorC[a] = it[0];
+//
+//				});
 
 
 
@@ -154,6 +128,36 @@ void simple_vadd(const std::array<T, 2 * N> &VA,
 	});
 }
 
+
+void bad() {
+	cl::sycl::queue deviceQueue;
+
+	std::cout << "Device:" << deviceQueue.get_device().get_info<cl::sycl::info::device::vendor>()
+	          << std::endl;
+
+	deviceQueue.submit([&](cl::sycl::handler &cgh) {
+
+		cl::sycl::stream os(1024, 128, cgh);
+		int x_max = 20;
+		int y_max = 20;
+
+		int x_min = 10;
+		int y_min = 10;
+
+
+		cgh.parallel_for<class OffsetTest>(
+				cl::sycl::range<3>(3, 3, 3), // global range
+				cl::sycl::id<3>(0, 0, 0), // offset
+				[=](cl::sycl::item<3> a) {
+					auto id = a.get_id();
+					os << a.get_linear_id() << " ->" << id[0] << "," << id[1] << "," << id[2]
+					   << "\n";
+				});
+
+	});
+	deviceQueue.wait_and_throw();
+}
+
 int main() {
 	std::array<cl::sycl::cl_int, 12> A = {
 			{
@@ -162,33 +166,16 @@ int main() {
 			}
 	};
 	std::array<cl::sycl::cl_int, 6> Out = {};
-//	simple_vadd(A, Out);
+//
+	simple_vadd(A, Out);
 
-
-	cl::sycl::queue deviceQueue;
-
-	std::cout << "Device:" <<  deviceQueue.get_device().get_info<cl::sycl::info::device ::vendor>()<< std::endl;
-
-	deviceQueue.submit([&](cl::sycl::handler &cgh) {
-		cl::sycl::stream os(1024, 128, cgh);
-		cgh.parallel_for<class AAA>(
-				cl::sycl::range<3>(3, 3, 3), // global range
-				cl::sycl::id<3>(1,1,1), // offset
-				[=](cl::sycl::item<3> a) {
-
-					auto it = a.get_id();
-					// FIXME seems broken
-
-					os <<  a.get_linear_id() << " ->" << it[0]  << "," << it[1] << "," << it[2]<<  "\n";
-
-				});
-
-	});
+//	bad();
 
 	for (const auto &x : Out) {
 		std::cout << "=" << x << std::endl;
 	}
 
-	std::cout << "Done\n";
+
+	std::cout << "Done" << std::endl;
 	return EXIT_SUCCESS;
 }

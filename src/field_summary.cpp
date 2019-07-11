@@ -41,22 +41,22 @@ struct field_summary_functor {
 
 	// Functor data member (kernel arguments)
 	int x_min, x_max, y_min, y_max;
-	Kokkos::View<double **> volume;
-	Kokkos::View<double **> density0;
-	Kokkos::View<double **> energy0;
-	Kokkos::View<double **> pressure;
-	Kokkos::View<double **> xvel0;
-	Kokkos::View<double **> yvel0;
+	Buffer<double, 2> volume;
+	Buffer<double, 2> density0;
+	Buffer<double, 2> energy0;
+	Buffer<double, 2> pressure;
+	Buffer<double, 2> xvel0;
+	Buffer<double, 2> yvel0;
 
 	// Constructor, which saves the kernel arguments
 	field_summary_functor(
 			int x_min_, int x_max_, int y_min_, int y_max_,
-			Kokkos::View<double **> volume_,
-			Kokkos::View<double **> density0_,
-			Kokkos::View<double **> energy0_,
-			Kokkos::View<double **> pressure_,
-			Kokkos::View<double **> xvel0_,
-			Kokkos::View<double **> yvel0) :
+			Buffer<double, 2> volume_,
+			Buffer<double, 2> density0_,
+			Buffer<double, 2> energy0_,
+			Buffer<double, 2> pressure_,
+			Buffer<double, 2> xvel0_,
+			Buffer<double, 2> yvel0) :
 
 			x_min(x_min_), x_max(x_max_), y_min(y_min_), y_max(y_max_),
 			volume(volume_),

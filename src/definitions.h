@@ -63,9 +63,13 @@ struct Accessor {
 template<typename T, int N>
 struct Buffer {
 
-	cl::sycl::buffer<T, N> &buffer;
+	cl::sycl::buffer<T, N> buffer;
 
-	explicit Buffer(cl::sycl::buffer<T, N> &buffer) : buffer(buffer) {}
+	Buffer(){};
+
+	explicit Buffer(cl::sycl::buffer<T, N> buffer) : buffer(buffer) {}
+
+	explicit Buffer(range<N> range) : buffer(range) {}
 
 	template<cl::sycl::access::mode mode,
 			cl::sycl::access::target target = cl::sycl::access::target::global_buffer>
@@ -79,11 +83,68 @@ struct Buffer {
 typedef Accessor<double, 2, RW> AccDP2RW;
 typedef Accessor<double, 1, RW> AccDP1RW;
 
+struct Range1d {
+	const size_t from, to;
+	const size_t size;
+	template<typename A, typename B>
+	Range1d(A from, B to) : from(from), to(to), size(to - from) {
+		assert(from < to);
+	}
+};
 
-{
-	auto a = cl::sycl::nd_range<2>();
 
+struct Range2d {
+	const size_t fromX, toX;
+	const size_t fromY, toY;
+	const size_t sizeX, sizeY;
+	template<typename A, typename B, typename C, typename D>
+	Range2d(A fromX, B toX, C fromY, D toY) :
+			fromX(fromX), toX(toX), fromY(fromY), toY(toY),
+			sizeX(toX - fromX), sizeY(toY - fromX) {
+		assert(fromX < toX);
+		assert(fromY < toY);
+	}
+};
+
+template<typename nameT = std::nullptr_t, typename functorT>
+inline void par_ranged(cl::sycl::handler &cgh, const Range1d &range, const functorT &functor) {
+	cgh.parallel_for<nameT>(
+			cl::sycl::range<1>(range.size),
+			cl::sycl::id<1>(range.from),
+			functor);
 }
+
+template<typename nameT = std::nullptr_t, typename functorT>
+inline void par_ranged(cl::sycl::handler &cgh, const Range2d &range, const functorT &functor) {
+	cgh.parallel_for<nameT>(
+			cl::sycl::range<2>(range.sizeY, range.sizeY),
+			cl::sycl::id<2>(range.fromX, range.fromY),
+			functor);
+}
+
+template<typename T>
+inline void execute(cl::sycl::queue &queue, T cgf) {
+	queue.submit(cgf);
+	queue.wait_and_throw();
+}
+
+template<int X = 0, int Y = 0>
+inline id<2> xy(id<2> x) { return x + id<2>(X, Y); }
+
+template<int X = 0, int Y = 0>
+inline id<2> jk(id<2> x) { return xy<X, Y>(x); }
+
+
+template<int N = 1>
+inline id<2> j(id<2> x) { return xy<N, 0>(x); }
+template<int N = 1>
+inline id<2> k(id<2> x) { return xy<0, N>(x); }
+
+template<int N = 1>
+inline id<2> x(id<2> x) { return xy<N, 0>(x); }
+template<int N = 1>
+inline id<2> y(id<2> x) { return xy<0, N>(x); }
+
 
 enum geometry_type {
 	g_rect = 1, g_circ = 2, g_point = 3

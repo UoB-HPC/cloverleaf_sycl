@@ -26,28 +26,28 @@
 //  condition, the velocity gradient and the velocity divergence. A safety
 //  factor is used to ensure numerical stability.
 void calc_dt_kernel(
-		queue &queue,
+		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
 		double dtmin,
 		double dtc_safe,
 		double dtu_safe,
 		double dtv_safe,
 		double dtdiv_safe,
-		Accessor<double, 2, RW>::View &xarea,
-		Accessor<double, 2, RW>::View &yarea,
-		Accessor<double, 1, RW>::View &cellx,
-		Accessor<double, 1, RW>::View &celly,
-		Accessor<double, 1, RW>::View &celldx,
-		Accessor<double, 1, RW>::View &celldy,
-		Accessor<double, 2, RW>::View &volume,
-		Accessor<double, 2, RW>::View &density0,
-		Accessor<double, 2, RW>::View &energy0,
-		Accessor<double, 2, RW>::View &pressure,
-		Accessor<double, 2, RW>::View &viscosity_a,
-		Accessor<double, 2, RW>::View &soundspeed,
-		Accessor<double, 2, RW>::View &xvel0,
-		Accessor<double, 2, RW>::View &yvel0,
-		Accessor<double, 2, RW>::View &dt_min,
+		const AccDP2RW::View &xarea,
+		const AccDP2RW::View &yarea,
+		const AccDP1RW::View &cellx,
+		const AccDP1RW::View &celly,
+		const AccDP1RW::View &celldx,
+		const AccDP1RW::View &celldy,
+		const AccDP2RW::View &volume,
+		const AccDP2RW::View &density0,
+		const AccDP2RW::View &energy0,
+		const AccDP2RW::View &pressure,
+		const AccDP2RW::View &viscosity_a,
+		const AccDP2RW::View &soundspeed,
+		const AccDP2RW::View &xvel0,
+		const AccDP2RW::View &yvel0,
+		const AccDP2RW::View &dt_min,
 		double &dt_min_val,
 		int &dtl_control,
 		double &xl_pos,
@@ -61,63 +61,59 @@ void calc_dt_kernel(
 	dt_min_val = g_big;
 	double jk_control = 1.1;
 
-
-	queue.submit([&](handler &h){
-
-	});
-
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
-	Kokkos::parallel_reduce("calc_dt", policy,
-	                        KOKKOS_LAMBDA(
-	const int j,
-	const int k,
-	double &dt_min_val) {
-
-		double dsx = celldx(j);
-		double dsy = celldy(k);
-
-		double cc = soundspeed(j, k) * soundspeed(j, k);
-		cc = cc + 2.0 * viscosity_a(j, k) / density0(j, k);
-		cc = MAX(sqrt(cc), g_small);
-
-		double dtct = dtc_safe * MIN(dsx, dsy) / cc;
-
-		double div = 0.0;
-
-		double dv1 = (xvel0(j, k) + xvel0(j, k + 1)) * xarea(j, k);
-		double dv2 = (xvel0(j + 1, k) + xvel0(j + 1, k + 1)) * xarea(j + 1, k);
-
-		div = div + dv2 - dv1;
-
-		double dtut = dtu_safe * 2.0 * volume(j, k) /
-		              MAX(MAX(fabs(dv1), fabs(dv2)), g_small * volume(j, k));
-
-		dv1 = (yvel0(j, k) + yvel0(j + 1, k)) * yarea(j, k);
-		dv2 = (yvel0(j, k + 1) + yvel0(j + 1, k + 1)) * yarea(j, k + 1);
-
-		div = div + dv2 - dv1;
-
-		double dtvt = dtv_safe * 2.0 * volume(j, k) /
-		              MAX(MAX(fabs(dv1), fabs(dv2)), g_small * volume(j, k));
-
-		div = div / (2.0 * volume(j, k));
-
-		double dtdivt;
-		if (div < -g_small) {
-			dtdivt = dtdiv_safe * (-1.0 / div);
-		} else {
-			dtdivt = g_big;
-		}
-
-		dt_min_val = MIN(dt_min_val, dtct);
-		dt_min_val = MIN(dt_min_val, dtut);
-		dt_min_val = MIN(dt_min_val, dtvt);
-		dt_min_val = MIN(dt_min_val, dtdivt);
-
-	},
-	Kokkos::Min<double>(dt_min_val));
+	// FIXME need par reduction for sycl
+//	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
+//	Kokkos::parallel_reduce("calc_dt", policy,
+//	                        KOKKOS_LAMBDA(
+//	const int j,
+//	const int k,
+//	double &dt_min_val) {
+//
+//		double dsx = celldx(j);
+//		double dsy = celldy(k);
+//
+//		double cc = soundspeed(j, k) * soundspeed(j, k);
+//		cc = cc + 2.0 * viscosity_a(j, k) / density0(j, k);
+//		cc = MAX(sqrt(cc), g_small);
+//
+//		double dtct = dtc_safe * MIN(dsx, dsy) / cc;
+//
+//		double div = 0.0;
+//
+//		double dv1 = (xvel0(j, k) + xvel0(j, k + 1)) * xarea(j, k);
+//		double dv2 = (xvel0(j + 1, k) + xvel0(j + 1, k + 1)) * xarea(j + 1, k);
+//
+//		div = div + dv2 - dv1;
+//
+//		double dtut = dtu_safe * 2.0 * volume(j, k) /
+//		              MAX(MAX(fabs(dv1), fabs(dv2)), g_small * volume(j, k));
+//
+//		dv1 = (yvel0(j, k) + yvel0(j + 1, k)) * yarea(j, k);
+//		dv2 = (yvel0(j, k + 1) + yvel0(j + 1, k + 1)) * yarea(j, k + 1);
+//
+//		div = div + dv2 - dv1;
+//
+//		double dtvt = dtv_safe * 2.0 * volume(j, k) /
+//		              MAX(MAX(fabs(dv1), fabs(dv2)), g_small * volume(j, k));
+//
+//		div = div / (2.0 * volume(j, k));
+//
+//		double dtdivt;
+//		if (div < -g_small) {
+//			dtdivt = dtdiv_safe * (-1.0 / div);
+//		} else {
+//			dtdivt = g_big;
+//		}
+//
+//		dt_min_val = MIN(dt_min_val, dtct);
+//		dt_min_val = MIN(dt_min_val, dtut);
+//		dt_min_val = MIN(dt_min_val, dtvt);
+//		dt_min_val = MIN(dt_min_val, dtdivt);
+//
+//	},
+//	Kokkos::Min<double>(dt_min_val));
 
 	//  Extract the mimimum timestep information
 	dtl_control = 10.01 * (jk_control - (int) (jk_control));
@@ -130,20 +126,22 @@ void calc_dt_kernel(
 
 	if (dt_min_val < dtmin) small = 1;
 
+	cl::sycl::stream os(1024, 128, h);
+
 	if (small != 0) {
-		std::cout
-				<< "Timestep information:" << std::endl
-				<< "j, k                 : " << jldt << " " << kldt << std::endl
-				<< "x, y                 : " << cellx(jldt) << " " << celly(kldt) << std::endl
-				<< "timestep : " << dt_min_val << std::endl
-				<< "Cell velocities;" << std::endl
-				<< xvel0(jldt, kldt) << " " << yvel0(jldt, kldt) << std::endl
-				<< xvel0(jldt + 1, kldt) << " " << yvel0(jldt + 1, kldt) << std::endl
-				<< xvel0(jldt + 1, kldt + 1) << " " << yvel0(jldt + 1, kldt + 1) << std::endl
-				<< xvel0(jldt, kldt + 1) << " " << yvel0(jldt, kldt + 1) << std::endl
-				<< "density, energy, pressure, soundspeed " << std::endl
-				<< density0(jldt, kldt) << " " << energy0(jldt, kldt) << " " << pressure(jldt, kldt)
-				<< " " << soundspeed(jldt, kldt) << std::endl;
+		os
+				<< "Timestep information:" << cl::sycl::endl
+				<< "j, k                 : " << jldt << " " << kldt << cl::sycl::endl
+				<< "x, y                 : " << cellx[jldt] << " " << celly[kldt] << cl::sycl::endl
+				<< "timestep : " << dt_min_val << cl::sycl::endl
+				<< "Cell velocities;" << cl::sycl::endl
+				<< xvel0[jldt][kldt] << " " << yvel0[jldt][kldt] << cl::sycl::endl
+				<< xvel0[jldt + 1][kldt] << " " << yvel0[jldt + 1][kldt] << cl::sycl::endl
+				<< xvel0[jldt + 1][kldt + 1] << " " << yvel0[jldt + 1][kldt + 1] << cl::sycl::endl
+				<< xvel0[jldt][kldt + 1] << " " << yvel0[jldt][kldt + 1] << cl::sycl::endl
+				<< "density, energy, pressure, soundspeed " << cl::sycl::endl
+				<< density0[jldt][kldt] << " " << energy0[jldt][kldt] << " " << pressure[jldt][kldt]
+				<< " " << soundspeed[jldt][kldt] << cl::sycl::endl;
 	}
 }
 
@@ -159,42 +157,45 @@ void calc_dt(global_variables &globals, int tile, double &local_dt, std::string 
 	int l_control;
 	int small = 0;
 
+	execute(globals.queue, [&](handler &h) {
 
+		tile_type &t = globals.chunk.tiles[tile];
+		calc_dt_kernel(
+				h,
+				t.t_xmin,
+				t.t_xmax,
+				t.t_ymin,
+				t.t_ymax,
+				globals.dtmin,
+				globals.dtc_safe,
+				globals.dtu_safe,
+				globals.dtv_safe,
+				globals.dtdiv_safe,
+				t.field.xarea.access<RW>(h),
+				t.field.yarea.access<RW>(h),
+				t.field.cellx.access<RW>(h),
+				t.field.celly.access<RW>(h),
+				t.field.celldx.access<RW>(h),
+				t.field.celldy.access<RW>(h),
+				t.field.volume.access<RW>(h),
+				t.field.density0.access<RW>(h),
+				t.field.energy0.access<RW>(h),
+				t.field.pressure.access<RW>(h),
+				t.field.viscosity.access<RW>(h),
+				t.field.soundspeed.access<RW>(h),
+				t.field.xvel0.access<RW>(h),
+				t.field.yvel0.access<RW>(h),
+				t.field.work_array1.access<RW>(h),
+				local_dt,
+				l_control,
+				xl_pos,
+				yl_pos,
+				jldt,
+				kldt,
+				small
+		);
+	});
 
-	calc_dt_kernel(
-			globals.queue,
-			globals.chunk.tiles[tile].t_xmin,
-			globals.chunk.tiles[tile].t_xmax,
-			globals.chunk.tiles[tile].t_ymin,
-			globals.chunk.tiles[tile].t_ymax,
-			globals.dtmin,
-			globals.dtc_safe,
-			globals.dtu_safe,
-			globals.dtv_safe,
-			globals.dtdiv_safe,
-			globals.chunk.tiles[tile].field.xarea,
-			globals.chunk.tiles[tile].field.yarea,
-			globals.chunk.tiles[tile].field.cellx,
-			globals.chunk.tiles[tile].field.celly,
-			globals.chunk.tiles[tile].field.celldx,
-			globals.chunk.tiles[tile].field.celldy,
-			globals.chunk.tiles[tile].field.volume,
-			globals.chunk.tiles[tile].field.density0,
-			globals.chunk.tiles[tile].field.energy0,
-			globals.chunk.tiles[tile].field.pressure,
-			globals.chunk.tiles[tile].field.viscosity,
-			globals.chunk.tiles[tile].field.soundspeed,
-			globals.chunk.tiles[tile].field.xvel0,
-			globals.chunk.tiles[tile].field.yvel0,
-			globals.chunk.tiles[tile].field.work_array1,
-			local_dt,
-			l_control,
-			xl_pos,
-			yl_pos,
-			jldt,
-			kldt,
-			small,
-	);
 
 	if (l_control == 1) local_control = "sound";
 	if (l_control == 2) local_control = "xvel";

@@ -65,8 +65,8 @@ void clover_exchange(global_variables &globals, int fields[NUM_FIELDS], const in
 void clover_pack_left(global_variables &globals, int tile, int fields[NUM_FIELDS], int depth,
                       int left_right_offset[NUM_FIELDS]);
 void
-clover_send_recv_message_left(global_variables &globals, Kokkos::View<double *> &left_snd_buffer,
-                              Kokkos::View<double *> &left_rcv_buffer, int total_size, int tag_send,
+clover_send_recv_message_left(global_variables &globals, const AccDP1RW::View &left_snd_buffer,
+                              const AccDP1RW::View &left_rcv_buffer, int total_size, int tag_send,
                               int tag_recv, MPI_Request &req_send, MPI_Request &req_recv);
 void clover_unpack_left(global_variables &globals, int fields[NUM_FIELDS], int tile, int depth,
                         int left_right_offset[NUM_FIELDS]);
@@ -74,8 +74,8 @@ void clover_unpack_left(global_variables &globals, int fields[NUM_FIELDS], int t
 void clover_pack_right(global_variables &globals, int tile, int fields[NUM_FIELDS], int depth,
                        int left_right_offset[NUM_FIELDS]);
 void
-clover_send_recv_message_right(global_variables &globals, Kokkos::View<double *> &right_snd_buffer,
-                               Kokkos::View<double *> &right_rcv_buffer, int total_size,
+clover_send_recv_message_right(global_variables &globals, const AccDP1RW::View &right_snd_buffer,
+                               const AccDP1RW::View &right_rcv_buffer, int total_size,
                                int tag_send, int tag_recv, MPI_Request &req_send,
                                MPI_Request &req_recv);
 void clover_unpack_right(global_variables &globals, int fields[NUM_FIELDS], int tile, int depth,
@@ -83,8 +83,8 @@ void clover_unpack_right(global_variables &globals, int fields[NUM_FIELDS], int 
 
 void clover_pack_top(global_variables &globals, int tile, int fields[NUM_FIELDS], int depth,
                      int bottom_top_offset[NUM_FIELDS]);
-void clover_send_recv_message_top(global_variables &globals, Kokkos::View<double *> &top_snd_buffer,
-                                  Kokkos::View<double *> &top_rcv_buffer, int total_size,
+void clover_send_recv_message_top(global_variables &globals, const AccDP1RW::View &top_snd_buffer,
+                                  const AccDP1RW::View &top_rcv_buffer, int total_size,
                                   int tag_send, int tag_recv, MPI_Request &req_send,
                                   MPI_Request &req_recv);
 void clover_unpack_top(global_variables &globals, int fields[NUM_FIELDS], int tile, int depth,
@@ -93,8 +93,8 @@ void clover_unpack_top(global_variables &globals, int fields[NUM_FIELDS], int ti
 void clover_pack_bottom(global_variables &globals, int tile, int fields[NUM_FIELDS], int depth,
                         int bottom_top_offset[NUM_FIELDS]);
 void clover_send_recv_message_bottom(global_variables &globals,
-                                     Kokkos::View<double *> &bottom_snd_buffer,
-                                     Kokkos::View<double *> &top_rcv_buffer, int total_size,
+                                     const AccDP1RW::View &bottom_snd_buffer,
+                                     const AccDP1RW::View &top_rcv_buffer, int total_size,
                                      int tag_send, int tag_recv, MPI_Request &req_send,
                                      MPI_Request &req_recv);
 void clover_unpack_bottom(global_variables &globals, int fields[NUM_FIELDS], int tile, int depth,

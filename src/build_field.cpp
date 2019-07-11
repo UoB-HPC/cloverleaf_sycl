@@ -30,198 +30,186 @@ void build_field(global_variables &globals) {
 
 	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
 
-		const size_t xrange =
-				(globals.chunk.tiles[tile].t_xmax + 2) - (globals.chunk.tiles[tile].t_xmin - 2) + 1;
-		const size_t yrange =
-				(globals.chunk.tiles[tile].t_ymax + 2) - (globals.chunk.tiles[tile].t_ymin - 2) + 1;
+		tile_type &t = globals.chunk.tiles[tile];
 
+		const size_t xrange = (t.t_xmax + 2) - (t.t_xmin - 2) + 1;
+		const size_t yrange = (t.t_ymax + 2) - (t.t_ymin - 2) + 1;
+
+		t.field.density0 = Buffer<double, 2>(range<2>(xrange, yrange));
 		// (t_xmin-2:t_xmax+2, t_ymin-2:t_ymax+2)
-		new(&globals.chunk.tiles[tile].field.density0) Kokkos::View<double **>("density0", xrange,
-		                                                                       yrange);
-		new(&globals.chunk.tiles[tile].field.density1) Kokkos::View<double **>("density1", xrange,
-		                                                                       yrange);
-		new(&globals.chunk.tiles[tile].field.energy0) Kokkos::View<double **>("energy0", xrange,
-		                                                                      yrange);
-		new(&globals.chunk.tiles[tile].field.energy1) Kokkos::View<double **>("energy1", xrange,
-		                                                                      yrange);
-		new(&globals.chunk.tiles[tile].field.pressure) Kokkos::View<double **>("pressure", xrange,
-		                                                                       yrange);
-		new(&globals.chunk.tiles[tile].field.viscosity) Kokkos::View<double **>("viscosity", xrange,
-		                                                                        yrange);
-		new(&globals.chunk.tiles[tile].field.soundspeed) Kokkos::View<double **>("soundspeed",
-		                                                                         xrange, yrange);
+
+		t.field.density0 = Buffer<double, 2>(range<2>(xrange, yrange));
+		t.field.density1 = Buffer<double, 2>(range<2>(xrange, yrange));
+		t.field.energy0 = Buffer<double, 2>(range<2>(xrange, yrange));
+		t.field.energy1 = Buffer<double, 2>(range<2>(xrange, yrange));
+		t.field.pressure = Buffer<double, 2>(range<2>(xrange, yrange));
+		t.field.viscosity = Buffer<double, 2>(range<2>(xrange, yrange));
+		t.field.soundspeed = Buffer<double, 2>(range<2>(xrange, yrange));
 
 		// (t_xmin-2:t_xmax+3, t_ymin-2:t_ymax+3)
-		new(&globals.chunk.tiles[tile].field.xvel0) Kokkos::View<double **>("xvel0", xrange + 1,
-		                                                                    yrange + 1);
-		new(&globals.chunk.tiles[tile].field.xvel1) Kokkos::View<double **>("xvel1", xrange + 1,
-		                                                                    yrange + 1);
-		new(&globals.chunk.tiles[tile].field.yvel0) Kokkos::View<double **>("yvel0", xrange + 1,
-		                                                                    yrange + 1);
-		new(&globals.chunk.tiles[tile].field.yvel1) Kokkos::View<double **>("yvel1", xrange + 1,
-		                                                                    yrange + 1);
+		t.field.xvel0 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+		t.field.xvel1 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+		t.field.yvel0 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+		t.field.yvel1 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
 
 		// (t_xmin-2:t_xmax+3, t_ymin-2:t_ymax+2)
-		new(&globals.chunk.tiles[tile].field.vol_flux_x) Kokkos::View<double **>("vol_flux_x",
-		                                                                         xrange + 1,
-		                                                                         yrange);
-		new(&globals.chunk.tiles[tile].field.mass_flux_x) Kokkos::View<double **>("mass_flux_x",
-		                                                                          xrange + 1,
-		                                                                          yrange);
+		t.field.vol_flux_x = Buffer<double, 2>(range<2>(xrange + 1, yrange));
+		t.field.mass_flux_x = Buffer<double, 2>(range<2>(xrange + 1, yrange));
 		// (t_xmin-2:t_xmax+2, t_ymin-2:t_ymax+3)
-		new(&globals.chunk.tiles[tile].field.vol_flux_y) Kokkos::View<double **>("vol_flux_y",
-		                                                                         xrange,
-		                                                                         yrange + 1);
-		new(&globals.chunk.tiles[tile].field.mass_flux_y) Kokkos::View<double **>("mass_flux_y",
-		                                                                          xrange,
-		                                                                          yrange + 1);
+		t.field.vol_flux_y = Buffer<double, 2>(range<2>(xrange, yrange + 1));
+		t.field.mass_flux_y = Buffer<double, 2>(range<2>(xrange, yrange + 1));
 
 		// (t_xmin-2:t_xmax+3, t_ymin-2:t_ymax+3)
-		new(&globals.chunk.tiles[tile].field.work_array1) Kokkos::View<double **>("work_array1",
-		                                                                          xrange + 1,
-		                                                                          yrange + 1);
-		new(&globals.chunk.tiles[tile].field.work_array2) Kokkos::View<double **>("work_array2",
-		                                                                          xrange + 1,
-		                                                                          yrange + 1);
-		new(&globals.chunk.tiles[tile].field.work_array3) Kokkos::View<double **>("work_array3",
-		                                                                          xrange + 1,
-		                                                                          yrange + 1);
-		new(&globals.chunk.tiles[tile].field.work_array4) Kokkos::View<double **>("work_array4",
-		                                                                          xrange + 1,
-		                                                                          yrange + 1);
-		new(&globals.chunk.tiles[tile].field.work_array5) Kokkos::View<double **>("work_array5",
-		                                                                          xrange + 1,
-		                                                                          yrange + 1);
-		new(&globals.chunk.tiles[tile].field.work_array6) Kokkos::View<double **>("work_array6",
-		                                                                          xrange + 1,
-		                                                                          yrange + 1);
-		new(&globals.chunk.tiles[tile].field.work_array7) Kokkos::View<double **>("work_array7",
-		                                                                          xrange + 1,
-		                                                                          yrange + 1);
+		t.field.work_array1 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+		t.field.work_array2 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+		t.field.work_array3 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+		t.field.work_array4 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+		t.field.work_array5 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+		t.field.work_array6 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+		t.field.work_array7 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
 
 		// (t_xmin-2:t_xmax+2)
-		new(&globals.chunk.tiles[tile].field.cellx) Kokkos::View<double *>("cellx", xrange);
-		new(&globals.chunk.tiles[tile].field.celldx) Kokkos::View<double *>("celldx", xrange);
+		t.field.cellx = Buffer<double, 1>(range<1>(xrange));
+		t.field.celldx = Buffer<double, 1>(range<1>(xrange));
 		// (t_ymin-2:t_ymax+2)
-		new(&globals.chunk.tiles[tile].field.celly) Kokkos::View<double *>("celly", yrange);
-		new(&globals.chunk.tiles[tile].field.celldy) Kokkos::View<double *>("celldy", yrange);
+		t.field.celly = Buffer<double, 1>(range<1>(yrange));
+		t.field.celldy = Buffer<double, 1>(range<1>(yrange));
 		// (t_xmin-2:t_xmax+3)
-		new(&globals.chunk.tiles[tile].field.vertexx) Kokkos::View<double *>("vertexx", xrange + 1);
-		new(&globals.chunk.tiles[tile].field.vertexdx) Kokkos::View<double *>("vertexdx",
-		                                                                      xrange + 1);
+		t.field.vertexx = Buffer<double, 1>(range<1>(xrange + 1));
+		t.field.vertexdx = Buffer<double, 1>(range<1>(xrange + 1));
 		// (t_ymin-2:t_ymax+3)
-		new(&globals.chunk.tiles[tile].field.vertexy) Kokkos::View<double *>("vertexy", yrange + 1);
-		new(&globals.chunk.tiles[tile].field.vertexdy) Kokkos::View<double *>("vertexdy",
-		                                                                      yrange + 1);
+		t.field.vertexy = Buffer<double, 1>(range<1>(yrange + 1));
+		t.field.vertexdy = Buffer<double, 1>(range<1>(yrange + 1));
 
 		// (t_xmin-2:t_xmax+2, t_ymin-2:t_ymax+2)
-		new(&globals.chunk.tiles[tile].field.volume) Kokkos::View<double **>("volume", xrange,
-		                                                                     yrange);
+		t.field.volume = Buffer<double, 2>(range<2>(xrange, yrange));
 		// (t_xmin-2:t_xmax+3, t_ymin-2:t_ymax+2)
-		new(&globals.chunk.tiles[tile].field.xarea) Kokkos::View<double **>("xarea", xrange + 1,
-		                                                                    yrange);
+		t.field.xarea = Buffer<double, 2>(range<2>(xrange + 1, yrange));
 		// (t_xmin-2:t_xmax+2, t_ymin-2:t_ymax+3)
-		new(&globals.chunk.tiles[tile].field.yarea) Kokkos::View<double **>("yarea", xrange,
-		                                                                    yrange + 1);
+		t.field.yarea = Buffer<double, 2>(range<2>(xrange, yrange + 1));
 
-		// Zeroing isn't strictly neccessary but it ensures physical pages
+		// Zeroing isn't strictly necessary but it ensures physical pages
 		// are allocated. This prevents first touch overheads in the main code
 		// cycle which can skew timings in the first step
 
 		// Take a reference to the lowest structure, as Kokkos device cannot necessarily chase through the structure.
-		field_type &field = globals.chunk.tiles[tile].field;
+		field_type &field = t.field;
 
-		// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+3) inclusive
-		Kokkos::MDRangePolicy <Kokkos::Rank<2>> loop_bounds_1({0, 0}, {xrange + 1, yrange + 1});
-
-		Kokkos::parallel_for("build_field_zero_1", loop_bounds_1, KOKKOS_LAMBDA(
-		const int j,
-		const int k) {
-
-			field.work_array1(j, k) = 0.0;
-			field.work_array2(j, k) = 0.0;
-			field.work_array3(j, k) = 0.0;
-			field.work_array4(j, k) = 0.0;
-			field.work_array5(j, k) = 0.0;
-			field.work_array6(j, k) = 0.0;
-			field.work_array7(j, k) = 0.0;
-
-			field.xvel0(j, k) = 0.0;
-			field.xvel1(j, k) = 0.0;
-			field.yvel0(j, k) = 0.0;
-			field.yvel1(j, k) = 0.0;
-
-		});
-
-		// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+2) inclusive
-		Kokkos::MDRangePolicy <Kokkos::Rank<2>> loop_bounds_2({0, 0}, {xrange, yrange});
-
-		Kokkos::parallel_for("build_field_zero_2", loop_bounds_2, KOKKOS_LAMBDA(
-		const int j,
-		const int k) {
-
-			field.density0(j, k) = 0.0;
-			field.density1(j, k) = 0.0;
-			field.energy0(j, k) = 0.0;
-			field.energy1(j, k) = 0.0;
-			field.pressure(j, k) = 0.0;
-			field.viscosity(j, k) = 0.0;
-			field.soundspeed(j, k) = 0.0;
-			field.volume(j, k) = 0.0;
-
-		});
-
-		// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+3) inclusive
-		Kokkos::MDRangePolicy <Kokkos::Rank<2>> loop_bounds_3({0, 0}, {xrange + 1, yrange});
-
-		Kokkos::parallel_for("build_field_zero_3", loop_bounds_3, KOKKOS_LAMBDA(
-		const int j,
-		const int k) {
-
-			field.vol_flux_x(j, k) = 0.0;
-			field.mass_flux_x(j, k) = 0.0;
-			field.xarea(j, k) = 0.0;
-		});
-
-		// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+2) inclusive
-		Kokkos::MDRangePolicy <Kokkos::Rank<2>> loop_bounds_4({0, 0}, {xrange, yrange + 1});
-
-		Kokkos::parallel_for("build_field_zero_4", loop_bounds_4, KOKKOS_LAMBDA(
-		const int j,
-		const int k) {
-
-			field.vol_flux_y(j, k) = 0.0;
-			field.mass_flux_y(j, k) = 0.0;
-			field.yarea(j, k) = 0.0;
-		});
+//		Kokkos::MDRangePolicy <Kokkos::Rank<2>> loop_bounds_1({0, 0}, {xrange + 1, yrange + 1});
 
 
-		// (t_xmin-2:t_xmax+2) inclusive
-		Kokkos::parallel_for("build_field_zero_5", xrange, KOKKOS_LAMBDA(
-		const int j) {
-			field.cellx(j) = 0.0;
-			field.celldx(j) = 0.0;
-		});
+		execute(globals.queue, [&](cl::sycl::handler &h) {
 
-		// (t_ymin-2:t_ymax+2) inclusive
-		Kokkos::parallel_for("build_field_zero_6", yrange, KOKKOS_LAMBDA(
-		const int k) {
-			field.celly(k) = 0.0;
-			field.celldy(k) = 0.0;
-		});
 
-		// (t_xmin-2:t_xmax+3) inclusive
-		Kokkos::parallel_for("build_field_zero_6", xrange + 1, KOKKOS_LAMBDA(
-		const int j) {
-			field.vertexx(j) = 0.0;
-			field.vertexdx(j) = 0.0;
-		});
+			auto work_array1 = field.work_array1.access<W>(h);
+			auto work_array2 = field.work_array2.access<W>(h);
+			auto work_array3 = field.work_array3.access<W>(h);
+			auto work_array4 = field.work_array4.access<W>(h);
+			auto work_array5 = field.work_array5.access<W>(h);
+			auto work_array6 = field.work_array6.access<W>(h);
+			auto work_array7 = field.work_array7.access<W>(h);
 
-		// (t_ymin-2:t_ymax+3) inclusive
-		Kokkos::parallel_for("build_field_zero_7", yrange + 1, KOKKOS_LAMBDA(
-		const int k) {
-			field.vertexy(k) = 0.0;
-			field.vertexdy(k) = 0.0;
+			auto xvel0 = field.xvel0.access<W>(h);
+			auto xvel1 = field.xvel1.access<W>(h);
+			auto yvel0 = field.yvel0.access<W>(h);
+			auto yvel1 = field.yvel1.access<W>(h);
+
+			// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+3) inclusive
+			par_ranged<class build_field_zero_1>(h, {0, 0, xrange + 1, yrange + 1}, [=](id<2> id) {
+				work_array1[id] = 0.0;
+				work_array2[id] = 0.0;
+				work_array3[id] = 0.0;
+				work_array4[id] = 0.0;
+				work_array5[id] = 0.0;
+				work_array6[id] = 0.0;
+				work_array7[id] = 0.0;
+
+				xvel0[id] = 0.0;
+				xvel1[id] = 0.0;
+				yvel0[id] = 0.0;
+				yvel1[id] = 0.0;
+			});
+
+			auto density0 = field.density0.access<W>(h);
+			auto density1 = field.density1.access<W>(h);
+			auto energy0 = field.energy0.access<W>(h);
+			auto energy1 = field.energy1.access<W>(h);
+			auto pressure = field.pressure.access<W>(h);
+			auto viscosity = field.viscosity.access<W>(h);
+			auto soundspeed = field.soundspeed.access<W>(h);
+			auto volume = field.volume.access<W>(h);
+
+			// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+2) inclusive
+			par_ranged<class build_field_zero_2>(h, {0, 0, xrange, yrange}, [=](id<2> id) {
+				density0[id] = 0.0;
+				density1[id] = 0.0;
+				energy0[id] = 0.0;
+				energy1[id] = 0.0;
+				pressure[id] = 0.0;
+				viscosity[id] = 0.0;
+				soundspeed[id] = 0.0;
+				volume[id] = 0.0;
+			});
+
+			auto vol_flux_x = field.vol_flux_x.access<W>(h);
+			auto mass_flux_x = field.mass_flux_x.access<W>(h);
+			auto xarea = field.xarea.access<W>(h);
+
+			// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+3) inclusive
+			par_ranged<class build_field_zero_3>(h, {0, 0, xrange, yrange}, [=](id<2> id) {
+				vol_flux_x[id] = 0.0;
+				mass_flux_x[id] = 0.0;
+				xarea[id] = 0.0;
+			});
+
+			auto vol_flux_y = field.vol_flux_y.access<W>(h);
+			auto mass_flux_y = field.mass_flux_y.access<W>(h);
+			auto yarea = field.yarea.access<W>(h);
+
+			// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+2) inclusive
+			par_ranged<class build_field_zero_3>(h, {0, 0, xrange, yrange + 1}, [=](id<2> id) {
+				vol_flux_y[id] = 0.0;
+				mass_flux_y[id] = 0.0;
+				yarea[id] = 0.0;
+			});
+
+			auto cellx = field.cellx.access<W>(h);
+			auto celldx = field.celldx.access<W>(h);
+
+			// (t_xmin-2:t_xmax+2) inclusive
+			par_ranged<class build_field_zero_5>(h, {0, xrange}, [=](id<1> id) {
+				cellx[id] = 0.0;
+				celldx[id] = 0.0;
+			});
+
+			auto celly = field.celly.access<W>(h);
+			auto celldy = field.celldy.access<W>(h);
+
+
+			// (t_ymin-2:t_ymax+2) inclusive
+			par_ranged<class build_field_zero_6>(h, {0, yrange}, [=](id<1> id) {
+				celly[id] = 0.0;
+				celldy[id] = 0.0;
+			});
+
+			auto vertexx = field.vertexx.access<W>(h);
+			auto vertexdx = field.vertexdx.access<W>(h);
+
+
+			// (t_xmin-2:t_xmax+3) inclusive
+			par_ranged<class build_field_zero_6>(h, {0, xrange + 1}, [=](id<1> id) {
+				vertexx[id] = 0.0;
+				vertexdx[id] = 0.0;
+			});
+
+			auto vertexy = field.vertexy.access<W>(h);
+			auto vertexdy = field.vertexdy.access<W>(h);
+			// (t_ymin-2:t_ymax+3) inclusive
+			par_ranged<class build_field_zero_7>(h, {0, yrange + 1}, [=](id<1> id) {
+				vertexy[id] = 0.0;
+				vertexdy[id] = 0.0;
+			});
+
 		});
 
 	}

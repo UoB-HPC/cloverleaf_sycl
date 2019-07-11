@@ -21,46 +21,46 @@
 #ifndef PACK_KERNEL_H
 #define PACK_KERNEL_H
 
-#include <Kokkos_Core.hpp>
+#include "definitions.h"
 
 void
-clover_pack_message_left(int x_min, int x_max, int y_min, int y_max, Kokkos::View<double **> &field,
-                         Kokkos::View<double *> &left_snd_buffer, int cell_data, int vertex_data,
+clover_pack_message_left(handler&h, int x_min, int x_max, int y_min, int y_max, const AccDP2RW::View &field,
+                         const AccDP1RW::View &left_snd_buffer, int cell_data, int vertex_data,
                          int x_face_fata, int y_face_data, int depth, int field_type,
                          int buffer_offset);
-void clover_unpack_message_left(int x_min, int x_max, int y_min, int y_max,
-                                Kokkos::View<double **> &field,
-                                Kokkos::View<double *> &left_rcv_buffer, int cell_data,
+void clover_unpack_message_left(handler&h, int x_min, int x_max, int y_min, int y_max,
+                                const AccDP2RW::View &field,
+                                const AccDP1RW::View &left_rcv_buffer, int cell_data,
                                 int vertex_data, int x_face_fata, int y_face_data, int depth,
                                 int field_type, int buffer_offset);
-void clover_pack_message_right(int x_min, int x_max, int y_min, int y_max,
-                               Kokkos::View<double **> &field,
-                               Kokkos::View<double *> &right_snd_buffer, int cell_data,
+void clover_pack_message_right(handler&h, int x_min, int x_max, int y_min, int y_max,
+                               const AccDP2RW::View &field,
+                               const AccDP1RW::View &right_snd_buffer, int cell_data,
                                int vertex_data, int x_face_fata, int y_face_data, int depth,
                                int field_type, int buffer_offset);
-void clover_unpack_message_right(int x_min, int x_max, int y_min, int y_max,
-                                 Kokkos::View<double **> &field,
-                                 Kokkos::View<double *> &right_rcv_buffer, int cell_data,
+void clover_unpack_message_right(handler&h, int x_min, int x_max, int y_min, int y_max,
+                                 const AccDP2RW::View &field,
+                                 const AccDP1RW::View &right_rcv_buffer, int cell_data,
                                  int vertex_data, int x_face_fata, int y_face_data, int depth,
                                  int field_type, int buffer_offset);
 void
-clover_pack_message_top(int x_min, int x_max, int y_min, int y_max, Kokkos::View<double **> &field,
-                        Kokkos::View<double *> &top_snd_buffer, int cell_data, int vertex_data,
+clover_pack_message_top(handler&h, int x_min, int x_max, int y_min, int y_max, const AccDP2RW::View &field,
+                        const AccDP1RW::View &top_snd_buffer, int cell_data, int vertex_data,
                         int x_face_fata, int y_face_data, int depth, int field_type,
                         int buffer_offset);
-void clover_unpack_message_top(int x_min, int x_max, int y_min, int y_max,
-                               Kokkos::View<double **> &field,
-                               Kokkos::View<double *> &top_rcv_buffer, int cell_data,
+void clover_unpack_message_top(handler&h, int x_min, int x_max, int y_min, int y_max,
+                               const AccDP2RW::View &field,
+                               const AccDP1RW::View &top_rcv_buffer, int cell_data,
                                int vertex_data, int x_face_fata, int y_face_data, int depth,
                                int field_type, int buffer_offset);
-void clover_pack_message_bottom(int x_min, int x_max, int y_min, int y_max,
-                                Kokkos::View<double **> &field,
-                                Kokkos::View<double *> &bottom_snd_buffer, int cell_data,
+void clover_pack_message_bottom(handler&h, int x_min, int x_max, int y_min, int y_max,
+                                const AccDP2RW::View &field,
+                                const AccDP1RW::View &bottom_snd_buffer, int cell_data,
                                 int vertex_data, int x_face_fata, int y_face_data, int depth,
                                 int field_type, int buffer_offset);
-void clover_unpack_message_bottom(int x_min, int x_max, int y_min, int y_max,
-                                  Kokkos::View<double **> &field,
-                                  Kokkos::View<double *> &bottom_rcv_buffer, int cell_data,
+void clover_unpack_message_bottom(handler&h, int x_min, int x_max, int y_min, int y_max,
+                                  const AccDP2RW::View &field,
+                                  const AccDP1RW::View &bottom_rcv_buffer, int cell_data,
                                   int vertex_data, int x_face_fata, int y_face_data, int depth,
                                   int field_type, int buffer_offset);
 
