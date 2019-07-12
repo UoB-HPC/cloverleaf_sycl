@@ -26,37 +26,32 @@
 //  @details Copies all of the final end of step filed data to the begining of
 //  step data, ready for the next timestep.
 void reset_field_kernel(
+		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
-		Kokkos::View<double **> &density0,
-		Kokkos::View<double **> &density1,
-		Kokkos::View<double **> &energy0,
-		Kokkos::View<double **> &energy1,
-		Kokkos::View<double **> &xvel0,
-		Kokkos::View<double **> &xvel1,
-		Kokkos::View<double **> &yvel0,
-		Kokkos::View<double **> &yvel1) {
+		const AccDP2RW::View &density0,
+		const AccDP2RW::View &density1,
+		const AccDP2RW::View &energy0,
+		const AccDP2RW::View &energy1,
+		const AccDP2RW::View &xvel0,
+		const AccDP2RW::View &xvel1,
+		const AccDP2RW::View &yvel0,
+		const AccDP2RW::View &yvel1) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy1({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
-	Kokkos::parallel_for("reset_field_1", policy1, KOKKOS_LAMBDA(
-	const int j,
-	const int k) {
-
-		density0(j, k) = density1(j, k);
-		energy0(j, k) = energy1(j, k);
+	par_ranged<class reset_field_1>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
+			id<2> idx) {
+		density0[idx] = density1[idx];
+		energy0[idx] = energy1[idx];
 
 	});
 
 	// DO k=y_min,y_max+1
 	//   DO j=x_min,x_max+1
-	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy2({x_min + 1, y_min + 1},
-	                                                {x_max + 1 + 2, y_max + 1 + 2});
-	Kokkos::parallel_for("reset_field_2", policy2, KOKKOS_LAMBDA(
-	const int j,
-	const int k) {
-		xvel0(j, k) = xvel1(j, k);
-		yvel0(j, k) = yvel1(j, k);
+	par_ranged<class reset_field_2>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
+			id<2> idx) {
+		xvel0[idx] = xvel1[idx];
+		yvel0[idx] = yvel1[idx];
 	});
 
 }
@@ -70,22 +65,29 @@ void reset_field(global_variables &globals) {
 	double kernel_time;
 	if (globals.profiler_on) kernel_time = timer();
 
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
 
-		reset_field_kernel(
-				globals.chunk.tiles[tile].t_xmin,
-				globals.chunk.tiles[tile].t_xmax,
-				globals.chunk.tiles[tile].t_ymin,
-				globals.chunk.tiles[tile].t_ymax,
-				globals.chunk.tiles[tile].field.density0,
-				globals.chunk.tiles[tile].field.density1,
-				globals.chunk.tiles[tile].field.energy0,
-				globals.chunk.tiles[tile].field.energy1,
-				globals.chunk.tiles[tile].field.xvel0,
-				globals.chunk.tiles[tile].field.xvel1,
-				globals.chunk.tiles[tile].field.yvel0,
-				globals.chunk.tiles[tile].field.yvel1);
-	}
+	execute(globals.queue, [&](handler &h) {
+
+		for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+
+			tile_type &t = globals.chunk.tiles[tile];
+			reset_field_kernel(
+					h,
+					t.t_xmin,
+					t.t_xmax,
+					t.t_ymin,
+					t.t_ymax,
+					t.field.density0.access<RW>(h),
+					t.field.density1.access<RW>(h),
+					t.field.energy0.access<RW>(h),
+					t.field.energy1.access<RW>(h),
+					t.field.xvel0.access<RW>(h),
+					t.field.xvel1.access<RW>(h),
+					t.field.yvel0.access<RW>(h),
+					t.field.yvel1.access<RW>(h));
+		}
+	});
+
 
 	if (globals.profiler_on) globals.profiler.reset += timer() - kernel_time;
 }

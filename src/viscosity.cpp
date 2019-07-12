@@ -26,47 +26,48 @@
 //  smooth out shock front and prevent oscillations around discontinuities.
 //  Only cells in compression will have a non-zero value.
 
-void viscosity_kernel(int x_min, int x_max, int y_min, int y_max,
-                      Kokkos::View<double *> &celldx,
-                      Kokkos::View<double *> &celldy,
-                      Kokkos::View<double **> &density0,
-                      Kokkos::View<double **> &pressure,
-                      Kokkos::View<double **> &viscosity,
-                      Kokkos::View<double **> &xvel0,
-                      Kokkos::View<double **> &yvel0) {
+void viscosity_kernel(handler &h, int x_min, int x_max, int y_min, int y_max,
+                      const AccDP1RW::View &celldx,
+                      const AccDP1RW::View &celldy,
+                      const AccDP2RW::View &density0,
+                      const AccDP2RW::View &pressure,
+                      const AccDP2RW::View &viscosity,
+                      const AccDP2RW::View &xvel0,
+                      const AccDP2RW::View &yvel0) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
-	Kokkos::parallel_for("viscosity", policy, KOKKOS_LAMBDA(
-	const int j,
-	const int k) {
+	par_ranged<class viscosity>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
+			id<2> idx) {
 
-		double ugrad = (xvel0(j + 1, k) + xvel0(j + 1, k + 1)) - (xvel0(j, k) + xvel0(j, k + 1));
+		double ugrad = (xvel0[j<1>(idx)] + xvel0[jk<1, 1>(idx)]) - (xvel0[idx] + xvel0[k<1>(idx)]);
 
-		double vgrad = (yvel0(j, k + 1) + yvel0(j + 1, k + 1)) - (yvel0(j, k) + yvel0(j + 1, k));
+		double vgrad = (yvel0[k<1>(idx)] + yvel0[jk<1, 1>(idx)]) - (yvel0[idx] + yvel0[j<1>(idx)]);
 
-		double div = (celldx(j) * (ugrad) + celldy(k) * (vgrad));
+		double div = (celldx[idx[0]] * (ugrad) + celldy[idx[1]] * (vgrad));
 
 		double strain2 =
-				0.5 * (xvel0(j, k + 1) + xvel0(j + 1, k + 1) - xvel0(j, k) - xvel0(j + 1, k)) /
-				celldy(k)
-				+ 0.5 * (yvel0(j + 1, k) + yvel0(j + 1, k + 1) - yvel0(j, k) - yvel0(j, k + 1)) /
-				  celldx(j);
+				0.5 * (xvel0[k<1>(idx)] + xvel0[jk<1, 1>(idx)] - xvel0[idx] - xvel0[j<1>(idx)]) /
+				celldy[idx[1]]
+				+ 0.5 * (yvel0[j<1>(idx)] + yvel0[jk<1, 1>(idx)] - yvel0[idx] - yvel0[k<1>(idx)]) /
+				  celldx[idx[0]];
 
-		double pgradx = (pressure(j + 1, k) - pressure(j - 1, k)) / (celldx(j) + celldx(j + 1));
-		double pgrady = (pressure(j, k + 1) - pressure(j, k - 1)) / (celldy(k) + celldy(k + 1));
+		double pgradx = (pressure[j<1>(idx)] - pressure[j<-1>(idx)]) /
+		                (celldx[idx[0]] + celldx[idx[0] + 1]);
+		double pgrady = (pressure[k<1>(idx)] - pressure[k<-1>(idx)]) /
+		                (celldy[idx[1]] + celldy[idx[1] + 2]);
 
 		double pgradx2 = pgradx * pgradx;
 		double pgrady2 = pgrady * pgrady;
 
 		double limiter =
-				((0.5 * (ugrad) / celldx(j)) * pgradx2 + (0.5 * (vgrad) / celldy(k)) * pgrady2 +
+				((0.5 * (ugrad) / celldx[idx[0]]) * pgradx2 +
+				 (0.5 * (vgrad) / celldy[idx[1]]) * pgrady2 +
 				 strain2 * pgradx * pgrady)
 				/ MAX(pgradx2 + pgrady2, 1.0e-16);
 
 		if ((limiter > 0.0) || (div >= 0.0)) {
-			viscosity(j, k) = 0.0;
+			viscosity[idx] = 0.0;
 		} else {
 			double dirx = 1.0;
 			if (pgradx < 0.0) dirx = -1.0;
@@ -75,12 +76,12 @@ void viscosity_kernel(int x_min, int x_max, int y_min, int y_max,
 			if (pgradx < 0.0) diry = -1.0;
 			pgrady = diry * MAX(1.0e-16, fabs(pgrady));
 			double pgrad = sqrt(pgradx * pgradx + pgrady * pgrady);
-			double xgrad = fabs(celldx(j) * pgrad / pgradx);
-			double ygrad = fabs(celldy(k) * pgrad / pgrady);
+			double xgrad = fabs(celldx[idx[0]] * pgrad / pgradx);
+			double ygrad = fabs(celldy[idx[1]] * pgrad / pgrady);
 			double grad = MIN(xgrad, ygrad);
 			double grad2 = grad * grad;
 
-			viscosity(j, k) = 2.0 * density0(j, k) * grad2 * limiter * limiter;
+			viscosity[idx] = 2.0 * density0[idx] * grad2 * limiter * limiter;
 		}
 	});
 }
@@ -92,20 +93,24 @@ void viscosity_kernel(int x_min, int x_max, int y_min, int y_max,
 //  viscosity.
 void viscosity(global_variables &globals) {
 
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+	execute(globals.queue, [&](handler &h) {
 
-		viscosity_kernel(
-				globals.chunk.tiles[tile].t_xmin,
-				globals.chunk.tiles[tile].t_xmax,
-				globals.chunk.tiles[tile].t_ymin,
-				globals.chunk.tiles[tile].t_ymax,
-				globals.chunk.tiles[tile].field.celldx,
-				globals.chunk.tiles[tile].field.celldy,
-				globals.chunk.tiles[tile].field.density0,
-				globals.chunk.tiles[tile].field.pressure,
-				globals.chunk.tiles[tile].field.viscosity,
-				globals.chunk.tiles[tile].field.xvel0,
-				globals.chunk.tiles[tile].field.yvel0);
-	}
+		for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+			tile_type &t = globals.chunk.tiles[tile];
+			viscosity_kernel(h,
+			                 t.t_xmin,
+			                 t.t_xmax,
+			                 t.t_ymin,
+			                 t.t_ymax,
+			                 t.field.celldx.access<RW>(h),
+			                 t.field.celldy.access<RW>(h),
+			                 t.field.density0.access<RW>(h),
+			                 t.field.pressure.access<RW>(h),
+			                 t.field.viscosity.access<RW>(h),
+			                 t.field.xvel0.access<RW>(h),
+			                 t.field.yvel0.access<RW>(h));
+		}
+	});
+
 }
 

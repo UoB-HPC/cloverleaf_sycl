@@ -64,40 +64,52 @@ void initialise_chunk(const int tile, global_variables &globals) {
 	// Take a reference to the lowest structure, as Kokkos device cannot necessarily chase through the structure.
 	field_type &field = globals.chunk.tiles[tile].field;
 
-	Kokkos::parallel_for(xrange, KOKKOS_LAMBDA(
-	const int j) {
-		field.vertexx(j) = xmin + dx * (double) (j - 1 - x_min);
-		field.vertexdx(j) = dx;
-	});
+	execute(globals.queue, [&](handler &h) {
 
-	Kokkos::parallel_for(yrange, KOKKOS_LAMBDA(
-	const int k) {
-		field.vertexy(k) = ymin + dy * (double) (k - 1 - y_min);
-		field.vertexdy(k) = dy;
-	});
+		auto vertexx = field.vertexx.access<RW>(h);
+		auto vertexdx = field.vertexdx.access<RW>(h);
+		auto vertexy = field.vertexy.access<RW>(h);
+		auto vertexdy = field.vertexdy.access<RW>(h);
+		auto cellx = field.cellx.access<RW>(h);
+		auto celldx = field.celldx.access<RW>(h);
+		auto celly = field.celly.access<RW>(h);
+		auto celldy = field.celldy.access<RW>(h);
 
-	xrange = (x_max + 2) - (x_min - 2) + 1;
-	yrange = (y_max + 2) - (y_min - 2) + 1;
 
-	Kokkos::parallel_for(xrange, KOKKOS_LAMBDA(
-	const int j) {
-		field.cellx(j) = 0.5 * (field.vertexx(j) + field.vertexx(j + 1));
-		field.celldx(j) = dx;
-	});
+		par_ranged(h, {0, xrange}, [=](id<1> j) {
+			vertexx[j] = xmin + dx * (double) (j[0] - 1 - x_min);
+			vertexdx[j] = dx;
+		});
 
-	Kokkos::parallel_for(yrange, KOKKOS_LAMBDA(
-	const int k) {
-		field.celly(k) = 0.5 * (field.vertexy(k) + field.vertexy(k + 1));
-		field.celldy(k) = dy;
-	});
+		par_ranged(h, {0, yrange}, [=](id<1> k) {
+			vertexy[k] = ymin + dy * (double) (k[0] - 1 - y_min);
+			vertexdy[k] = dy;
+		});
 
-	Kokkos::parallel_for(Kokkos::MDRangePolicy < Kokkos::Rank < 2 >> ({ 0, 0 },
-	                     {xrange, yrange}), KOKKOS_LAMBDA(
-	const int j,
-	const int k) {
-		field.volume(j, k) = dx * dy;
-		field.xarea(j, k) = field.celldy(k);
-		field.yarea(j, k) = field.celldx(j);
+		xrange = (x_max + 2) - (x_min - 2) + 1;
+		yrange = (y_max + 2) - (y_min - 2) + 1;
+
+		par_ranged(h, {0, xrange}, [=](id<1> j) {
+			cellx[j] = 0.5 * (vertexx[j] + vertexx[j[0] + 1]);
+			celldx[j] = dx;
+		});
+
+		par_ranged(h, {0, yrange}, [=](id<1> k) {
+			celly[k] = 0.5 * (vertexy[k] + vertexy[k[0] + 1]);
+			celldy[k] = dy;
+		});
+
+
+		auto volume = field.volume.access<RW>(h);
+		auto xarea = field.xarea.access<RW>(h);
+		auto yarea = field.yarea.access<RW>(h);
+
+		par_ranged(h, {0, 0, xrange, yrange}, [=](id<2> idx) {
+			volume[idx] = dx * dy;
+			xarea[idx] = celldy[idx[1]];
+			yarea[idx] = celldx[idx[0]];
+		});
+
 	});
 }
 

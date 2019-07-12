@@ -26,35 +26,30 @@
 //  @author Wayne Gaudin
 //  @details The edge volume fluxes are calculated based on the velocity fields.
 void flux_calc_kernel(
+		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		Kokkos::View<double **> &xarea,
-		Kokkos::View<double **> &yarea,
-		Kokkos::View<double **> &xvel0,
-		Kokkos::View<double **> &yvel0,
-		Kokkos::View<double **> &xvel1,
-		Kokkos::View<double **> &yvel1,
-		Kokkos::View<double **> &vol_flux_x,
-		Kokkos::View<double **> &vol_flux_y) {
+		const AccDP2RW::View &xarea,
+		const AccDP2RW::View &yarea,
+		const AccDP2RW::View &xvel0,
+		const AccDP2RW::View &yvel0,
+		const AccDP2RW::View &xvel1,
+		const AccDP2RW::View &yvel1,
+		const AccDP2RW::View &vol_flux_x,
+		const AccDP2RW::View &vol_flux_y) {
 
 	// DO k=y_min,y_max+1
 	//   DO j=x_min,x_max+1
-	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1},
-	                                               {x_max + 1 + 2, y_max + 1 + 2});
-
-	// Note that the loops calculate one extra flux than required, but this
+// Note that the loops calculate one extra flux than required, but this
 	// allows loop fusion that improves performance
-	Kokkos::parallel_for("flux_calc", policy, KOKKOS_LAMBDA(
-	const int j,
-	const int k) {
+	par_ranged<class flux_calc>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
+			id<2> idx) {
 
-		vol_flux_x(j, k) = 0.25 * dt * xarea(j, k)
-		                   * (xvel0(j, k) + xvel0(j, k + 1) + xvel1(j, k) + xvel1(j, k + 1));
-		vol_flux_y(j, k) = 0.25 * dt * yarea(j, k)
-		                   * (yvel0(j, k) + yvel0(j + 1, k) + yvel1(j, k) + yvel1(j + 1, k));
-
+		vol_flux_x[idx] = 0.25 * dt * xarea[idx]
+		                  * (xvel0[idx] + xvel0[k<1>(idx)] + xvel1[idx] + xvel1[k<1>(idx)]);
+		vol_flux_y[idx] = 0.25 * dt * yarea[idx]
+		                  * (yvel0[idx] + yvel0[j<1>(idx)] + yvel1[idx] + yvel1[j<1>(idx)]);
 	});
-
 }
 
 // @brief Driver for the flux kernels
@@ -65,25 +60,30 @@ void flux_calc(global_variables &globals) {
 	double kernel_time;
 	if (globals.profiler_on) kernel_time = timer();
 
+	execute(globals.queue, [&](handler &h) {
 
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
 
-		flux_calc_kernel(
-				globals.chunk.tiles[tile].t_xmin,
-				globals.chunk.tiles[tile].t_xmax,
-				globals.chunk.tiles[tile].t_ymin,
-				globals.chunk.tiles[tile].t_ymax,
-				globals.dt,
-				globals.chunk.tiles[tile].field.xarea,
-				globals.chunk.tiles[tile].field.yarea,
-				globals.chunk.tiles[tile].field.xvel0,
-				globals.chunk.tiles[tile].field.yvel0,
-				globals.chunk.tiles[tile].field.xvel1,
-				globals.chunk.tiles[tile].field.yvel1,
-				globals.chunk.tiles[tile].field.vol_flux_x,
-				globals.chunk.tiles[tile].field.vol_flux_y);
+		for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
 
-	}
+			tile_type &t = globals.chunk.tiles[tile];
+			flux_calc_kernel(
+					h,
+					t.t_xmin,
+					t.t_xmax,
+					t.t_ymin,
+					t.t_ymax,
+					globals.dt,
+					t.field.xarea.access<RW>(h),
+					t.field.yarea.access<RW>(h),
+					t.field.xvel0.access<RW>(h),
+					t.field.yvel0.access<RW>(h),
+					t.field.xvel1.access<RW>(h),
+					t.field.yvel1.access<RW>(h),
+					t.field.vol_flux_x.access<RW>(h),
+					t.field.vol_flux_y.access<RW>(h));
+
+		}
+	});
 
 	if (globals.profiler_on) globals.profiler.flux += timer() - kernel_time;
 
