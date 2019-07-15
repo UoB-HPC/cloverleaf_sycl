@@ -31,10 +31,11 @@
 #include <iostream>
 #include <cstring>
 #include <iterator>
+#include <sstream>
 
 extern std::ostream g_out;
 
-void read_input(std::ifstream &g_in, parallel_ &parallel, global_variables &globals) {
+void read_input(std::ifstream &g_in, parallel_ &parallel, global_config &globals) {
 
 	globals.test_problem = 0;
 
@@ -50,7 +51,7 @@ void read_input(std::ifstream &g_in, parallel_ &parallel, global_variables &glob
 
 	globals.end_time = 10.0;
 	globals.end_step = g_ibig;
-	globals.complete = false;
+//	globals.complete = false;
 
 	globals.visit_frequency = 0;
 	globals.summary_frequency = 10;
@@ -66,22 +67,22 @@ void read_input(std::ifstream &g_in, parallel_ &parallel, global_variables &glob
 	globals.dtv_safe = 0.5;
 	globals.dtdiv_safe = 0.7;
 
-	globals.profiler_on = false;
-	globals.profiler.timestep = 0.0;
-	globals.profiler.acceleration = 0.0;
-	globals.profiler.PdV = 0.0;
-	globals.profiler.cell_advection = 0.0;
-	globals.profiler.mom_advection = 0.0;
-	globals.profiler.viscosity = 0.0;
-	globals.profiler.ideal_gas = 0.0;
-	globals.profiler.visit = 0.0;
-	globals.profiler.summary = 0.0;
-	globals.profiler.reset = 0.0;
-	globals.profiler.revert = 0.0;
-	globals.profiler.flux = 0.0;
-	globals.profiler.tile_halo_exchange = 0.0;
-	globals.profiler.self_halo_exchange = 0.0;
-	globals.profiler.mpi_halo_exchange = 0.0;
+//	globals.profiler_on = false;
+//	globals.profiler.timestep = 0.0;
+//	globals.profiler.acceleration = 0.0;
+//	globals.profiler.PdV = 0.0;
+//	globals.profiler.cell_advection = 0.0;
+//	globals.profiler.mom_advection = 0.0;
+//	globals.profiler.viscosity = 0.0;
+//	globals.profiler.ideal_gas = 0.0;
+//	globals.profiler.visit = 0.0;
+//	globals.profiler.summary = 0.0;
+//	globals.profiler.reset = 0.0;
+//	globals.profiler.revert = 0.0;
+//	globals.profiler.flux = 0.0;
+//	globals.profiler.tile_halo_exchange = 0.0;
+//	globals.profiler.self_halo_exchange = 0.0;
+//	globals.profiler.mpi_halo_exchange = 0.0;
 
 	if (parallel.boss) {
 		g_out << "Reading input file" << std::endl
@@ -110,7 +111,7 @@ void read_input(std::ifstream &g_in, parallel_ &parallel, global_variables &glob
 	if (globals.number_of_states < 1)
 		report_error((char *) "read_input", (char *) "No states defined.");
 
-	globals.states = new state_type[globals.number_of_states];
+	globals.states = std::vector<state_type>(globals.number_of_states);
 	for (int s = 0; s < globals.number_of_states; ++s) {
 		globals.states[s].defined = false;
 		globals.states[s].energy = 0.0;

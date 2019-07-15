@@ -36,69 +36,80 @@
 
 extern std::ostream g_out;
 
-void start(parallel_ &parallel, global_variables &globals) {
+std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config &config) {
 
 	if (parallel.boss) {
 		g_out << "Setting up initial geometry" << std::endl
 		      << std::endl;
 	}
 
-	globals.time = 0.0;
-	globals.step = 0.0;
-	globals.dtold = globals.dtinit;
-	globals.dt = globals.dtinit;
+//	globals.time = 0.0;
+//	globals.step = 0.0;
+//	globals.dtold = globals.dtinit;
+//	globals.dt = globals.dtinit;
 
 	clover_barrier();
 
 	// clover_get_num_chunks()
-	globals.number_of_chunks = parallel.max_task;
 
 	int left, right, bottom, top;
-	clover_decompose(globals, parallel, globals.grid.x_cells, globals.grid.y_cells, left, right,
-	                 bottom, top);
 
 	// Create the chunks
-	globals.chunk.task = parallel.task;
+//	globals.chunk.task = parallel.task;
 
 	int x_cells = right - left + 1;
 	int y_cells = top - bottom + 1;
 
 
-	globals.chunk.left = left;
-	globals.chunk.bottom = bottom;
-	globals.chunk.right = right;
-	globals.chunk.top = top;
-	globals.chunk.left_boundary = 1;
-	globals.chunk.bottom_boundary = 1;
-	globals.chunk.right_boundary = globals.grid.x_cells;
-	globals.chunk.top_boundary = globals.grid.y_cells;
-	globals.chunk.x_min = 1;
-	globals.chunk.y_min = 1;
-	globals.chunk.x_max = x_cells;
-	globals.chunk.y_max = y_cells;
+	global_variables globals(config, cl::sycl::queue(),
+	                           chunk_type(
+			                           clover_decompose(config, parallel,
+			                                            config.grid.x_cells, config.grid.y_cells, left, right,
+			                                            bottom, top),
+			                           parallel.task, 1, 1, x_cells, y_cells,
+			                           left, right, bottom, top,
+			                           1, config.grid.x_cells,
+			                           1, config.grid.y_cells,
+			                           config.tiles_per_chunk));
 
-	// Create the tiles
-	globals.chunk.tiles = new tile_type[globals.tiles_per_chunk];
 
-	clover_tile_decompose(globals, x_cells, y_cells);
+//	globals.chunk.left = left;
+//	globals.chunk.bottom = bottom;
+//	globals.chunk.right = right;
+//	globals.chunk.top = top;
+//	globals.chunk.left_boundary = 1;
+//	globals.chunk.bottom_boundary = 1;
+//	globals.chunk.right_boundary = globals.grid.x_cells;
+//	globals.chunk.top_boundary = globals.grid.y_cells;
+//	globals.chunk.x_min = 1;
+//	globals.chunk.y_min = 1;
+//	globals.chunk.x_max = x_cells;
+//	globals.chunk.y_max = y_cells;
+
+
+	auto infos = clover_tile_decompose(globals, x_cells, y_cells);
+
+	std::transform(infos.begin(), infos.end(), std::back_inserter(globals.chunk.tiles),
+	               [](const tile_info &ti) { return tile_type(ti); });
+
 
 	// Line 92 start.f90
 	build_field(globals);
 
 	clover_barrier();
 
-	clover_allocate_buffers(globals, parallel);
+	clover_allocate_buffers(globals, parallel); // FIXME remove; basically no-op, moved to ctor
 
 	if (parallel.boss) {
 		g_out << "Generating chunks" << std::endl;
 	}
 
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+	for (int tile = 0; tile < config.tiles_per_chunk; ++tile) {
 		initialise_chunk(tile, globals);
 		generate_chunk(tile, globals);
 	}
 
-	globals.advect_x = true;
+//	globals.advect_x = true;
 
 	clover_barrier();
 
@@ -107,11 +118,12 @@ void start(parallel_ &parallel, global_variables &globals) {
 	bool profiler_off = globals.profiler_on;
 	globals.profiler_on = false;
 
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+	for (int tile = 0; tile < config.tiles_per_chunk; ++tile) {
 		ideal_gas(globals, tile, false);
 	}
 
 	// Prime all halo data for the first step
+	// TODO replace with std::array
 	int fields[NUM_FIELDS];
 	for (int i = 0; i < NUM_FIELDS; ++i)
 		fields[i] = 0;
@@ -136,11 +148,12 @@ void start(parallel_ &parallel, global_variables &globals) {
 
 	field_summary(globals, parallel);
 
-	if (globals.visit_frequency != 0) visit(globals, parallel);
+	if (config.visit_frequency != 0) visit(globals, parallel);
 
 	clover_barrier();
 
 	globals.profiler_on = profiler_off;
 
+	return std::make_unique<global_variables>(globals);
 }
 

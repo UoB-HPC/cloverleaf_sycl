@@ -45,7 +45,7 @@ void timestep(global_variables &globals, parallel_ &parallel) {
 	double kernel_time;
 	if (globals.profiler_on) kernel_time = timer();
 
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		ideal_gas(globals, tile, false);
 	}
 
@@ -73,7 +73,7 @@ void timestep(global_variables &globals, parallel_ &parallel) {
 	double dtlp;
 	double x_pos, y_pos, xl_pos, yl_pos;
 	std::string dt_control, dtl_control;
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		calc_dt(globals, tile, dtlp, dtl_control, xl_pos, yl_pos, jldt, kldt);
 
 		if (dtlp <= globals.dt) {
@@ -86,12 +86,12 @@ void timestep(global_variables &globals, parallel_ &parallel) {
 		}
 	}
 
-	globals.dt = std::min(std::min(globals.dt, globals.dtold * globals.dtrise), globals.dtmax);
+	globals.dt = std::min(std::min(globals.dt, globals.dtold * globals.config.dtrise), globals.config.dtmax);
 
 	clover_min(globals.dt);
 	if (globals.profiler_on) globals.profiler.timestep += timer() - kernel_time;
 
-	if (globals.dt < globals.dtmin) small = 1;
+	if (globals.dt < globals.config.dtmin) small = 1;
 
 	if (parallel.boss) {
 		g_out << " Step " << globals.step << " time " << globals.time << " control " << dt_control

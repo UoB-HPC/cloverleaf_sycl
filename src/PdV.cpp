@@ -33,109 +33,107 @@
 //  level of the velocity data depends on whether it is invoked as the
 //  predictor or corrector.
 void PdV_kernel(
+		handler &h,
 		bool predict,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		Kokkos::View<double **> &xarea,
-		Kokkos::View<double **> &yarea,
-		Kokkos::View<double **> &volume,
-		Kokkos::View<double **> &density0,
-		Kokkos::View<double **> &density1,
-		Kokkos::View<double **> &energy0,
-		Kokkos::View<double **> &energy1,
-		Kokkos::View<double **> &pressure,
-		Kokkos::View<double **> &viscosity,
-		Kokkos::View<double **> &xvel0,
-		Kokkos::View<double **> &xvel1,
-		Kokkos::View<double **> &yvel0,
-		Kokkos::View<double **> &yvel1,
-		Kokkos::View<double **> &volume_change) {
+		const AccDP2RW::View &xarea,
+		const AccDP2RW::View &yarea,
+		const AccDP2RW::View &volume,
+		const AccDP2RW::View &density0,
+		const AccDP2RW::View &density1,
+		const AccDP2RW::View &energy0,
+		const AccDP2RW::View &energy1,
+		const AccDP2RW::View &pressure,
+		const AccDP2RW::View &viscosity,
+		const AccDP2RW::View &xvel0,
+		const AccDP2RW::View &xvel1,
+		const AccDP2RW::View &yvel0,
+		const AccDP2RW::View &yvel1,
+		const AccDP2RW::View &volume_change) {
 
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
+	Range2d policy(x_min + 1, y_min + 1, x_max + 2, y_max + 2);
 
 	if (predict) {
 
-		Kokkos::parallel_for("PdV predict=true", policy, KOKKOS_LAMBDA(
-		const int j,
-		const int k) {
+		par_ranged<class PdV_predict_true>(h, policy, [=](id<2> idx) {
 
-			double left_flux = (xarea(j, k) * (xvel0(j, k) + xvel0(j, k + 1)
-			                                   + xvel0(j, k) + xvel0(j, k + 1))) * 0.25 * dt * 0.5;
 
-			double right_flux = (xarea(j + 1, k) * (xvel0(j + 1, k) + xvel0(j + 1, k + 1)
-			                                        + xvel0(j + 1, k) + xvel0(j + 1, k + 1))) *
+			double left_flux = (xarea[idx] * (xvel0[idx] + xvel0[k<1>(idx)]
+			                                  + xvel0[idx] + xvel0[k<1>(idx)])) * 0.25 * dt * 0.5;
+
+			double right_flux = (xarea[j<1>(idx)] * (xvel0[j<1>(idx)] + xvel0[jk<1, 1>(idx)]
+			                                         + xvel0[j<1>(idx)] + xvel0[jk<1, 1>(idx)])) *
 			                    0.25 * dt * 0.5;
 
-			double bottom_flux = (yarea(j, k) * (yvel0(j, k) + yvel0(j + 1, k)
-			                                     + yvel0(j, k) + yvel0(j + 1, k))) * 0.25 * dt *
+			double bottom_flux = (yarea[idx] * (yvel0[idx] + yvel0[j<1>(idx)]
+			                                    + yvel0[idx] + yvel0[j<1>(idx)])) * 0.25 * dt *
 			                     0.5;
 
-			double top_flux = (yarea(j, k + 1) * (yvel0(j, k + 1) + yvel0(j + 1, k + 1)
-			                                      + yvel0(j, k + 1) + yvel0(j + 1, k + 1))) * 0.25 *
+			double top_flux = (yarea[k<1>(idx)] * (yvel0[k<1>(idx)] + yvel0[jk<1, 1>(idx)]
+			                                       + yvel0[k<1>(idx)] + yvel0[jk<1, 1>(idx)])) * 0.25 *
 			                  dt * 0.5;
 
 			double total_flux = right_flux - left_flux + top_flux - bottom_flux;
 
-			double volume_change_s = volume(j, k) / (volume(j, k) + total_flux);
+			double volume_change_s = volume[idx] / (volume[idx] + total_flux);
 
 			double min_cell_volume =
-					MIN(MIN(volume(j, k) + right_flux - left_flux + top_flux - bottom_flux,
-					        volume(j, k) + right_flux - left_flux),
-					    volume(j, k) + top_flux - bottom_flux);
+					MIN(MIN(volume[idx] + right_flux - left_flux + top_flux - bottom_flux,
+					        volume[idx] + right_flux - left_flux),
+					    volume[idx] + top_flux - bottom_flux);
 
-			double recip_volume = 1.0 / volume(j, k);
+			double recip_volume = 1.0 / volume[idx];
 
 			double energy_change =
-					(pressure(j, k) / density0(j, k) + viscosity(j, k) / density0(j, k)) *
+					(pressure[idx] / density0[idx] + viscosity[idx] / density0[idx]) *
 					total_flux * recip_volume;
 
-			energy1(j, k) = energy0(j, k) - energy_change;
+			energy1[idx] = energy0[idx] - energy_change;
 
-			density1(j, k) = density0(j, k) * volume_change_s;
+			density1[idx] = density0[idx] * volume_change_s;
 
 		});
 
 	} else {
 
-		Kokkos::parallel_for("PdV predict=false", policy, KOKKOS_LAMBDA(
-		const int j,
-		const int k) {
+		par_ranged<class PdV_predict_false>(h, policy, [=](id<2> idx) {
 
-			double left_flux = (xarea(j, k) * (xvel0(j, k) + xvel0(j, k + 1)
-			                                   + xvel1(j, k) + xvel1(j, k + 1))) * 0.25 * dt;
+			double left_flux = (xarea[idx] * (xvel0[idx] + xvel0[k<1>(idx)]
+			                                  + xvel1[idx] + xvel1[k<1>(idx)])) * 0.25 * dt;
 
-			double right_flux = (xarea(j + 1, k) * (xvel0(j + 1, k) + xvel0(j + 1, k + 1)
-			                                        + xvel1(j + 1, k) + xvel1(j + 1, k + 1))) *
+			double right_flux = (xarea[j<1>(idx)] * (xvel0[j<1>(idx)] + xvel0[jk<1, 1>(idx)]
+			                                         + xvel1[j<1>(idx)] + xvel1[jk<1, 1>(idx)])) *
 			                    0.25 * dt;
 
-			double bottom_flux = (yarea(j, k) * (yvel0(j, k) + yvel0(j + 1, k)
-			                                     + yvel1(j, k) + yvel1(j + 1, k))) * 0.25 * dt;
+			double bottom_flux = (yarea[idx] * (yvel0[idx] + yvel0[j<1>(idx)]
+			                                    + yvel1[idx] + yvel1[j<1>(idx)])) * 0.25 * dt;
 
-			double top_flux = (yarea(j, k + 1) * (yvel0(j, k + 1) + yvel0(j + 1, k + 1)
-			                                      + yvel1(j, k + 1) + yvel1(j + 1, k + 1))) * 0.25 *
+			double top_flux = (yarea[k<1>(idx)] * (yvel0[k<1>(idx)] + yvel0[jk<1, 1>(idx)]
+			                                       + yvel1[k<1>(idx)] + yvel1[jk<1, 1>(idx)])) * 0.25 *
 			                  dt;
 
 			double total_flux = right_flux - left_flux + top_flux - bottom_flux;
 
-			double volume_change_s = volume(j, k) / (volume(j, k) + total_flux);
+			double volume_change_s = volume[idx] / (volume[idx] + total_flux);
 
 			double min_cell_volume =
-					MIN(MIN(volume(j, k) + right_flux - left_flux + top_flux - bottom_flux,
-					        volume(j, k) + right_flux - left_flux),
-					    volume(j, k) + top_flux - bottom_flux);
+					MIN(MIN(volume[idx] + right_flux - left_flux + top_flux - bottom_flux,
+					        volume[idx] + right_flux - left_flux),
+					    volume[idx] + top_flux - bottom_flux);
 
-			double recip_volume = 1.0 / volume(j, k);
+			double recip_volume = 1.0 / volume[idx];
 
 			double energy_change =
-					(pressure(j, k) / density0(j, k) + viscosity(j, k) / density0(j, k)) *
+					(pressure[idx] / density0[idx] + viscosity[idx] / density0[idx]) *
 					total_flux * recip_volume;
 
-			energy1(j, k) = energy0(j, k) - energy_change;
+			energy1[idx] = energy0[idx] - energy_change;
 
-			density1(j, k) = density0(j, k) * volume_change_s;
+			density1[idx] = density0[idx] * volume_change_s;
 
 		});
 	}
@@ -160,30 +158,35 @@ void PdV(global_variables &globals, bool predict) {
 		prdct = 1;
 	}
 
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
-		PdV_kernel(
-				predict,
-				globals.chunk.tiles[tile].t_xmin,
-				globals.chunk.tiles[tile].t_xmax,
-				globals.chunk.tiles[tile].t_ymin,
-				globals.chunk.tiles[tile].t_ymax,
-				globals.dt,
-				globals.chunk.tiles[tile].field.xarea,
-				globals.chunk.tiles[tile].field.yarea,
-				globals.chunk.tiles[tile].field.volume,
-				globals.chunk.tiles[tile].field.density0,
-				globals.chunk.tiles[tile].field.density1,
-				globals.chunk.tiles[tile].field.energy0,
-				globals.chunk.tiles[tile].field.energy1,
-				globals.chunk.tiles[tile].field.pressure,
-				globals.chunk.tiles[tile].field.viscosity,
-				globals.chunk.tiles[tile].field.xvel0,
-				globals.chunk.tiles[tile].field.xvel1,
-				globals.chunk.tiles[tile].field.yvel0,
-				globals.chunk.tiles[tile].field.yvel1,
-				globals.chunk.tiles[tile].field.work_array1);
+	execute(globals.queue, [&](handler &h) {
+		for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
+			tile_type &t = globals.chunk.tiles[tile];
+			PdV_kernel(
+					h,
+					predict,
+					t.info.t_xmin,
+					t.info.t_xmax,
+					t.info.t_ymin,
+					t.info.t_ymax,
+					globals.dt,
+					t.field.xarea.access<RW>(h),
+					t.field.yarea.access<RW>(h),
+					t.field.volume.access<RW>(h),
+					t.field.density0.access<RW>(h),
+					t.field.density1.access<RW>(h),
+					t.field.energy0.access<RW>(h),
+					t.field.energy1.access<RW>(h),
+					t.field.pressure.access<RW>(h),
+					t.field.viscosity.access<RW>(h),
+					t.field.xvel0.access<RW>(h),
+					t.field.xvel1.access<RW>(h),
+					t.field.yvel0.access<RW>(h),
+					t.field.yvel1.access<RW>(h),
+					t.field.work_array1.access<RW>(h));
 
-	}
+		}
+	});
+
 
 	clover_check_error(globals.error_condition);
 	if (globals.profiler_on) globals.profiler.PdV += timer() - kernel_time;
@@ -194,7 +197,7 @@ void PdV(global_variables &globals, bool predict) {
 
 	if (predict) {
 		if (globals.profiler_on) kernel_time = timer();
-		for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+		for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 			ideal_gas(globals, tile, true);
 		}
 

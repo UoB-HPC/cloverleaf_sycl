@@ -28,65 +28,64 @@
 // Allocate Kokkos Views for the data arrays
 void build_field(global_variables &globals) {
 
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 
 		tile_type &t = globals.chunk.tiles[tile];
 
-		const size_t xrange = (t.t_xmax + 2) - (t.t_xmin - 2) + 1;
-		const size_t yrange = (t.t_ymax + 2) - (t.t_ymin - 2) + 1;
-
-		t.field.density0 = Buffer<double, 2>(range<2>(xrange, yrange));
-		// (t_xmin-2:t_xmax+2, t_ymin-2:t_ymax+2)
-
-		t.field.density0 = Buffer<double, 2>(range<2>(xrange, yrange));
-		t.field.density1 = Buffer<double, 2>(range<2>(xrange, yrange));
-		t.field.energy0 = Buffer<double, 2>(range<2>(xrange, yrange));
-		t.field.energy1 = Buffer<double, 2>(range<2>(xrange, yrange));
-		t.field.pressure = Buffer<double, 2>(range<2>(xrange, yrange));
-		t.field.viscosity = Buffer<double, 2>(range<2>(xrange, yrange));
-		t.field.soundspeed = Buffer<double, 2>(range<2>(xrange, yrange));
-
-		// (t_xmin-2:t_xmax+3, t_ymin-2:t_ymax+3)
-		t.field.xvel0 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
-		t.field.xvel1 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
-		t.field.yvel0 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
-		t.field.yvel1 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
-
-		// (t_xmin-2:t_xmax+3, t_ymin-2:t_ymax+2)
-		t.field.vol_flux_x = Buffer<double, 2>(range<2>(xrange + 1, yrange));
-		t.field.mass_flux_x = Buffer<double, 2>(range<2>(xrange + 1, yrange));
-		// (t_xmin-2:t_xmax+2, t_ymin-2:t_ymax+3)
-		t.field.vol_flux_y = Buffer<double, 2>(range<2>(xrange, yrange + 1));
-		t.field.mass_flux_y = Buffer<double, 2>(range<2>(xrange, yrange + 1));
-
-		// (t_xmin-2:t_xmax+3, t_ymin-2:t_ymax+3)
-		t.field.work_array1 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
-		t.field.work_array2 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
-		t.field.work_array3 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
-		t.field.work_array4 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
-		t.field.work_array5 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
-		t.field.work_array6 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
-		t.field.work_array7 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
-
-		// (t_xmin-2:t_xmax+2)
-		t.field.cellx = Buffer<double, 1>(range<1>(xrange));
-		t.field.celldx = Buffer<double, 1>(range<1>(xrange));
-		// (t_ymin-2:t_ymax+2)
-		t.field.celly = Buffer<double, 1>(range<1>(yrange));
-		t.field.celldy = Buffer<double, 1>(range<1>(yrange));
-		// (t_xmin-2:t_xmax+3)
-		t.field.vertexx = Buffer<double, 1>(range<1>(xrange + 1));
-		t.field.vertexdx = Buffer<double, 1>(range<1>(xrange + 1));
-		// (t_ymin-2:t_ymax+3)
-		t.field.vertexy = Buffer<double, 1>(range<1>(yrange + 1));
-		t.field.vertexdy = Buffer<double, 1>(range<1>(yrange + 1));
+		const size_t xrange = (t.info.t_xmax + 2) - (t.info.t_xmin - 2) + 1;
+		const size_t yrange = (t.info.t_ymax + 2) - (t.info.t_ymin - 2) + 1;
 
 		// (t_xmin-2:t_xmax+2, t_ymin-2:t_ymax+2)
-		t.field.volume = Buffer<double, 2>(range<2>(xrange, yrange));
-		// (t_xmin-2:t_xmax+3, t_ymin-2:t_ymax+2)
-		t.field.xarea = Buffer<double, 2>(range<2>(xrange + 1, yrange));
-		// (t_xmin-2:t_xmax+2, t_ymin-2:t_ymax+3)
-		t.field.yarea = Buffer<double, 2>(range<2>(xrange, yrange + 1));
+
+//		t.field.density0 = Buffer<double, 2>(range<2>(xrange, yrange));
+//		t.field.density1 = Buffer<double, 2>(range<2>(xrange, yrange));
+//		t.field.energy0 = Buffer<double, 2>(range<2>(xrange, yrange));
+//		t.field.energy1 = Buffer<double, 2>(range<2>(xrange, yrange));
+//		t.field.pressure = Buffer<double, 2>(range<2>(xrange, yrange));
+//		t.field.viscosity = Buffer<double, 2>(range<2>(xrange, yrange));
+//		t.field.soundspeed = Buffer<double, 2>(range<2>(xrange, yrange));
+//
+//		// (t_xmin-2:t_xmax+3, t_ymin-2:t_ymax+3)
+//		t.field.xvel0 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+//		t.field.xvel1 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+//		t.field.yvel0 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+//		t.field.yvel1 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+//
+//		// (t_xmin-2:t_xmax+3, t_ymin-2:t_ymax+2)
+//		t.field.vol_flux_x = Buffer<double, 2>(range<2>(xrange + 1, yrange));
+//		t.field.mass_flux_x = Buffer<double, 2>(range<2>(xrange + 1, yrange));
+//		// (t_xmin-2:t_xmax+2, t_ymin-2:t_ymax+3)
+//		t.field.vol_flux_y = Buffer<double, 2>(range<2>(xrange, yrange + 1));
+//		t.field.mass_flux_y = Buffer<double, 2>(range<2>(xrange, yrange + 1));
+//
+//		// (t_xmin-2:t_xmax+3, t_ymin-2:t_ymax+3)
+//		t.field.work_array1 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+//		t.field.work_array2 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+//		t.field.work_array3 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+//		t.field.work_array4 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+//		t.field.work_array5 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+//		t.field.work_array6 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+//		t.field.work_array7 = Buffer<double, 2>(range<2>(xrange + 1, yrange + 1));
+//
+//		// (t_xmin-2:t_xmax+2)
+//		t.field.cellx = Buffer<double, 1>(range<1>(xrange));
+//		t.field.celldx = Buffer<double, 1>(range<1>(xrange));
+//		// (t_ymin-2:t_ymax+2)
+//		t.field.celly = Buffer<double, 1>(range<1>(yrange));
+//		t.field.celldy = Buffer<double, 1>(range<1>(yrange));
+//		// (t_xmin-2:t_xmax+3)
+//		t.field.vertexx = Buffer<double, 1>(range<1>(xrange + 1));
+//		t.field.vertexdx = Buffer<double, 1>(range<1>(xrange + 1));
+//		// (t_ymin-2:t_ymax+3)
+//		t.field.vertexy = Buffer<double, 1>(range<1>(yrange + 1));
+//		t.field.vertexdy = Buffer<double, 1>(range<1>(yrange + 1));
+//
+//		// (t_xmin-2:t_xmax+2, t_ymin-2:t_ymax+2)
+//		t.field.volume = Buffer<double, 2>(range<2>(xrange, yrange));
+//		// (t_xmin-2:t_xmax+3, t_ymin-2:t_ymax+2)
+//		t.field.xarea = Buffer<double, 2>(range<2>(xrange + 1, yrange));
+//		// (t_xmin-2:t_xmax+2, t_ymin-2:t_ymax+3)
+//		t.field.yarea = Buffer<double, 2>(range<2>(xrange, yrange + 1));
 
 		// Zeroing isn't strictly necessary but it ensures physical pages
 		// are allocated. This prevents first touch overheads in the main code

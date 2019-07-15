@@ -72,14 +72,10 @@ int main(int argc, char *argv[]) {
 				<< std::endl;
 	}
 
-	// Struct to hold many global scope variables, from original definitions.f90
-	global_variables *globals = new global_variables;
 
-	initialise(parallel, *globals);
+	std::unique_ptr<global_variables> config = initialise(parallel);
 
-	hydro(*globals, parallel);
-
-	delete globals;
+	hydro(*config, parallel);
 
 	// Finilise programming models
 //	Kokkos::finalize();

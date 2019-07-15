@@ -62,10 +62,10 @@ void ideal_gas(global_variables &globals, const int tile, bool predict) {
 		if (!predict) {
 			ideal_gas_kernel(
 					h,
-					t.t_xmin,
-					t.t_xmax,
-					t.t_ymin,
-					t.t_ymax,
+					t.info.t_xmin,
+					t.info.t_xmax,
+					t.info.t_ymin,
+					t.info.t_ymax,
 					t.field.density0.access<RW>(h),
 					t.field.energy0.access<RW>(h),
 					t.field.pressure.access<RW>(h),
@@ -74,10 +74,10 @@ void ideal_gas(global_variables &globals, const int tile, bool predict) {
 		} else {
 			ideal_gas_kernel(
 					h,
-					t.t_xmin,
-					t.t_xmax,
-					t.t_ymin,
-					t.t_ymax,
+					t.info.t_xmin,
+					t.info.t_xmax,
+					t.info.t_ymin,
+					t.info.t_ymax,
 					t.field.density1.access<RW>(h),
 					t.field.energy1.access<RW>(h),
 					t.field.pressure.access<RW>(h),

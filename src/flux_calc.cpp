@@ -63,15 +63,15 @@ void flux_calc(global_variables &globals) {
 	execute(globals.queue, [&](handler &h) {
 
 
-		for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+		for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 
 			tile_type &t = globals.chunk.tiles[tile];
 			flux_calc_kernel(
 					h,
-					t.t_xmin,
-					t.t_xmax,
-					t.t_ymin,
-					t.t_ymax,
+					t.info.t_xmin,
+					t.info.t_xmax,
+					t.info.t_ymin,
+					t.info.t_ymax,
 					globals.dt,
 					t.field.xarea.access<RW>(h),
 					t.field.yarea.access<RW>(h),

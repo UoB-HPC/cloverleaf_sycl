@@ -263,10 +263,10 @@ void advec_cell_driver(global_variables &globals, int tile, int sweep_number, in
 	execute(globals.queue, [&](handler &h) {
 		advec_cell_kernel(
 				h,
-				t.t_xmin,
-				t.t_xmax,
-				t.t_ymin,
-				t.t_ymax,
+				t.info.t_xmin,
+				t.info.t_xmax,
+				t.info.t_ymin,
+				t.info.t_ymax,
 				direction,
 				sweep_number,
 				t.field.vertexdx.access<RW>(h),

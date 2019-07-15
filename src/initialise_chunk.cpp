@@ -29,12 +29,12 @@
 
 void initialise_chunk(const int tile, global_variables &globals) {
 
-	double dx = (globals.grid.xmax - globals.grid.xmin) / (double) (globals.grid.x_cells);
-	double dy = (globals.grid.ymax - globals.grid.ymin) / (double) (globals.grid.y_cells);
+	double dx = (globals.config.grid.xmax - globals.config.grid.xmin) / (double) (globals.config.grid.x_cells);
+	double dy = (globals.config.grid.ymax - globals.config.grid.ymin) / (double) (globals.config.grid.y_cells);
 
-	double xmin = globals.grid.xmin + dx * (double) (globals.chunk.tiles[tile].t_left - 1);
+	double xmin = globals.config.grid.xmin + dx * (double) (globals.chunk.tiles[tile].info.t_left - 1);
 
-	double ymin = globals.grid.ymin + dy * (double) (globals.chunk.tiles[tile].t_bottom - 1);
+	double ymin = globals.config.grid.ymin + dy * (double) (globals.chunk.tiles[tile].info.t_bottom - 1);
 
 ////    CALL initialise_chunk_kernel(chunk%tiles(tile)%t_xmin,    &
 	//     chunk%tiles(tile)%t_xmax,    &
@@ -53,10 +53,10 @@ void initialise_chunk(const int tile, global_variables &globals) {
 	//     chunk%tiles(tile)%field%xarea,    &
 	//     chunk%tiles(tile)%field%yarea     )
 
-	const int x_min = globals.chunk.tiles[tile].t_xmin;
-	const int x_max = globals.chunk.tiles[tile].t_xmax;
-	const int y_min = globals.chunk.tiles[tile].t_ymin;
-	const int y_max = globals.chunk.tiles[tile].t_ymax;
+	const int x_min = globals.chunk.tiles[tile].info.t_xmin;
+	const int x_max = globals.chunk.tiles[tile].info.t_xmax;
+	const int y_min = globals.chunk.tiles[tile].info.t_ymin;
+	const int y_max = globals.chunk.tiles[tile].info.t_ymax;
 
 	size_t xrange = (x_max + 3) - (x_min - 2) + 1;
 	size_t yrange = (y_max + 3) - (y_min - 2) + 1;

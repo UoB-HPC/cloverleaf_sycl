@@ -1,3 +1,7 @@
+#include <utility>
+
+#include <utility>
+
 /*
  Crown Copyright 2012 AWE.
 
@@ -49,13 +53,17 @@ constexpr cl::sycl::access::mode RW = cl::sycl::access::mode::read_write;
 
 template<typename T,
 		int N,
-		cl::sycl::access::mode mode,
-		cl::sycl::access::target target = cl::sycl::access::target::global_buffer>
+		cl::sycl::access::mode mode>
 struct Accessor {
-	typedef cl::sycl::accessor<T, N, mode, target> View;
+	typedef cl::sycl::accessor<T, N, mode, cl::sycl::access::target::global_buffer> View;
+	typedef cl::sycl::accessor<T, N, mode, cl::sycl::access::target::host_buffer> HostView;
 
 	inline static View from(cl::sycl::buffer<T, N> &b, cl::sycl::handler &cgh) {
-		return b.template get_access<mode, target>(cgh);
+		return b.template get_access<mode, cl::sycl::access::target::global_buffer>(cgh);
+	}
+
+	inline static HostView access_host(cl::sycl::buffer<T, N> &b) {
+		return b.template get_access<mode>();
 	}
 
 };
@@ -65,18 +73,25 @@ struct Buffer {
 
 	cl::sycl::buffer<T, N> buffer;
 
-	Buffer(){};
+//	Buffer() {};
 
-	explicit Buffer(cl::sycl::buffer<T, N> buffer) : buffer(buffer) {}
+	// XXX remove
+	explicit Buffer(cl::sycl::buffer<T, N> &buffer) : buffer(buffer) {}
 
 	explicit Buffer(range<N> range) : buffer(range) {}
 
-	template<cl::sycl::access::mode mode,
-			cl::sycl::access::target target = cl::sycl::access::target::global_buffer>
-	inline typename Accessor<T, N, mode, target>::View
-	access(cl::sycl::handler &cgh) {
-		return Accessor<T, N, mode, target>::from(buffer, cgh);
-	}
+	template<typename Iterator>
+	explicit Buffer(Iterator begin, Iterator end) : buffer(begin, end) {}
+
+
+	template<cl::sycl::access::mode mode>
+	inline typename Accessor<T, N, mode>::View
+	access(cl::sycl::handler &cgh) { return Accessor<T, N, mode>::from(buffer, cgh); }
+
+
+	template<cl::sycl::access::mode mode>
+	inline typename Accessor<T, N, mode>::HostView
+	access() { return Accessor<T, N, mode>::access_host(buffer); }
 
 };
 
@@ -221,25 +236,60 @@ struct grid_type {
 
 struct profiler_type {
 
-	double timestep;
-	double acceleration;
-	double PdV;
-	double cell_advection;
-	double mom_advection;
-	double viscosity;
-	double ideal_gas;
-	double visit;
-	double summary;
-	double reset;
-	double revert;
-	double flux;
-	double tile_halo_exchange;
-	double self_halo_exchange;
-	double mpi_halo_exchange;
+	double timestep = 0.0;
+	double acceleration = 0.0;
+	double PdV = 0.0;
+	double cell_advection = 0.0;
+	double mom_advection = 0.0;
+	double viscosity = 0.0;
+	double ideal_gas = 0.0;
+	double visit = 0.0;
+	double summary = 0.0;
+	double reset = 0.0;
+	double revert = 0.0;
+	double flux = 0.0;
+	double tile_halo_exchange = 0.0;
+	double self_halo_exchange = 0.0;
+	double mpi_halo_exchange = 0.0;
+
 };
 
 struct field_type {
 
+	explicit field_type(const size_t xrange, const size_t yrange) :
+			density0(range<2>(xrange, yrange)),
+			density1(range<2>(xrange, yrange)),
+			energy0(range<2>(xrange, yrange)),
+			energy1(range<2>(xrange, yrange)),
+			pressure(range<2>(xrange, yrange)),
+			viscosity(range<2>(xrange, yrange)),
+			soundspeed(range<2>(xrange, yrange)),
+			xvel0(range<2>(xrange + 1, yrange + 1)),
+			xvel1(range<2>(xrange + 1, yrange + 1)),
+			yvel0(range<2>(xrange + 1, yrange + 1)),
+			yvel1(range<2>(xrange + 1, yrange + 1)),
+			vol_flux_x(range<2>(xrange + 1, yrange)),
+			mass_flux_x(range<2>(xrange + 1, yrange)),
+			vol_flux_y(range<2>(xrange, yrange + 1)),
+			mass_flux_y(range<2>(xrange, yrange + 1)),
+			work_array1(range<2>(xrange + 1, yrange + 1)),
+			work_array2(range<2>(xrange + 1, yrange + 1)),
+			work_array3(range<2>(xrange + 1, yrange + 1)),
+			work_array4(range<2>(xrange + 1, yrange + 1)),
+			work_array5(range<2>(xrange + 1, yrange + 1)),
+			work_array6(range<2>(xrange + 1, yrange + 1)),
+			work_array7(range<2>(xrange + 1, yrange + 1)),
+			cellx(range<1>(xrange)),
+			celldx(range<1>(xrange)),
+			celly(range<1>(yrange)),
+			celldy(range<1>(yrange)),
+			vertexx(range<1>(xrange + 1)),
+			vertexdx(range<1>(xrange + 1)),
+			vertexy(range<1>(yrange + 1)),
+			vertexdy(range<1>(yrange + 1)),
+			volume(range<2>(xrange, yrange)),
+			xarea(range<2>(xrange + 1, yrange)),
+			yarea(range<2>(xrange, yrange + 1)) {}
 
 	Buffer<double, 2> density0;
 	Buffer<double, 2> density1;
@@ -262,89 +312,132 @@ struct field_type {
 	Buffer<double, 2> work_array7; // post_vol, ener_flux
 
 	Buffer<double, 1> cellx;
-	Buffer<double, 1> celly;
-	Buffer<double, 1> vertexx;
-	Buffer<double, 1> vertexy;
 	Buffer<double, 1> celldx;
+	Buffer<double, 1> celly;
 	Buffer<double, 1> celldy;
+	Buffer<double, 1> vertexx;
 	Buffer<double, 1> vertexdx;
+	Buffer<double, 1> vertexy;
 	Buffer<double, 1> vertexdy;
 
 	Buffer<double, 2> volume;
 	Buffer<double, 2> xarea;
 	Buffer<double, 2> yarea;
 
+
+};
+
+
+struct tile_info {
+	std::array<int, 4> tile_neighbours;
+	std::array<int, 4> external_tile_mask;
+	int t_xmin, t_xmax, t_ymin, t_ymax;
+	int t_left, t_right, t_bottom, t_top;
 };
 
 struct tile_type {
 
+//	tile_type(const size_t xrange, const size_t yrange) : field(xrange, yrange) {}
+
+	tile_info info;
+//	std::array<int, 4> tile_neighbours;
+//	std::array<int, 4> external_tile_mask;
+//	int t_xmin, t_xmax, t_ymin, t_ymax;
+//	int t_left, t_right, t_bottom, t_top;
+
 	field_type field;
-	int tile_neighbours[4];
-	int external_tile_mask[4];
 
-	int t_xmin, t_xmax, t_ymin, t_ymax;
 
-	int t_left, t_right, t_bottom, t_top;
-
+	explicit tile_type(const tile_info &info) :
+			info(info),
+			// (t_xmin-2:t_xmax+2, t_ymin-2:t_ymax+2)
+			// XXX see build_field()
+			field((info.t_xmax + 2) - (info.t_xmin - 2) + 1,
+			      (info.t_ymax + 2) - (info.t_ymin - 2) + 1) {}
 };
 
 struct chunk_type {
 
-	int task; // MPI task
 
-	int chunk_neighbours[4]; // Chunks, not tasks, so we can overload in the future
 
 	// MPI Buffers in device memory
-	Accessor<double, 1, RW>::View left_rcv_buffer, right_rcv_buffer, bottom_rcv_buffer, top_rcv_buffer;
-	Accessor<double, 1, RW>::View left_snd_buffer, right_snd_buffer, bottom_snd_buffer, top_snd_buffer;
 
 	// MPI Buffers in host memory - to be created with Kokkos::create_mirror_view() and Kokkos::deep_copy()
-//	typename Kokkos::View<double *>::HostMirror hm_left_rcv_buffer, hm_right_rcv_buffer, hm_bottom_rcv_buffer, hm_top_rcv_buffer;
-//	typename Kokkos::View<double *>::HostMirror hm_left_snd_buffer, hm_right_snd_buffer, hm_bottom_snd_buffer, hm_top_snd_buffer;
+//	std::vector<double > hm_left_rcv_buffer, hm_right_rcv_buffer, hm_bottom_rcv_buffer, hm_top_rcv_buffer;
+//	std::vector<double > hm_left_snd_buffer, hm_right_snd_buffer, hm_bottom_snd_buffer, hm_top_snd_buffer;
+	const std::array<int, 4> chunk_neighbours; // Chunks, not tasks, so we can overload in the future
 
-	tile_type *tiles;
+	const int task; // MPI task
+	const int x_min;
+	const int y_min;
+	const int x_max;
+	const int y_max;
 
-	int x_min;
-	int y_min;
-	int x_max;
-	int y_max;
+	const int left, right, bottom, top;
+	const int left_boundary, right_boundary, bottom_boundary, top_boundary;
 
-	int left, right, bottom, top;
-	int left_boundary, right_boundary, bottom_boundary, top_boundary;
+	Buffer<double, 1> left_rcv_buffer, right_rcv_buffer, bottom_rcv_buffer, top_rcv_buffer;
+	Buffer<double, 1> left_snd_buffer, right_snd_buffer, bottom_snd_buffer, top_snd_buffer;
+
+	std::vector<tile_type> tiles;
+
+	chunk_type(const std::array<int, 4> &chunkNeighbours,
+	           const int task,
+	           const int xMin, const int yMin, const int xMax, const int yMax,
+	           const int left, const int right, const int bottom, const int top,
+	           const int leftBoundary, const int rightBoundary, const int bottomBoundary, const int topBoundary,
+	           const int tiles_per_chunk
+	)
+			: chunk_neighbours(chunkNeighbours),
+			  task(task),
+			  x_min(xMin), y_min(yMin), x_max(xMax), y_max(yMax),
+			  left(left), right(right), bottom(bottom), top(top),
+			  left_boundary(leftBoundary), right_boundary(rightBoundary),
+			  bottom_boundary(bottomBoundary), top_boundary(topBoundary),
+			  left_rcv_buffer(range<1>(10 * 2 * (yMax + 5))),
+			  right_rcv_buffer(range<1>(10 * 2 * (yMax + 5))),
+			  bottom_rcv_buffer(range<1>(10 * 2 * (xMax + 5))),
+			  top_rcv_buffer(range<1>(10 * 2 * (xMax + 5))),
+			  left_snd_buffer(range<1>(10 * 2 * (yMax + 5))),
+			  right_snd_buffer(range<1>(10 * 2 * (yMax + 5))),
+			  bottom_snd_buffer(range<1>(10 * 2 * (xMax + 5))),
+			  top_snd_buffer(range<1>(10 * 2 * (xMax + 5))) {}
+
+
+//	left_snd_buffer(range<1>(10 * 2 * (yMax + 5))),
+//	left_rcv_buffer(range<1>(10 * 2 * (yMax + 5))),
+//	right_snd_buffer(range<1>(10 * 2 * (yMax + 5))),
+//	right_rcv_buffer(range<1>(10 * 2 * (yMax + 5))),
+//	bottom_snd_buffer(range<1>(10 * 2 * (xMax + 5))),
+//	bottom_rcv_buffer(range<1>(10 * 2 * (xMax + 5))),
+//	top_snd_buffer(range<1>(10 * 2 * (xMax + 5))),
+//	top_rcv_buffer(range<1>(10 * 2 * (xMax + 5)))
 
 };
 
 
 // Collection of globally defined variables
-struct global_variables {
+struct global_config {
 
-	cl::sycl::queue queue;
 
-	state_type *states;
+	std::vector<state_type> states;
+
+
 	int number_of_states;
 
-	int step;
-
-	bool advect_x;
 
 	int tiles_per_chunk;
 
-	int error_condition;
 
 	int test_problem;
-	bool complete;
 
-	bool profiler_on; // Internal code profiler to make comparisons accross systems easier
+	bool profiler_on;
 
-	profiler_type profiler;
 
 	double end_time;
 
 	int end_step;
 
-	double dtold;
-	double dt;
-	double time;
 	double dtinit;
 	double dtmin;
 	double dtmax;
@@ -361,13 +454,47 @@ struct global_variables {
 	int visit_frequency;
 	int summary_frequency;
 
-	int jdt, kdt;
 
-	chunk_type chunk;
 	int number_of_chunks;
 
 	grid_type grid;
 
+};
+
+struct global_variables {
+
+	const global_config config;
+
+	cl::sycl::queue queue;
+	chunk_type chunk;
+
+	int error_condition;
+
+	int step = 0;
+	bool advect_x = true;
+	double time = 0.0;
+
+	double dt;
+	double dtold;
+
+	bool complete;
+	int jdt, kdt;
+
+
+	bool profiler_on; // Internal code profiler to make comparisons accross systems easier
+
+
+	profiler_type profiler;
+
+
+	explicit global_variables(
+			const global_config &config,
+			cl::sycl::queue queue,
+			chunk_type chunk) :
+			config(config), queue(std::move(queue)), chunk(std::move(chunk)),
+			dt(config.dtinit),
+			dtold(config.dtinit),
+			profiler_on(config.profiler_on) {}
 };
 
 

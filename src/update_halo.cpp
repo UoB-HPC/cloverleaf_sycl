@@ -33,7 +33,8 @@
 void update_halo_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
-		int chunk_neighbours[4], int tile_neighbours[4],
+		const std::array<int, 4> &chunk_neighbours,
+		const std::array<int, 4> &tile_neighbours,
 		const AccDP2RW::View &density0,
 		const AccDP2RW::View &energy0,
 		const AccDP2RW::View &pressure,
@@ -740,17 +741,17 @@ void update_halo(global_variables &globals, int fields[NUM_FIELDS], const int de
 		execute(globals.queue, [&](handler &h) {
 
 
-			for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+			for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 
 				tile_type &t = globals.chunk.tiles[tile];
 				update_halo_kernel(
 						h,
-						t.t_xmin,
-						t.t_xmax,
-						t.t_ymin,
-						t.t_ymax,
+						t.info.t_xmin,
+						t.info.t_xmax,
+						t.info.t_ymin,
+						t.info.t_ymax,
 						globals.chunk.chunk_neighbours,
-						t.tile_neighbours,
+						t.info.tile_neighbours,
 						t.field.density0.access<RW>(h),
 						t.field.energy0.access<RW>(h),
 						t.field.pressure.access<RW>(h),

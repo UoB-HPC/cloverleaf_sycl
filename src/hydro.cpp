@@ -73,11 +73,11 @@ void hydro(global_variables &globals, parallel_ &parallel) {
 
 		globals.time += globals.dt;
 
-		if (globals.summary_frequency != 0) {
-			if (globals.step % globals.summary_frequency == 0) field_summary(globals, parallel);
+		if (globals.config.summary_frequency != 0) {
+			if (globals.step % globals.config.summary_frequency == 0) field_summary(globals, parallel);
 		}
-		if (globals.visit_frequency != 0) {
-			if (globals.step % globals.visit_frequency == 0) visit(globals, parallel);
+		if (globals.config.visit_frequency != 0) {
+			if (globals.step % globals.config.visit_frequency == 0) visit(globals, parallel);
 		}
 
 		// Sometimes there can be a significant start up cost that appears in the first step.
@@ -89,11 +89,11 @@ void hydro(global_variables &globals, parallel_ &parallel) {
 		if (globals.step == 1) first_step = timer() - step_time;
 		if (globals.step == 2) second_step = timer() - step_time;
 
-		if (globals.time + g_small > globals.end_time || globals.step >= globals.end_step) {
+		if (globals.time + g_small > globals.config.end_time || globals.step >= globals.config.end_step) {
 
 			globals.complete = true;
 			field_summary(globals, parallel);
-			if (globals.visit_frequency != 0) visit(globals, parallel);
+			if (globals.config.visit_frequency != 0) visit(globals, parallel);
 
 			wall_clock = timer() - timerstart;
 			if (parallel.boss) {
@@ -213,7 +213,7 @@ void hydro(global_variables &globals, parallel_ &parallel) {
 			double step_clock = timer() - step_time;
 			g_out << "Wall clock " << wall_clock << std::endl;
 			std::cout << "Wall clock " << wall_clock << std::endl;
-			double cells = globals.grid.x_cells * globals.grid.y_cells;
+			double cells = globals.config.grid.x_cells * globals.config.grid.y_cells;
 			double rstep = globals.step;
 			double grind_time = wall_clock / (rstep * cells);
 			double step_grind = step_clock / cells;

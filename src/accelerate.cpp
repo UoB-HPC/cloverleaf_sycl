@@ -92,17 +92,17 @@ void accelerate(global_variables &globals) {
 	if (globals.profiler_on) kernel_time = timer();
 
 
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		tile_type &t = globals.chunk.tiles[tile];
 
 
 		execute(globals.queue, [&](handler &h) {
 			accelerate_kernel(
 					h,
-					t.t_xmin,
-					t.t_xmax,
-					t.t_ymin,
-					t.t_ymax,
+					t.info.t_xmin,
+					t.info.t_xmax,
+					t.info.t_ymin,
+					t.info.t_ymax,
 					globals.dt,
 					t.field.xarea.access<RW>(h),
 					t.field.yarea.access<RW>(h),

@@ -47,7 +47,7 @@ void advection(global_variables &globals) {
 
 	double kernel_time;
 	if (globals.profiler_on) kernel_time = timer();
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		advec_cell_driver(globals, tile, sweep_number, direction);
 	}
 
@@ -65,7 +65,7 @@ void advection(global_variables &globals) {
 	if (globals.profiler_on) kernel_time = timer();
 
 
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		advec_mom_driver(globals, tile, xvel, direction, sweep_number);
 		advec_mom_driver(globals, tile, yvel, direction, sweep_number);
 	}
@@ -78,7 +78,7 @@ void advection(global_variables &globals) {
 
 	if (globals.profiler_on) kernel_time = timer();
 
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		advec_cell_driver(globals, tile, sweep_number, direction);
 	}
 
@@ -95,7 +95,7 @@ void advection(global_variables &globals) {
 
 	if (globals.profiler_on) kernel_time = timer();
 
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		advec_mom_driver(globals, tile, xvel, direction, sweep_number);
 		advec_mom_driver(globals, tile, yvel, direction, sweep_number);
 	}

@@ -23,7 +23,7 @@
 #include "comms.h"
 #include "definitions.h"
 
-void initialise(parallel_ &parallel, global_variables &globals);
+std::unique_ptr<global_variables> initialise(parallel_ &parallel);
 
 #endif
 

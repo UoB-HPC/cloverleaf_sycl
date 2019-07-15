@@ -37,7 +37,7 @@ void viscosity_kernel(handler &h, int x_min, int x_max, int y_min, int y_max,
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	par_ranged<class viscosity>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
+	par_ranged<class viscosity_>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
 			id<2> idx) {
 
 		double ugrad = (xvel0[j<1>(idx)] + xvel0[jk<1, 1>(idx)]) - (xvel0[idx] + xvel0[k<1>(idx)]);
@@ -95,13 +95,13 @@ void viscosity(global_variables &globals) {
 
 	execute(globals.queue, [&](handler &h) {
 
-		for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+		for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 			tile_type &t = globals.chunk.tiles[tile];
 			viscosity_kernel(h,
-			                 t.t_xmin,
-			                 t.t_xmax,
-			                 t.t_ymin,
-			                 t.t_ymax,
+			                 t.info.t_xmin,
+			                 t.info.t_xmax,
+			                 t.info.t_ymin,
+			                 t.info.t_ymax,
 			                 t.field.celldx.access<RW>(h),
 			                 t.field.celldy.access<RW>(h),
 			                 t.field.density0.access<RW>(h),

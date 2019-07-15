@@ -32,19 +32,19 @@ void update_tile_halo(global_variables &globals, int fields[NUM_FIELDS], int dep
 	// Update Top Bottom - Real to Real
 	execute(globals.queue, [&](handler &h) {
 
-		for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+		for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 			tile_type &tt = globals.chunk.tiles[tile];
-			int t_up = tt.tile_neighbours[tile_top];
-			int t_down = tt.tile_neighbours[tile_bottom];
+			int t_up = tt.info.tile_neighbours[tile_top];
+			int t_down = tt.info.tile_neighbours[tile_bottom];
 
 			if (t_up != external_tile) {
 				tile_type &tup = globals.chunk.tiles[t_up];
 				update_tile_halo_t_kernel(
 						h,
-						tt.t_xmin,
-						tt.t_xmax,
-						tt.t_ymin,
-						tt.t_ymax,
+						tt.info.t_xmin,
+						tt.info.t_xmax,
+						tt.info.t_ymin,
+						tt.info.t_ymax,
 						tt.field.density0.access<RW>(h),
 						tt.field.energy0.access<RW>(h),
 						tt.field.pressure.access<RW>(h),
@@ -60,10 +60,10 @@ void update_tile_halo(global_variables &globals, int fields[NUM_FIELDS], int dep
 						tt.field.vol_flux_y.access<RW>(h),
 						tt.field.mass_flux_x.access<RW>(h),
 						tt.field.mass_flux_y.access<RW>(h),
-						tup.t_xmin,
-						tup.t_xmax,
-						tup.t_ymin,
-						tup.t_ymax,
+						tup.info.t_xmin,
+						tup.info.t_xmax,
+						tup.info.t_ymin,
+						tup.info.t_ymax,
 						tup.field.density0.access<RW>(h),
 						tup.field.energy0.access<RW>(h),
 						tup.field.pressure.access<RW>(h),
@@ -88,10 +88,10 @@ void update_tile_halo(global_variables &globals, int fields[NUM_FIELDS], int dep
 				tile_type &tdown = globals.chunk.tiles[t_down];
 				update_tile_halo_b_kernel(
 						h,
-						tt.t_xmin,
-						tt.t_xmax,
-						tt.t_ymin,
-						tt.t_ymax,
+						tt.info.t_xmin,
+						tt.info.t_xmax,
+						tt.info.t_ymin,
+						tt.info.t_ymax,
 						tt.field.density0.access<RW>(h),
 						tt.field.energy0.access<RW>(h),
 						tt.field.pressure.access<RW>(h),
@@ -107,10 +107,10 @@ void update_tile_halo(global_variables &globals, int fields[NUM_FIELDS], int dep
 						tt.field.vol_flux_y.access<RW>(h),
 						tt.field.mass_flux_x.access<RW>(h),
 						tt.field.mass_flux_y.access<RW>(h),
-						tdown.t_xmin,
-						tdown.t_xmax,
-						tdown.t_ymin,
-						tdown.t_ymax,
+						tdown.info.t_xmin,
+						tdown.info.t_xmax,
+						tdown.info.t_ymin,
+						tdown.info.t_ymax,
 						tdown.field.density0.access<RW>(h),
 						tdown.field.energy0.access<RW>(h),
 						tdown.field.pressure.access<RW>(h),
@@ -134,19 +134,19 @@ void update_tile_halo(global_variables &globals, int fields[NUM_FIELDS], int dep
 
 		// Update Left Right - Ghost, Real, Ghost - > Real
 
-		for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+		for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 			tile_type &tt = globals.chunk.tiles[tile];
-			int t_left = tt.tile_neighbours[tile_left];
-			int t_right = tt.tile_neighbours[tile_right];
+			int t_left = tt.info.tile_neighbours[tile_left];
+			int t_right = tt.info.tile_neighbours[tile_right];
 
 			if (t_left != external_tile) {
 				tile_type &tleft = globals.chunk.tiles[t_left];
 				update_tile_halo_l_kernel(
 						h,
-						tt.t_xmin,
-						tt.t_xmax,
-						tt.t_ymin,
-						tt.t_ymax,
+						tt.info.t_xmin,
+						tt.info.t_xmax,
+						tt.info.t_ymin,
+						tt.info.t_ymax,
 						tt.field.density0.access<RW>(h),
 						tt.field.energy0.access<RW>(h),
 						tt.field.pressure.access<RW>(h),
@@ -162,10 +162,10 @@ void update_tile_halo(global_variables &globals, int fields[NUM_FIELDS], int dep
 						tt.field.vol_flux_y.access<RW>(h),
 						tt.field.mass_flux_x.access<RW>(h),
 						tt.field.mass_flux_y.access<RW>(h),
-						tleft.t_xmin,
-						tleft.t_xmax,
-						tleft.t_ymin,
-						tleft.t_ymax,
+						tleft.info.t_xmin,
+						tleft.info.t_xmax,
+						tleft.info.t_ymin,
+						tleft.info.t_ymax,
 						tleft.field.density0.access<RW>(h),
 						tleft.field.energy0.access<RW>(h),
 						tleft.field.pressure.access<RW>(h),
@@ -189,10 +189,10 @@ void update_tile_halo(global_variables &globals, int fields[NUM_FIELDS], int dep
 				tile_type &tright = globals.chunk.tiles[t_right];
 				update_tile_halo_r_kernel(
 						h,
-						tt.t_xmin,
-						tt.t_xmax,
-						tt.t_ymin,
-						tt.t_ymax,
+						tt.info.t_xmin,
+						tt.info.t_xmax,
+						tt.info.t_ymin,
+						tt.info.t_ymax,
 						tt.field.density0.access<RW>(h),
 						tt.field.energy0.access<RW>(h),
 						tt.field.pressure.access<RW>(h),
@@ -208,10 +208,10 @@ void update_tile_halo(global_variables &globals, int fields[NUM_FIELDS], int dep
 						tt.field.vol_flux_y.access<RW>(h),
 						tt.field.mass_flux_x.access<RW>(h),
 						tt.field.mass_flux_y.access<RW>(h),
-						tright.t_xmin,
-						tright.t_xmax,
-						tright.t_ymin,
-						tright.t_ymax,
+						tright.info.t_xmin,
+						tright.info.t_xmax,
+						tright.info.t_ymin,
+						tright.info.t_ymax,
 						tright.field.density0.access<RW>(h),
 						tright.field.energy0.access<RW>(h),
 						tright.field.pressure.access<RW>(h),

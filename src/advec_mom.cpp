@@ -247,10 +247,10 @@ void advec_mom_driver(global_variables &globals, int tile, int which_vel, int di
 		if (which_vel == 1) {
 			advec_mom_kernel(
 					h,
-					t.t_xmin,
-					t.t_xmax,
-					t.t_ymin,
-					t.t_ymax,
+					t.info.t_xmin,
+					t.info.t_xmax,
+					t.info.t_ymin,
+					t.info.t_ymax,
 					t.field.xvel1.access<RW>(h),
 					t.field.mass_flux_x.access<RW>(h),
 					t.field.vol_flux_x.access<RW>(h),
@@ -272,10 +272,10 @@ void advec_mom_driver(global_variables &globals, int tile, int which_vel, int di
 		} else {
 			advec_mom_kernel(
 					h,
-					t.t_xmin,
-					t.t_xmax,
-					t.t_ymin,
-					t.t_ymax,
+					t.info.t_xmin,
+					t.info.t_xmax,
+					t.info.t_ymin,
+					t.info.t_ymax,
 					t.field.yvel1.access<RW>(h),
 					t.field.mass_flux_x.access<RW>(h),
 					t.field.vol_flux_x.access<RW>(h),

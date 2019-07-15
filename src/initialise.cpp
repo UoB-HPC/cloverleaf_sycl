@@ -36,7 +36,9 @@
 extern std::ostream g_out;
 std::ofstream of;
 
-void initialise(parallel_ &parallel, global_variables &globals) {
+std::unique_ptr<global_variables> initialise(parallel_ &parallel) {
+
+	global_config config;
 
 	if (parallel.boss) {
 		of.open("clover.out");
@@ -48,7 +50,6 @@ void initialise(parallel_ &parallel, global_variables &globals) {
 	} else {
 		g_out.rdbuf(std::cout.rdbuf());
 	}
-
 
 	if (parallel.boss) {
 		g_out << "Clover Version " << g_version << std::endl
@@ -101,13 +102,15 @@ void initialise(parallel_ &parallel, global_variables &globals) {
 		      << std::endl;
 	}
 
-	read_input(g_in, parallel, globals);
+	read_input(g_in, parallel, config);
 
 	clover_barrier();
 
-	globals.step = 0;
+//	globals.step = 0;
+	config.number_of_chunks = parallel.max_task;
 
-	start(parallel, globals);
+
+	auto globals = start(parallel, config);
 
 	clover_barrier();
 
@@ -117,5 +120,7 @@ void initialise(parallel_ &parallel, global_variables &globals) {
 
 	g_in.close();
 
+
+	return globals;
 }
 

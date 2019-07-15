@@ -67,7 +67,7 @@ struct field_summary_functor {
 			yvel0(yvel0) {}
 
 	// Kernel body
-	KOKKOS_INLINE_FUNCTION
+	// KOKKOS_INLINE_FUNCTION
 	void operator()(const int i, value_type &update) const {
 
 		const int j = x_min + 1 + i % (x_max - x_min + 1);
@@ -77,19 +77,20 @@ struct field_summary_functor {
 		// START OF THE KERNEL
 		//
 
-		double vsqrd = 0.0;
-		for (int kv = k; kv <= k + 1; ++kv) {
-			for (int jv = j; jv <= j + 1; ++jv) {
-				vsqrd += 0.25 * (xvel0(jv, kv) * xvel0(jv, kv) + yvel0(jv, kv) * yvel0(jv, kv));
-			}
-		}
-		double cell_vol = volume(j, k);
-		double cell_mass = cell_vol * density0(j, k);
-		update.vol += cell_vol;
-		update.mass += cell_mass;
-		update.ie += cell_mass * energy0(j, k);
-		update.ke += cell_mass * 0.5 * vsqrd;
-		update.press += cell_vol * pressure(j, k);
+		// FIXME enable and rewrite
+//		double vsqrd = 0.0;
+//		for (int kv = k; kv <= k + 1; ++kv) {
+//			for (int jv = j; jv <= j + 1; ++jv) {
+//				vsqrd += 0.25 * (xvel0(jv, kv) * xvel0(jv, kv) + yvel0(jv, kv) * yvel0(jv, kv));
+//			}
+//		}
+//		double cell_vol = volume(j, k);
+//		double cell_mass = cell_vol * density0(j, k);
+//		update.vol += cell_vol;
+//		update.mass += cell_mass;
+//		update.ie += cell_mass * energy0(j, k);
+//		update.ke += cell_mass * 0.5 * vsqrd;
+//		update.press += cell_vol * pressure(j, k);
 
 		//
 		// END  OF THE KERNEL
@@ -98,7 +99,7 @@ struct field_summary_functor {
 	};
 
 	// Tell Kokkos how to reduce value_type
-	KOKKOS_INLINE_FUNCTION
+	// KOKKOS_INLINE_FUNCTION
 	void join(value_type &update, const value_type &input) const {
 		update.vol += input.vol;
 		update.mass += input.mass;
@@ -107,7 +108,7 @@ struct field_summary_functor {
 		update.press += input.press;
 	}
 
-	KOKKOS_INLINE_FUNCTION
+	// KOKKOS_INLINE_FUNCTION
 	void join(volatile value_type &update, const volatile value_type &input) const {
 		update.vol += input.vol;
 		update.mass += input.mass;
@@ -117,7 +118,7 @@ struct field_summary_functor {
 	}
 
 	// Initial values
-	KOKKOS_INLINE_FUNCTION
+	// KOKKOS_INLINE_FUNCTION
 	static void init(value_type &update) {
 		update.vol = 0.0;
 		update.mass = 0.0;
@@ -155,7 +156,7 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 	double kernel_time;
 	if (globals.profiler_on) kernel_time = timer();
 
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		ideal_gas(globals, tile, false);
 	}
 
@@ -170,12 +171,12 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 	double ke = 0.0;
 	double press = 0.0;
 
-	for (int tile = 0; tile < globals.tiles_per_chunk; ++tile) {
+	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		field_summary_functor functor(
-				globals.chunk.tiles[tile].t_xmin,
-				globals.chunk.tiles[tile].t_xmax,
-				globals.chunk.tiles[tile].t_ymin,
-				globals.chunk.tiles[tile].t_ymax,
+				globals.chunk.tiles[tile].info.t_xmin,
+				globals.chunk.tiles[tile].info.t_xmax,
+				globals.chunk.tiles[tile].info.t_ymin,
+				globals.chunk.tiles[tile].info.t_ymax,
 				globals.chunk.tiles[tile].field.volume,
 				globals.chunk.tiles[tile].field.density0,
 				globals.chunk.tiles[tile].field.energy0,
@@ -186,11 +187,13 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		typename field_summary_functor::value_type result;
 
 		// Use a 1D parallel for because 2D reduction results in shared memory segfaults on a GPU
-		Kokkos::parallel_reduce("field_summary",
-		                        (globals.chunk.tiles[tile].t_ymax -
-		                         globals.chunk.tiles[tile].t_ymin + 1) *
-		                        (globals.chunk.tiles[tile].t_xmax -
-		                         globals.chunk.tiles[tile].t_xmin + 1), functor, result);
+
+		// FIXME enable and rewrite
+//		Kokkos::parallel_reduce("field_summary",
+//		                        (globals.chunk.tiles[tile].t_ymax -
+//		                         globals.chunk.tiles[tile].t_ymin + 1) *
+//		                        (globals.chunk.tiles[tile].t_xmax -
+//		                         globals.chunk.tiles[tile].t_xmin + 1), functor, result);
 
 		vol = result.vol;
 		mass = result.mass;
@@ -225,20 +228,20 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 	if (globals.complete) {
 		double qa_diff;
 		if (parallel.boss) {
-			if (globals.test_problem >= 1) {
-				if (globals.test_problem == 1)
+			if (globals.config.test_problem >= 1) {
+				if (globals.config.test_problem == 1)
 					qa_diff = fabs((100.0 * (ke / 1.82280367310258)) - 100.0);
-				if (globals.test_problem == 2)
+				if (globals.config.test_problem == 2)
 					qa_diff = fabs((100.0 * (ke / 1.19316898756307)) - 100.0);
-				if (globals.test_problem == 3)
+				if (globals.config.test_problem == 3)
 					qa_diff = fabs((100.0 * (ke / 2.58984003503994)) - 100.0);
-				if (globals.test_problem == 4)
+				if (globals.config.test_problem == 4)
 					qa_diff = fabs((100.0 * (ke / 0.307475452287895)) - 100.0);
-				if (globals.test_problem == 5)
+				if (globals.config.test_problem == 5)
 					qa_diff = fabs((100.0 * (ke / 4.85350315783719)) - 100.0);
-				std::cout << "Test problem " << globals.test_problem << " is within " << qa_diff
+				std::cout << "Test problem " << globals.config.test_problem << " is within " << qa_diff
 				          << "% of the expected solution" << std::endl;
-				g_out << "Test problem " << globals.test_problem << " is within " << qa_diff
+				g_out << "Test problem " << globals.config.test_problem << " is within " << qa_diff
 				      << "% of the expected solution" << std::endl;
 				if (qa_diff < 0.001) {
 					std::cout << "This test is considered PASSED" << std::endl;

@@ -52,10 +52,12 @@ SET(SOURCES
         src/viscosity.cpp
         src/visit.cpp
 
-        src/_main.cpp
+#        src/_main.cpp
         )
 
 add_executable(clover_leaf ${SOURCES})
+target_link_libraries(clover_leaf ${MPI_CXX_LIBRARIES})
+
 
 add_sycl_to_target(
         TARGET clover_leaf
