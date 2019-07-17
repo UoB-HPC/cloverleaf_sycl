@@ -24,6 +24,7 @@
 // size.
 
 #include "build_field.h"
+#include "sycl_utils.hpp"
 
 // Allocate Kokkos Views for the data arrays
 void build_field(global_variables &globals) {

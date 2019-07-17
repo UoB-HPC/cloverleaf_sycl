@@ -26,6 +26,7 @@
 // @details Calculates mesh geometry for the mesh chunk based on the mesh size.
 
 #include "initialise_chunk.h"
+#include "sycl_utils.hpp"
 
 
 void initialise_chunk(const int tile, global_variables &globals) {

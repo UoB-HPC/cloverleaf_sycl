@@ -19,6 +19,7 @@
 
 
 #include "revert.h"
+#include "sycl_utils.hpp"
 
 //  @brief Fortran revert kernel.
 //  @author Wayne Gaudin
@@ -29,10 +30,10 @@
 void revert_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
-		AccDP2RW::Type density0,
-		AccDP2RW::Type density1,
-		AccDP2RW::Type energy0,
-		AccDP2RW::Type energy1) {
+		Accessor<double, 2, RW>::Type density0,
+		Accessor<double, 2, RW>::Type density1,
+		Accessor<double, 2, RW>::Type energy0,
+		Accessor<double, 2, RW>::Type energy1) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max

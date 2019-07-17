@@ -20,6 +20,7 @@
 
 #include "reset_field.h"
 #include "timer.h"
+#include "sycl_utils.hpp"
 
 //  @brief Fortran reset field kernel.
 //  @author Wayne Gaudin
@@ -28,14 +29,14 @@
 void reset_field_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
-		AccDP2RW::Type density0,
-		AccDP2RW::Type density1,
-		AccDP2RW::Type energy0,
-		AccDP2RW::Type energy1,
-		AccDP2RW::Type xvel0,
-		AccDP2RW::Type xvel1,
-		AccDP2RW::Type yvel0,
-		AccDP2RW::Type yvel1) {
+		Accessor<double, 2, RW>::Type density0,
+		Accessor<double, 2, RW>::Type density1,
+		Accessor<double, 2, RW>::Type energy0,
+		Accessor<double, 2, RW>::Type energy1,
+		Accessor<double, 2, RW>::Type xvel0,
+		Accessor<double, 2, RW>::Type xvel1,
+		Accessor<double, 2, RW>::Type yvel0,
+		Accessor<double, 2, RW>::Type yvel1) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max

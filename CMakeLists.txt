@@ -76,6 +76,8 @@ set(RELEASE_OPTIONS -O3 -march=native -g)
 target_link_libraries(clover_leaf PRIVATE ${MPI_CXX_LIBRARIES})
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_OPTIONS}>")
 
+#set_property(SOURCE ${SOURCES} PROPERTY COMPUTECPP_SOURCE_FLAGS -Rno-sycl-kernel-naming)
+
 add_sycl_to_target(
         TARGET clover_leaf
         SOURCES ${SOURCES}

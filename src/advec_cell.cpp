@@ -19,6 +19,7 @@
 
 
 #include "advec_cell.h"
+#include "sycl_utils.hpp"
 
 
 //  @brief Fortran cell advection kernel.
@@ -33,22 +34,22 @@ void advec_cell_kernel(
 		int y_max,
 		int dir,
 		int sweep_number,
-		AccDP1RW::Type vertexdx,
-		AccDP1RW::Type vertexdy,
-		AccDP2RW::Type volume,
-		AccDP2RW::Type density1,
-		AccDP2RW::Type energy1,
-		AccDP2RW::Type mass_flux_x,
-		AccDP2RW::Type vol_flux_x,
-		AccDP2RW::Type mass_flux_y,
-		AccDP2RW::Type vol_flux_y,
-		AccDP2RW::Type pre_vol,
-		AccDP2RW::Type post_vol,
-		AccDP2RW::Type pre_mass,
-		AccDP2RW::Type post_mass,
-		AccDP2RW::Type advec_vol,
-		AccDP2RW::Type post_ener,
-		AccDP2RW::Type ener_flux) {
+		Accessor<double, 1, RW>::Type vertexdx,
+		Accessor<double, 1, RW>::Type vertexdy,
+		Accessor<double, 2, RW>::Type volume,
+		Accessor<double, 2, RW>::Type density1,
+		Accessor<double, 2, RW>::Type energy1,
+		Accessor<double, 2, RW>::Type mass_flux_x,
+		Accessor<double, 2, RW>::Type vol_flux_x,
+		Accessor<double, 2, RW>::Type mass_flux_y,
+		Accessor<double, 2, RW>::Type vol_flux_y,
+		Accessor<double, 2, RW>::Type pre_vol,
+		Accessor<double, 2, RW>::Type post_vol,
+		Accessor<double, 2, RW>::Type pre_mass,
+		Accessor<double, 2, RW>::Type post_mass,
+		Accessor<double, 2, RW>::Type advec_vol,
+		Accessor<double, 2, RW>::Type post_ener,
+		Accessor<double, 2, RW>::Type ener_flux) {
 
 	const double one_by_six = 1.0 / 6.0;
 

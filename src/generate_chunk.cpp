@@ -26,6 +26,7 @@
 //  @details Invoked the users specified chunk generator.
 
 #include "generate_chunk.h"
+#include "sycl_utils.hpp"
 
 void generate_chunk(const int tile, global_variables &globals) {
 

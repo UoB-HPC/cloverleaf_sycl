@@ -19,6 +19,7 @@
 
 
 #include "ideal_gas.h"
+#include "sycl_utils.hpp"
 
 //  @brief Fortran ideal gas kernel.
 //  @author Wayne Gaudin
@@ -27,10 +28,10 @@
 void ideal_gas_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
-		AccDP2RW::Type density,
-		AccDP2RW::Type energy,
-		AccDP2RW::Type pressure,
-		AccDP2RW::Type soundspeed) {
+		Accessor<double, 2, RW>::Type density,
+		Accessor<double, 2, RW>::Type energy,
+		Accessor<double, 2, RW>::Type pressure,
+		Accessor<double, 2, RW>::Type soundspeed) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max

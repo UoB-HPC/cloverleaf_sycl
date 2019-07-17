@@ -23,10 +23,11 @@
 //  @details Packs/unpacks mpi send and receive buffers
 
 #include "pack_kernel.h"
+#include "sycl_utils.hpp"
 
 void clover_pack_message_left(handler &h, int x_min, int x_max, int y_min, int y_max,
-                              AccDP2RW::Type field,
-                              AccDP1RW::Type left_snd_buffer,
+                              Accessor<double, 2, RW>::Type field,
+                              Accessor<double, 1, RW>::Type left_snd_buffer,
                               int cell_data, int vertex_data, int x_face_data, int y_face_data,
                               int depth, int field_type, int buffer_offset) {
 
@@ -66,8 +67,8 @@ void clover_pack_message_left(handler &h, int x_min, int x_max, int y_min, int y
 
 
 void clover_unpack_message_left(handler &h, int x_min, int x_max, int y_min, int y_max,
-                                AccDP2RW::Type field,
-                                AccDP1RW::Type left_rcv_buffer,
+                                Accessor<double, 2, RW>::Type field,
+                                Accessor<double, 1, RW>::Type left_rcv_buffer,
                                 int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                 int depth, int field_type, int buffer_offset) {
 
@@ -107,8 +108,8 @@ void clover_unpack_message_left(handler &h, int x_min, int x_max, int y_min, int
 
 
 void clover_pack_message_right(handler &h, int x_min, int x_max, int y_min, int y_max,
-                               AccDP2RW::Type field,
-                               AccDP1RW::Type right_snd_buffer,
+                               Accessor<double, 2, RW>::Type field,
+                               Accessor<double, 1, RW>::Type right_snd_buffer,
                                int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                int depth, int field_type, int buffer_offset) {
 
@@ -148,8 +149,8 @@ void clover_pack_message_right(handler &h, int x_min, int x_max, int y_min, int 
 
 
 void clover_unpack_message_right(handler &h, int x_min, int x_max, int y_min, int y_max,
-                                 AccDP2RW::Type field,
-                                 AccDP1RW::Type right_rcv_buffer,
+                                 Accessor<double, 2, RW>::Type field,
+                                 Accessor<double, 1, RW>::Type right_rcv_buffer,
                                  int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                  int depth, int field_type, int buffer_offset) {
 
@@ -188,7 +189,7 @@ void clover_unpack_message_right(handler &h, int x_min, int x_max, int y_min, in
 }
 
 void clover_pack_message_top(handler &h, int x_min, int x_max, int y_min, int y_max,
-                             AccDP2RW::Type field, AccDP1RW::Type top_snd_buffer,
+                             Accessor<double, 2, RW>::Type field, Accessor<double, 1, RW>::Type top_snd_buffer,
                              int cell_data, int vertex_data, int x_face_data, int y_face_data,
                              int depth, int field_type, int buffer_offset) {
 
@@ -226,8 +227,8 @@ void clover_pack_message_top(handler &h, int x_min, int x_max, int y_min, int y_
 }
 
 void clover_unpack_message_top(handler &h, int x_min, int x_max, int y_min, int y_max,
-                               AccDP2RW::Type field,
-                               AccDP1RW::Type top_rcv_buffer,
+                               Accessor<double, 2, RW>::Type field,
+                               Accessor<double, 1, RW>::Type top_rcv_buffer,
                                int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                int depth, int field_type, int buffer_offset) {
 
@@ -266,8 +267,8 @@ void clover_unpack_message_top(handler &h, int x_min, int x_max, int y_min, int 
 
 
 void clover_pack_message_bottom(handler &h, int x_min, int x_max, int y_min, int y_max,
-                                AccDP2RW::Type field,
-                                AccDP1RW::Type bottom_snd_buffer,
+                                Accessor<double, 2, RW>::Type field,
+                                Accessor<double, 1, RW>::Type bottom_snd_buffer,
                                 int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                 int depth, int field_type, int buffer_offset) {
 
@@ -305,8 +306,8 @@ void clover_pack_message_bottom(handler &h, int x_min, int x_max, int y_min, int
 }
 
 void clover_unpack_message_bottom(handler &h, int x_min, int x_max, int y_min, int y_max,
-                                  AccDP2RW::Type field,
-                                  AccDP1RW::Type bottom_rcv_buffer,
+                                  Accessor<double, 2, RW>::Type field,
+                                  Accessor<double, 1, RW>::Type bottom_rcv_buffer,
                                   int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                   int depth, int field_type, int buffer_offset) {
 

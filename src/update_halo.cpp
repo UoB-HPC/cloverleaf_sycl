@@ -22,6 +22,7 @@
 #include "update_halo.h"
 #include "update_tile_halo.h"
 #include "timer.h"
+#include "sycl_utils.hpp"
 
 
 //   @brief Fortran kernel to update the external halo cells in a chunk.
@@ -35,21 +36,21 @@ void update_halo_kernel(
 		int x_min, int x_max, int y_min, int y_max,
 		const std::array<int, 4> &chunk_neighbours,
 		const std::array<int, 4> &tile_neighbours,
-		AccDP2RW::Type density0,
-		AccDP2RW::Type energy0,
-		AccDP2RW::Type pressure,
-		AccDP2RW::Type viscosity,
-		AccDP2RW::Type soundspeed,
-		AccDP2RW::Type density1,
-		AccDP2RW::Type energy1,
-		AccDP2RW::Type xvel0,
-		AccDP2RW::Type yvel0,
-		AccDP2RW::Type xvel1,
-		AccDP2RW::Type yvel1,
-		AccDP2RW::Type vol_flux_x,
-		AccDP2RW::Type vol_flux_y,
-		AccDP2RW::Type mass_flux_x,
-		AccDP2RW::Type mass_flux_y,
+		Accessor<double, 2, RW>::Type density0,
+		Accessor<double, 2, RW>::Type energy0,
+		Accessor<double, 2, RW>::Type pressure,
+		Accessor<double, 2, RW>::Type viscosity,
+		Accessor<double, 2, RW>::Type soundspeed,
+		Accessor<double, 2, RW>::Type density1,
+		Accessor<double, 2, RW>::Type energy1,
+		Accessor<double, 2, RW>::Type xvel0,
+		Accessor<double, 2, RW>::Type yvel0,
+		Accessor<double, 2, RW>::Type xvel1,
+		Accessor<double, 2, RW>::Type yvel1,
+		Accessor<double, 2, RW>::Type vol_flux_x,
+		Accessor<double, 2, RW>::Type vol_flux_y,
+		Accessor<double, 2, RW>::Type mass_flux_x,
+		Accessor<double, 2, RW>::Type mass_flux_y,
 		int fields[NUM_FIELDS],
 		int depth) {
 

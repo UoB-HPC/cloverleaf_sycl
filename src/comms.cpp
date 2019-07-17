@@ -34,6 +34,7 @@
 
 #include "comms.h"
 #include "pack_kernel.h"
+#include "sycl_utils.hpp"
 
 #include <mpi.h>
 

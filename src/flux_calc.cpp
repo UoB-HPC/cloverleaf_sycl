@@ -20,6 +20,7 @@
 
 #include "flux_calc.h"
 #include "timer.h"
+#include "sycl_utils.hpp"
 
 
 //  @brief Fortran flux kernel.
@@ -29,14 +30,14 @@ void flux_calc_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		AccDP2RW::Type xarea,
-		AccDP2RW::Type yarea,
-		AccDP2RW::Type xvel0,
-		AccDP2RW::Type yvel0,
-		AccDP2RW::Type xvel1,
-		AccDP2RW::Type yvel1,
-		AccDP2RW::Type vol_flux_x,
-		AccDP2RW::Type vol_flux_y) {
+		Accessor<double, 2, RW>::Type xarea,
+		Accessor<double, 2, RW>::Type yarea,
+		Accessor<double, 2, RW>::Type xvel0,
+		Accessor<double, 2, RW>::Type yvel0,
+		Accessor<double, 2, RW>::Type xvel1,
+		Accessor<double, 2, RW>::Type yvel1,
+		Accessor<double, 2, RW>::Type vol_flux_x,
+		Accessor<double, 2, RW>::Type vol_flux_y) {
 
 	// DO k=y_min,y_max+1
 	//   DO j=x_min,x_max+1

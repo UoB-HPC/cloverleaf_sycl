@@ -19,6 +19,7 @@
 
 
 #include "viscosity.h"
+#include "sycl_utils.hpp"
 
 //  @brief Fortran viscosity kernel.
 //  @author Wayne Gaudin
@@ -27,13 +28,13 @@
 //  Only cells in compression will have a non-zero value.
 
 void viscosity_kernel(handler &h, int x_min, int x_max, int y_min, int y_max,
-                      AccDP1RW::Type celldx,
-                      AccDP1RW::Type celldy,
-                      AccDP2RW::Type density0,
-                      AccDP2RW::Type pressure,
-                      AccDP2RW::Type viscosity,
-                      AccDP2RW::Type xvel0,
-                      AccDP2RW::Type yvel0) {
+                      Accessor<double, 1, RW>::Type celldx,
+                      Accessor<double, 1, RW>::Type celldy,
+                      Accessor<double, 2, RW>::Type density0,
+                      Accessor<double, 2, RW>::Type pressure,
+                      Accessor<double, 2, RW>::Type viscosity,
+                      Accessor<double, 2, RW>::Type xvel0,
+                      Accessor<double, 2, RW>::Type yvel0) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max

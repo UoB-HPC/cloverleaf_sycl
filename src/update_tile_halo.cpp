@@ -20,6 +20,7 @@
 
 #include "update_tile_halo.h"
 #include "update_tile_halo_kernel.h"
+#include "sycl_utils.hpp"
 
 #include <iostream>
 

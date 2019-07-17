@@ -21,6 +21,7 @@
 #include "field_summary.h"
 #include "timer.h"
 #include "ideal_gas.h"
+#include "sycl_utils.hpp"
 
 #include <iomanip>
 

@@ -19,6 +19,7 @@
 
 
 #include "calc_dt.h"
+#include "sycl_utils.hpp"
 
 //  @brief Fortran timestep kernel
 //  @author Wayne Gaudin
@@ -33,21 +34,21 @@ void calc_dt_kernel(
 		double dtu_safe,
 		double dtv_safe,
 		double dtdiv_safe,
-		AccDP2RW::Type xarea,
-		AccDP2RW::Type yarea,
-		AccDP1RW::Type cellx,
-		AccDP1RW::Type celly,
-		AccDP1RW::Type celldx,
-		AccDP1RW::Type celldy,
-		AccDP2RW::Type volume,
-		AccDP2RW::Type density0,
-		AccDP2RW::Type energy0,
-		AccDP2RW::Type pressure,
-		AccDP2RW::Type viscosity_a,
-		AccDP2RW::Type soundspeed,
-		AccDP2RW::Type xvel0,
-		AccDP2RW::Type yvel0,
-		AccDP2RW::Type dt_min,
+		Accessor<double, 2, RW>::Type xarea,
+		Accessor<double, 2, RW>::Type yarea,
+		Accessor<double, 1, RW>::Type cellx,
+		Accessor<double, 1, RW>::Type celly,
+		Accessor<double, 1, RW>::Type celldx,
+		Accessor<double, 1, RW>::Type celldy,
+		Accessor<double, 2, RW>::Type volume,
+		Accessor<double, 2, RW>::Type density0,
+		Accessor<double, 2, RW>::Type energy0,
+		Accessor<double, 2, RW>::Type pressure,
+		Accessor<double, 2, RW>::Type viscosity_a,
+		Accessor<double, 2, RW>::Type soundspeed,
+		Accessor<double, 2, RW>::Type xvel0,
+		Accessor<double, 2, RW>::Type yvel0,
+		Accessor<double, 2, RW>::Type dt_min,
 		double &dt_min_val,
 		int &dtl_control,
 		double &xl_pos,

@@ -25,6 +25,7 @@
 #include "ideal_gas.h"
 #include "update_halo.h"
 #include "revert.h"
+#include "sycl_utils.hpp"
 
 //  @brief Fortran PdV kernel.
 //  @author Wayne Gaudin
@@ -37,20 +38,20 @@ void PdV_kernel(
 		bool predict,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		AccDP2RW::Type xarea,
-		AccDP2RW::Type yarea,
-		AccDP2RW::Type volume,
-		AccDP2RW::Type density0,
-		AccDP2RW::Type density1,
-		AccDP2RW::Type energy0,
-		AccDP2RW::Type energy1,
-		AccDP2RW::Type pressure,
-		AccDP2RW::Type viscosity,
-		AccDP2RW::Type xvel0,
-		AccDP2RW::Type xvel1,
-		AccDP2RW::Type yvel0,
-		AccDP2RW::Type yvel1,
-		AccDP2RW::Type volume_change) {
+		Accessor<double, 2, RW>::Type xarea,
+		Accessor<double, 2, RW>::Type yarea,
+		Accessor<double, 2, RW>::Type volume,
+		Accessor<double, 2, RW>::Type density0,
+		Accessor<double, 2, RW>::Type density1,
+		Accessor<double, 2, RW>::Type energy0,
+		Accessor<double, 2, RW>::Type energy1,
+		Accessor<double, 2, RW>::Type pressure,
+		Accessor<double, 2, RW>::Type viscosity,
+		Accessor<double, 2, RW>::Type xvel0,
+		Accessor<double, 2, RW>::Type xvel1,
+		Accessor<double, 2, RW>::Type yvel0,
+		Accessor<double, 2, RW>::Type yvel1,
+		Accessor<double, 2, RW>::Type volume_change) {
 
 
 	// DO k=y_min,y_max

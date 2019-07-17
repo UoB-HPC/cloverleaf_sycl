@@ -22,6 +22,7 @@
 #define COMMS_H
 
 #include "definitions.h"
+#include "sycl_utils.hpp"
 
 #include <mpi.h>
 

@@ -19,6 +19,7 @@
 
 
 #include "advec_mom.h"
+#include "sycl_utils.hpp"
 
 //  @brief Fortran momentum advection kernel
 //  @author Wayne Gaudin
@@ -29,21 +30,21 @@
 void advec_mom_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
-		AccDP2RW::Type vel1,
-		AccDP2RW::Type mass_flux_x,
-		AccDP2RW::Type vol_flux_x,
-		AccDP2RW::Type mass_flux_y,
-		AccDP2RW::Type vol_flux_y,
-		AccDP2RW::Type volume,
-		AccDP2RW::Type density1,
-		AccDP2RW::Type node_flux,
-		AccDP2RW::Type node_mass_post,
-		AccDP2RW::Type node_mass_pre,
-		AccDP2RW::Type mom_flux,
-		AccDP2RW::Type pre_vol,
-		AccDP2RW::Type post_vol,
-		AccDP1RW::Type celldx,
-		AccDP1RW::Type celldy,
+		Accessor<double, 2, RW>::Type vel1,
+		Accessor<double, 2, RW>::Type mass_flux_x,
+		Accessor<double, 2, RW>::Type vol_flux_x,
+		Accessor<double, 2, RW>::Type mass_flux_y,
+		Accessor<double, 2, RW>::Type vol_flux_y,
+		Accessor<double, 2, RW>::Type volume,
+		Accessor<double, 2, RW>::Type density1,
+		Accessor<double, 2, RW>::Type node_flux,
+		Accessor<double, 2, RW>::Type node_mass_post,
+		Accessor<double, 2, RW>::Type node_mass_pre,
+		Accessor<double, 2, RW>::Type mom_flux,
+		Accessor<double, 2, RW>::Type pre_vol,
+		Accessor<double, 2, RW>::Type post_vol,
+		Accessor<double, 1, RW>::Type celldx,
+		Accessor<double, 1, RW>::Type celldy,
 		int which_vel,
 		int sweep_number,
 		int direction) {
