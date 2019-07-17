@@ -1,7 +1,3 @@
-#include <utility>
-
-#include <utility>
-
 /*
  Crown Copyright 2012 AWE.
 
@@ -24,10 +20,13 @@
 #ifndef GRID_H
 #define GRID_H
 
+#define DEBUG true
+
 #define CL_TARGET_OPENCL_VERSION 220
 
 #include <CL/sycl.hpp>
-
+#include <iostream>
+#include <utility>
 
 //#include <Kokkos_Core.hpp>
 
@@ -40,6 +39,13 @@
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) >= (b)) ? (a) : (b))
 
+
+#define PP_CAT(a, b) PP_CAT_I(a, b)
+#define PP_CAT_I(a, b) PP_CAT_II(~, a ## b)
+#define PP_CAT_II(p, res) res
+
+#define APPEND_LN(base) PP_CAT(base, __LINE__)
+
 using cl::sycl::accessor;
 using cl::sycl::queue;
 using cl::sycl::buffer;
@@ -51,18 +57,19 @@ constexpr cl::sycl::access::mode R = cl::sycl::access::mode::read;
 constexpr cl::sycl::access::mode W = cl::sycl::access::mode::write;
 constexpr cl::sycl::access::mode RW = cl::sycl::access::mode::read_write;
 
+
 template<typename T,
 		int N,
 		cl::sycl::access::mode mode>
 struct Accessor {
-	typedef cl::sycl::accessor<T, N, mode, cl::sycl::access::target::global_buffer> View;
-	typedef cl::sycl::accessor<T, N, mode, cl::sycl::access::target::host_buffer> HostView;
+	typedef cl::sycl::accessor<T, N, mode, cl::sycl::access::target::global_buffer> Type;
+	typedef cl::sycl::accessor<T, N, mode, cl::sycl::access::target::host_buffer> HostType;
 
-	inline static View from(cl::sycl::buffer<T, N> &b, cl::sycl::handler &cgh) {
+	inline static Type from(cl::sycl::buffer<T, N> &b, cl::sycl::handler &cgh) {
 		return b.template get_access<mode, cl::sycl::access::target::global_buffer>(cgh);
 	}
 
-	inline static HostView access_host(cl::sycl::buffer<T, N> &b) {
+	inline static HostType access_host(cl::sycl::buffer<T, N> &b) {
 		return b.template get_access<mode>();
 	}
 
@@ -75,22 +82,37 @@ struct Buffer {
 
 //	Buffer() {};
 
+	static range<N> show(range<N> range) {
+		if (N == 1)
+			std::cout << "Buffer<" << N << ">(range1d=" << range.get(0) << ")\n";
+		else if (N == 2)
+			std::cout << "Buffer<" << N << ">(range2d=" << range.get(0) << "," << range.get(1) << ")\n";
+		return range;
+	}
+
 	// XXX remove
 	explicit Buffer(cl::sycl::buffer<T, N> &buffer) : buffer(buffer) {}
 
-	explicit Buffer(range<N> range) : buffer(range) {}
+	explicit Buffer(range<N> range) : buffer(show(range)) {}
 
 	template<typename Iterator>
 	explicit Buffer(Iterator begin, Iterator end) : buffer(begin, end) {}
 
 
 	template<cl::sycl::access::mode mode>
-	inline typename Accessor<T, N, mode>::View
-	access(cl::sycl::handler &cgh) { return Accessor<T, N, mode>::from(buffer, cgh); }
+	inline typename Accessor<T, N, mode>::Type
+	access(cl::sycl::handler &cgh) {
+
+		if (N == 1) std::cout << "buffer->access_1d( " << buffer.get_range().get(0) << " )\n";
+		else if (N == 2)
+			std::cout << "buffer->access_2d( " << buffer.get_range().get(0) << "," << buffer.get_range().get(1)
+			          << " )\n";
+		return Accessor<T, N, mode>::from(buffer, cgh);
+	}
 
 
 	template<cl::sycl::access::mode mode>
-	inline typename Accessor<T, N, mode>::HostView
+	inline typename Accessor<T, N, mode>::HostType
 	access() { return Accessor<T, N, mode>::access_host(buffer); }
 
 };
@@ -104,6 +126,7 @@ struct Range1d {
 	template<typename A, typename B>
 	Range1d(A from, B to) : from(from), to(to), size(to - from) {
 		assert(from < to);
+		assert(size != 0);
 	}
 };
 
@@ -113,34 +136,54 @@ struct Range2d {
 	const size_t fromY, toY;
 	const size_t sizeX, sizeY;
 	template<typename A, typename B, typename C, typename D>
-	Range2d(A fromX, B toX, C fromY, D toY) :
+	Range2d(A fromX, B fromY, C toX, D toY) :
 			fromX(fromX), toX(toX), fromY(fromY), toY(toY),
-			sizeX(toX - fromX), sizeY(toY - fromX) {
+			sizeX(toX - fromX), sizeY(toY - fromY) {
+		if (DEBUG)
+			std::cout << "Mk range 2d:x=(" << fromX << "->" << toX << ")"
+			          << ",y= (" << fromY << "->" << toY << ")" << std::endl;
 		assert(fromX < toX);
 		assert(fromY < toY);
+		assert(sizeX != 0);
+		assert(sizeY != 0);
 	}
 };
 
-template<typename nameT = std::nullptr_t, typename functorT>
+template<typename nameT, typename functorT>
 inline void par_ranged(cl::sycl::handler &cgh, const Range1d &range, const functorT &functor) {
+	if (DEBUG)
+		std::cout << "par_ranged 1d:x=" << range.from << "(" << range.size << ")" << std::endl;
 	cgh.parallel_for<nameT>(
 			cl::sycl::range<1>(range.size),
 			cl::sycl::id<1>(range.from),
 			functor);
 }
 
-template<typename nameT = std::nullptr_t, typename functorT>
+
+template<typename nameT, typename functorT>
 inline void par_ranged(cl::sycl::handler &cgh, const Range2d &range, const functorT &functor) {
+	if (DEBUG)
+		std::cout << "par_ranged 2d(x=" << range.fromX << "(" << range.sizeX << ")" << ", " << range.fromY << "("
+		          << range.sizeY << "))" << std::endl;
 	cgh.parallel_for<nameT>(
-			cl::sycl::range<2>(range.sizeY, range.sizeY),
+			cl::sycl::range<2>(range.sizeX, range.sizeY),
 			cl::sycl::id<2>(range.fromX, range.fromY),
 			functor);
 }
 
 template<typename T>
 inline void execute(cl::sycl::queue &queue, T cgf) {
-	queue.submit(cgf);
-	queue.wait_and_throw();
+
+
+	if (DEBUG) std::cout << "Execute" << std::endl;
+
+	try {
+		queue.submit(cgf);
+		queue.wait_and_throw();
+	} catch (cl::sycl::device_error &e) {
+		std::cerr << "Execution failed: `" << e.what() << "`" << std::endl;
+		throw e;
+	}
 }
 
 template<int X = 0, int Y = 0>
@@ -256,6 +299,40 @@ struct profiler_type {
 
 struct field_type {
 
+	Buffer<double, 2> density0;
+	Buffer<double, 2> density1;
+	Buffer<double, 2> energy0;
+	Buffer<double, 2> energy1;
+	Buffer<double, 2> pressure;
+	Buffer<double, 2> viscosity;
+	Buffer<double, 2> soundspeed;
+	Buffer<double, 2> xvel0, xvel1;
+	Buffer<double, 2> yvel0, yvel1;
+	Buffer<double, 2> vol_flux_x, mass_flux_x;
+	Buffer<double, 2> vol_flux_y, mass_flux_y;
+
+	Buffer<double, 2> work_array1; // node_flux, stepbymass, volume_change, pre_vol
+	Buffer<double, 2> work_array2; // node_mass_post, post_vol
+	Buffer<double, 2> work_array3; // node_mass_pre,pre_mass
+	Buffer<double, 2> work_array4; // advec_vel, post_mass
+	Buffer<double, 2> work_array5; // mom_flux, advec_vol
+	Buffer<double, 2> work_array6; // pre_vol, post_ener
+	Buffer<double, 2> work_array7; // post_vol, ener_flux
+
+	Buffer<double, 1> cellx;
+	Buffer<double, 1> celldx;
+	Buffer<double, 1> celly;
+	Buffer<double, 1> celldy;
+	Buffer<double, 1> vertexx;
+	Buffer<double, 1> vertexdx;
+	Buffer<double, 1> vertexy;
+	Buffer<double, 1> vertexdy;
+
+	Buffer<double, 2> volume;
+	Buffer<double, 2> xarea;
+	Buffer<double, 2> yarea;
+
+
 	explicit field_type(const size_t xrange, const size_t yrange) :
 			density0(range<2>(xrange, yrange)),
 			density1(range<2>(xrange, yrange)),
@@ -289,40 +366,11 @@ struct field_type {
 			vertexdy(range<1>(yrange + 1)),
 			volume(range<2>(xrange, yrange)),
 			xarea(range<2>(xrange + 1, yrange)),
-			yarea(range<2>(xrange, yrange + 1)) {}
+			yarea(range<2>(xrange, yrange + 1)) {
 
-	Buffer<double, 2> density0;
-	Buffer<double, 2> density1;
-	Buffer<double, 2> energy0;
-	Buffer<double, 2> energy1;
-	Buffer<double, 2> pressure;
-	Buffer<double, 2> viscosity;
-	Buffer<double, 2> soundspeed;
-	Buffer<double, 2> xvel0, xvel1;
-	Buffer<double, 2> yvel0, yvel1;
-	Buffer<double, 2> vol_flux_x, mass_flux_x;
-	Buffer<double, 2> vol_flux_y, mass_flux_y;
+		std::cout << "f_t mkrange x=" << xrange << ", y=" << yrange << std::endl;
 
-	Buffer<double, 2> work_array1; // node_flux, stepbymass, volume_change, pre_vol
-	Buffer<double, 2> work_array2; // node_mass_post, post_vol
-	Buffer<double, 2> work_array3; // node_mass_pre,pre_mass
-	Buffer<double, 2> work_array4; // advec_vel, post_mass
-	Buffer<double, 2> work_array5; // mom_flux, advec_vol
-	Buffer<double, 2> work_array6; // pre_vol, post_ener
-	Buffer<double, 2> work_array7; // post_vol, ener_flux
-
-	Buffer<double, 1> cellx;
-	Buffer<double, 1> celldx;
-	Buffer<double, 1> celly;
-	Buffer<double, 1> celldy;
-	Buffer<double, 1> vertexx;
-	Buffer<double, 1> vertexdx;
-	Buffer<double, 1> vertexy;
-	Buffer<double, 1> vertexdy;
-
-	Buffer<double, 2> volume;
-	Buffer<double, 2> xarea;
-	Buffer<double, 2> yarea;
+	}
 
 
 };

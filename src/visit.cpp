@@ -26,6 +26,7 @@
 
 #include <fstream>
 #include <iomanip>
+#include <sstream>
 
 //  @brief Generates graphics output files.
 //  @author Wayne Gaudin

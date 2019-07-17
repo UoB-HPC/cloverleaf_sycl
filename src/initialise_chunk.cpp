@@ -27,6 +27,7 @@
 
 #include "initialise_chunk.h"
 
+
 void initialise_chunk(const int tile, global_variables &globals) {
 
 	double dx = (globals.config.grid.xmax - globals.config.grid.xmin) / (double) (globals.config.grid.x_cells);
@@ -76,12 +77,12 @@ void initialise_chunk(const int tile, global_variables &globals) {
 		auto celldy = field.celldy.access<RW>(h);
 
 
-		par_ranged(h, {0, xrange}, [=](id<1> j) {
+		par_ranged<class APPEND_LN(initialise)>(h, {0, xrange}, [=](id<1> j) {
 			vertexx[j] = xmin + dx * (double) (j[0] - 1 - x_min);
 			vertexdx[j] = dx;
 		});
 
-		par_ranged(h, {0, yrange}, [=](id<1> k) {
+		par_ranged<class APPEND_LN(initialise)>(h, {0, yrange}, [=](id<1> k) {
 			vertexy[k] = ymin + dy * (double) (k[0] - 1 - y_min);
 			vertexdy[k] = dy;
 		});
@@ -89,12 +90,12 @@ void initialise_chunk(const int tile, global_variables &globals) {
 		xrange = (x_max + 2) - (x_min - 2) + 1;
 		yrange = (y_max + 2) - (y_min - 2) + 1;
 
-		par_ranged(h, {0, xrange}, [=](id<1> j) {
+		par_ranged<class APPEND_LN(initialise)>(h, {0, xrange}, [=](id<1> j) {
 			cellx[j] = 0.5 * (vertexx[j] + vertexx[j[0] + 1]);
 			celldx[j] = dx;
 		});
 
-		par_ranged(h, {0, yrange}, [=](id<1> k) {
+		par_ranged<class APPEND_LN(initialise)>(h, {0, yrange}, [=](id<1> k) {
 			celly[k] = 0.5 * (vertexy[k] + vertexy[k[0] + 1]);
 			celldy[k] = dy;
 		});
@@ -104,7 +105,7 @@ void initialise_chunk(const int tile, global_variables &globals) {
 		auto xarea = field.xarea.access<RW>(h);
 		auto yarea = field.yarea.access<RW>(h);
 
-		par_ranged(h, {0, 0, xrange, yrange}, [=](id<2> idx) {
+		par_ranged<class APPEND_LN(initialise)>(h, {0, 0, xrange, yrange}, [=](id<2> idx) {
 			volume[idx] = dx * dy;
 			xarea[idx] = celldy[idx[1]];
 			yarea[idx] = celldx[idx[0]];

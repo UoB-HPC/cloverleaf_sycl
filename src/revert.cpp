@@ -29,10 +29,10 @@
 void revert_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
-		const AccDP2RW::View &density0,
-		const AccDP2RW::View &density1,
-		const AccDP2RW::View &energy0,
-		const AccDP2RW::View &energy1) {
+		AccDP2RW::Type density0,
+		AccDP2RW::Type density1,
+		AccDP2RW::Type energy0,
+		AccDP2RW::Type energy1) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max

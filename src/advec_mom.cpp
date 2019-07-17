@@ -29,21 +29,21 @@
 void advec_mom_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
-		const AccDP2RW::View &vel1,
-		const AccDP2RW::View &mass_flux_x,
-		const AccDP2RW::View &vol_flux_x,
-		const AccDP2RW::View &mass_flux_y,
-		const AccDP2RW::View &vol_flux_y,
-		const AccDP2RW::View &volume,
-		const AccDP2RW::View &density1,
-		const AccDP2RW::View &node_flux,
-		const AccDP2RW::View &node_mass_post,
-		const AccDP2RW::View &node_mass_pre,
-		const AccDP2RW::View &mom_flux,
-		const AccDP2RW::View &pre_vol,
-		const AccDP2RW::View &post_vol,
-		const AccDP1RW::View &celldx,
-		const AccDP1RW::View &celldy,
+		AccDP2RW::Type vel1,
+		AccDP2RW::Type mass_flux_x,
+		AccDP2RW::Type vol_flux_x,
+		AccDP2RW::Type mass_flux_y,
+		AccDP2RW::Type vol_flux_y,
+		AccDP2RW::Type volume,
+		AccDP2RW::Type density1,
+		AccDP2RW::Type node_flux,
+		AccDP2RW::Type node_mass_post,
+		AccDP2RW::Type node_mass_pre,
+		AccDP2RW::Type mom_flux,
+		AccDP2RW::Type pre_vol,
+		AccDP2RW::Type post_vol,
+		AccDP1RW::Type celldx,
+		AccDP1RW::Type celldy,
 		int which_vel,
 		int sweep_number,
 		int direction) {
@@ -56,22 +56,22 @@ void advec_mom_kernel(
 	Range2d policy(x_min - 2 + 1, y_min - 2 + 1, x_max + 2 + 2, y_max + 2 + 2);
 
 	if (mom_sweep == 1) { // x 1
-		par_ranged<class advec_mom_x1>(h, policy, [=](id<2> id) {
+		par_ranged<class APPEND_LN(advec_mom_x1)>(h, policy, [=](id<2> id) {
 			post_vol[id] = volume[id] + vol_flux_y[k<1>(id)] - vol_flux_y[id];
 			pre_vol[id] = post_vol[id] + vol_flux_x[j<1>(id)] - vol_flux_x[id];
 		});
 	} else if (mom_sweep == 2) { // y 1
-		par_ranged<class advec_mom_y1>(h, policy, [=](id<2> id) {
+		par_ranged<class APPEND_LN(advec_mom_y1)>(h, policy, [=](id<2> id) {
 			post_vol[id] = volume[id] + vol_flux_x[j<1>(id)] - vol_flux_x[id];
 			pre_vol[id] = post_vol[id] + vol_flux_y[k<1>(id)] - vol_flux_y[id];
 		});
 	} else if (mom_sweep == 3) { // x 2
-		par_ranged<class advec_mom_x1>(h, policy, [=](id<2> id) {
+		par_ranged<class APPEND_LN(advec_mom_x1)>(h, policy, [=](id<2> id) {
 			post_vol[id] = volume[id];
 			pre_vol[id] = post_vol[id] + vol_flux_y[k<1>(id)] - vol_flux_y[id];
 		});
 	} else if (mom_sweep == 4) { // y 2
-		par_ranged<class advec_mom_y1>(h, policy, [=](id<2> id) {
+		par_ranged<class APPEND_LN(advec_mom_y1)>(h, policy, [=](id<2> id) {
 			post_vol[id] = volume[id];
 			pre_vol[id] = post_vol[id] + vol_flux_x[j<1>(id)] - vol_flux_x[id];
 		});

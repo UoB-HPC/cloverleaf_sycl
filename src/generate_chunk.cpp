@@ -112,7 +112,7 @@ void generate_chunk(const int tile, global_variables &globals) {
 		auto vertexy = field.vertexy.access<RW>(h);
 
 		// State 1 is always the background state
-		par_ranged(h, xyrange_policy, [=](id<2> idx) {
+		par_ranged<class generate_chunk_1>(h, xyrange_policy, [=](id<2> idx) {
 			energy0[idx] = state_energy[0];
 			density0[idx] = state_density[0];
 			xvel0[idx] = state_xvel[0];
@@ -120,7 +120,7 @@ void generate_chunk(const int tile, global_variables &globals) {
 		});
 
 		for (int state = 1; state < globals.config.number_of_states; ++state) {
-			par_ranged(h, xyrange_policy, [=](id<2> idx) {
+			par_ranged<class generate_chunk_2>(h, xyrange_policy, [=](id<2> idx) {
 
 				const int j = idx.get(0);
 				const int k = idx.get(1);

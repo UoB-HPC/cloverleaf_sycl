@@ -24,43 +24,43 @@
 #include "definitions.h"
 
 void
-clover_pack_message_left(handler&h, int x_min, int x_max, int y_min, int y_max, const AccDP2RW::View &field,
-                         const AccDP1RW::View &left_snd_buffer, int cell_data, int vertex_data,
+clover_pack_message_left(handler&h, int x_min, int x_max, int y_min, int y_max, AccDP2RW::Type field,
+                         AccDP1RW::Type left_snd_buffer, int cell_data, int vertex_data,
                          int x_face_fata, int y_face_data, int depth, int field_type,
                          int buffer_offset);
 void clover_unpack_message_left(handler&h, int x_min, int x_max, int y_min, int y_max,
-                                const AccDP2RW::View &field,
-                                const AccDP1RW::View &left_rcv_buffer, int cell_data,
+                                AccDP2RW::Type field,
+                                AccDP1RW::Type left_rcv_buffer, int cell_data,
                                 int vertex_data, int x_face_fata, int y_face_data, int depth,
                                 int field_type, int buffer_offset);
 void clover_pack_message_right(handler&h, int x_min, int x_max, int y_min, int y_max,
-                               const AccDP2RW::View &field,
-                               const AccDP1RW::View &right_snd_buffer, int cell_data,
+                               AccDP2RW::Type field,
+                               AccDP1RW::Type right_snd_buffer, int cell_data,
                                int vertex_data, int x_face_fata, int y_face_data, int depth,
                                int field_type, int buffer_offset);
 void clover_unpack_message_right(handler&h, int x_min, int x_max, int y_min, int y_max,
-                                 const AccDP2RW::View &field,
-                                 const AccDP1RW::View &right_rcv_buffer, int cell_data,
+                                 AccDP2RW::Type field,
+                                 AccDP1RW::Type right_rcv_buffer, int cell_data,
                                  int vertex_data, int x_face_fata, int y_face_data, int depth,
                                  int field_type, int buffer_offset);
 void
-clover_pack_message_top(handler&h, int x_min, int x_max, int y_min, int y_max, const AccDP2RW::View &field,
-                        const AccDP1RW::View &top_snd_buffer, int cell_data, int vertex_data,
+clover_pack_message_top(handler&h, int x_min, int x_max, int y_min, int y_max, AccDP2RW::Type field,
+                        AccDP1RW::Type top_snd_buffer, int cell_data, int vertex_data,
                         int x_face_fata, int y_face_data, int depth, int field_type,
                         int buffer_offset);
 void clover_unpack_message_top(handler&h, int x_min, int x_max, int y_min, int y_max,
-                               const AccDP2RW::View &field,
-                               const AccDP1RW::View &top_rcv_buffer, int cell_data,
+                               AccDP2RW::Type field,
+                               AccDP1RW::Type top_rcv_buffer, int cell_data,
                                int vertex_data, int x_face_fata, int y_face_data, int depth,
                                int field_type, int buffer_offset);
 void clover_pack_message_bottom(handler&h, int x_min, int x_max, int y_min, int y_max,
-                                const AccDP2RW::View &field,
-                                const AccDP1RW::View &bottom_snd_buffer, int cell_data,
+                                AccDP2RW::Type field,
+                                AccDP1RW::Type bottom_snd_buffer, int cell_data,
                                 int vertex_data, int x_face_fata, int y_face_data, int depth,
                                 int field_type, int buffer_offset);
 void clover_unpack_message_bottom(handler&h, int x_min, int x_max, int y_min, int y_max,
-                                  const AccDP2RW::View &field,
-                                  const AccDP1RW::View &bottom_rcv_buffer, int cell_data,
+                                  AccDP2RW::Type field,
+                                  AccDP1RW::Type bottom_rcv_buffer, int cell_data,
                                   int vertex_data, int x_face_fata, int y_face_data, int depth,
                                   int field_type, int buffer_offset);
 

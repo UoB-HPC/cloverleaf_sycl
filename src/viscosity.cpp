@@ -27,13 +27,13 @@
 //  Only cells in compression will have a non-zero value.
 
 void viscosity_kernel(handler &h, int x_min, int x_max, int y_min, int y_max,
-                      const AccDP1RW::View &celldx,
-                      const AccDP1RW::View &celldy,
-                      const AccDP2RW::View &density0,
-                      const AccDP2RW::View &pressure,
-                      const AccDP2RW::View &viscosity,
-                      const AccDP2RW::View &xvel0,
-                      const AccDP2RW::View &yvel0) {
+                      AccDP1RW::Type celldx,
+                      AccDP1RW::Type celldy,
+                      AccDP2RW::Type density0,
+                      AccDP2RW::Type pressure,
+                      AccDP2RW::Type viscosity,
+                      AccDP2RW::Type xvel0,
+                      AccDP2RW::Type yvel0) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max

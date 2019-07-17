@@ -97,117 +97,129 @@ void build_field(global_variables &globals) {
 //		Kokkos::MDRangePolicy <Kokkos::Rank<2>> loop_bounds_1({0, 0}, {xrange + 1, yrange + 1});
 
 
-		execute(globals.queue, [&](cl::sycl::handler &h) {
+		cl::sycl::queue deviceQueue;
+
+		std::cout << "Device:" << deviceQueue.get_device().get_info<cl::sycl::info::device::vendor>()
+		          << std::endl;
+
+		auto bs = Buffer<double, 2>(range<2>(10,  10));
+		execute(deviceQueue, [&](cl::sycl::handler &h) {
+
+			auto bsa = bs.access<RW>(h);
 
 
-			auto work_array1 = field.work_array1.access<W>(h);
-			auto work_array2 = field.work_array2.access<W>(h);
-			auto work_array3 = field.work_array3.access<W>(h);
-			auto work_array4 = field.work_array4.access<W>(h);
-			auto work_array5 = field.work_array5.access<W>(h);
-			auto work_array6 = field.work_array6.access<W>(h);
-			auto work_array7 = field.work_array7.access<W>(h);
-
-			auto xvel0 = field.xvel0.access<W>(h);
-			auto xvel1 = field.xvel1.access<W>(h);
-			auto yvel0 = field.yvel0.access<W>(h);
-			auto yvel1 = field.yvel1.access<W>(h);
-
-			// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+3) inclusive
-			par_ranged<class build_field_zero_1>(h, {0, 0, xrange + 1, yrange + 1}, [=](id<2> id) {
-				work_array1[id] = 0.0;
-				work_array2[id] = 0.0;
-				work_array3[id] = 0.0;
-				work_array4[id] = 0.0;
-				work_array5[id] = 0.0;
-				work_array6[id] = 0.0;
-				work_array7[id] = 0.0;
-
-				xvel0[id] = 0.0;
-				xvel1[id] = 0.0;
-				yvel0[id] = 0.0;
-				yvel1[id] = 0.0;
+			par_ranged<class foo>(h, {0, 0, 10, 10}, [=](id<2> idx) {
+				 bsa[idx] = 42.3;
 			});
 
-			auto density0 = field.density0.access<W>(h);
-			auto density1 = field.density1.access<W>(h);
-			auto energy0 = field.energy0.access<W>(h);
-			auto energy1 = field.energy1.access<W>(h);
-			auto pressure = field.pressure.access<W>(h);
-			auto viscosity = field.viscosity.access<W>(h);
-			auto soundspeed = field.soundspeed.access<W>(h);
-			auto volume = field.volume.access<W>(h);
-
-			// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+2) inclusive
-			par_ranged<class build_field_zero_2>(h, {0, 0, xrange, yrange}, [=](id<2> id) {
-				density0[id] = 0.0;
-				density1[id] = 0.0;
-				energy0[id] = 0.0;
-				energy1[id] = 0.0;
-				pressure[id] = 0.0;
-				viscosity[id] = 0.0;
-				soundspeed[id] = 0.0;
-				volume[id] = 0.0;
-			});
-
-			auto vol_flux_x = field.vol_flux_x.access<W>(h);
-			auto mass_flux_x = field.mass_flux_x.access<W>(h);
-			auto xarea = field.xarea.access<W>(h);
-
-			// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+3) inclusive
-			par_ranged<class build_field_zero_3>(h, {0, 0, xrange, yrange}, [=](id<2> id) {
-				vol_flux_x[id] = 0.0;
-				mass_flux_x[id] = 0.0;
-				xarea[id] = 0.0;
-			});
-
-			auto vol_flux_y = field.vol_flux_y.access<W>(h);
-			auto mass_flux_y = field.mass_flux_y.access<W>(h);
-			auto yarea = field.yarea.access<W>(h);
-
-			// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+2) inclusive
-			par_ranged<class build_field_zero_3>(h, {0, 0, xrange, yrange + 1}, [=](id<2> id) {
-				vol_flux_y[id] = 0.0;
-				mass_flux_y[id] = 0.0;
-				yarea[id] = 0.0;
-			});
-
-			auto cellx = field.cellx.access<W>(h);
-			auto celldx = field.celldx.access<W>(h);
-
-			// (t_xmin-2:t_xmax+2) inclusive
-			par_ranged<class build_field_zero_5>(h, {0, xrange}, [=](id<1> id) {
-				cellx[id] = 0.0;
-				celldx[id] = 0.0;
-			});
-
-			auto celly = field.celly.access<W>(h);
-			auto celldy = field.celldy.access<W>(h);
-
-
-			// (t_ymin-2:t_ymax+2) inclusive
-			par_ranged<class build_field_zero_6>(h, {0, yrange}, [=](id<1> id) {
-				celly[id] = 0.0;
-				celldy[id] = 0.0;
-			});
-
-			auto vertexx = field.vertexx.access<W>(h);
-			auto vertexdx = field.vertexdx.access<W>(h);
-
-
-			// (t_xmin-2:t_xmax+3) inclusive
-			par_ranged<class build_field_zero_6>(h, {0, xrange + 1}, [=](id<1> id) {
-				vertexx[id] = 0.0;
-				vertexdx[id] = 0.0;
-			});
-
-			auto vertexy = field.vertexy.access<W>(h);
-			auto vertexdy = field.vertexdy.access<W>(h);
-			// (t_ymin-2:t_ymax+3) inclusive
-			par_ranged<class build_field_zero_7>(h, {0, yrange + 1}, [=](id<1> id) {
-				vertexy[id] = 0.0;
-				vertexdy[id] = 0.0;
-			});
+//			auto work_array1 = field.work_array1.access<W>(h);
+//			auto work_array2 = field.work_array2.access<W>(h);
+//			auto work_array3 = field.work_array3.access<W>(h);
+//			auto work_array4 = field.work_array4.access<W>(h);
+//			auto work_array5 = field.work_array5.access<W>(h);
+//			auto work_array6 = field.work_array6.access<W>(h);
+//			auto work_array7 = field.work_array7.access<W>(h);
+//
+//			auto xvel0 = field.xvel0.access<W>(h);
+//			auto xvel1 = field.xvel1.access<W>(h);
+//			auto yvel0 = field.yvel0.access<W>(h);
+//			auto yvel1 = field.yvel1.access<W>(h);
+//
+//			// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+3) inclusive
+//			par_ranged<class build_field_zero_1>(h, {0, 0, xrange + 1, yrange + 1}, [=](id<2> id) {
+//				work_array1[id] = 0.0;
+//				work_array2[id] = 0.0;
+//				work_array3[id] = 0.0;
+//				work_array4[id] = 0.0;
+//				work_array5[id] = 0.0;
+//				work_array6[id] = 0.0;
+//				work_array7[id] = 0.0;
+//
+//				xvel0[id] = 0.0;
+//				xvel1[id] = 0.0;
+//				yvel0[id] = 0.0;
+//				yvel1[id] = 0.0;
+//			});
+//
+//			auto density0 = field.density0.access<W>(h);
+//			auto density1 = field.density1.access<W>(h);
+//			auto energy0 = field.energy0.access<W>(h);
+//			auto energy1 = field.energy1.access<W>(h);
+//			auto pressure = field.pressure.access<W>(h);
+//			auto viscosity = field.viscosity.access<W>(h);
+//			auto soundspeed = field.soundspeed.access<W>(h);
+//			auto volume = field.volume.access<W>(h);
+//
+//			// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+2) inclusive
+//			par_ranged<class build_field_zero_2>(h, {0, 0, xrange, yrange}, [=](id<2> id) {
+//				density0[id] = 0.0;
+//				density1[id] = 0.0;
+//				energy0[id] = 0.0;
+//				energy1[id] = 0.0;
+//				pressure[id] = 0.0;
+//				viscosity[id] = 0.0;
+//				soundspeed[id] = 0.0;
+//				volume[id] = 0.0;
+//			});
+//
+//			auto vol_flux_x = field.vol_flux_x.access<W>(h);
+//			auto mass_flux_x = field.mass_flux_x.access<W>(h);
+//			auto xarea = field.xarea.access<W>(h);
+//
+//			// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+3) inclusive
+//			par_ranged<class build_field_zero_3>(h, {0, 0, xrange, yrange}, [=](id<2> id) {
+//				vol_flux_x[id] = 0.0;
+//				mass_flux_x[id] = 0.0;
+//				xarea[id] = 0.0;
+//			});
+//
+//			auto vol_flux_y = field.vol_flux_y.access<W>(h);
+//			auto mass_flux_y = field.mass_flux_y.access<W>(h);
+//			auto yarea = field.yarea.access<W>(h);
+//
+//			// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+2) inclusive
+//			par_ranged<class build_field_zero_3>(h, {0, 0, xrange, yrange + 1}, [=](id<2> id) {
+//				vol_flux_y[id] = 0.0;
+//				mass_flux_y[id] = 0.0;
+//				yarea[id] = 0.0;
+//			});
+//
+//			auto cellx = field.cellx.access<W>(h);
+//			auto celldx = field.celldx.access<W>(h);
+//
+//			// (t_xmin-2:t_xmax+2) inclusive
+//			par_ranged<class build_field_zero_5>(h, {0, xrange}, [=](id<1> id) {
+//				cellx[id] = 0.0;
+//				celldx[id] = 0.0;
+//			});
+//
+//			auto celly = field.celly.access<W>(h);
+//			auto celldy = field.celldy.access<W>(h);
+//
+//
+//			// (t_ymin-2:t_ymax+2) inclusive
+//			par_ranged<class build_field_zero_6>(h, {0, yrange}, [=](id<1> id) {
+//				celly[id] = 0.0;
+//				celldy[id] = 0.0;
+//			});
+//
+//			auto vertexx = field.vertexx.access<W>(h);
+//			auto vertexdx = field.vertexdx.access<W>(h);
+//
+//
+//			// (t_xmin-2:t_xmax+3) inclusive
+//			par_ranged<class build_field_zero_6>(h, {0, xrange + 1}, [=](id<1> id) {
+//				vertexx[id] = 0.0;
+//				vertexdx[id] = 0.0;
+//			});
+//
+//			auto vertexy = field.vertexy.access<W>(h);
+//			auto vertexdy = field.vertexdy.access<W>(h);
+//			// (t_ymin-2:t_ymax+3) inclusive
+//			par_ranged<class build_field_zero_7>(h, {0, yrange + 1}, [=](id<1> id) {
+//				vertexy[id] = 0.0;
+//				vertexdy[id] = 0.0;
+//			});
 
 		});
 

@@ -7,21 +7,15 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 find_package(ComputeCpp REQUIRED)
 find_package(MPI REQUIRED)
 
-set(CMAKE_CXX_STANDARD 14)
-
-if (MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-    set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-else ()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-endif ()
-
+set(CMAKE_CXX_STANDARD 11)
 
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 
 #include_directories(src)
 
 SET(SOURCES
+        src/cxx14_compat.hpp
+
         src/accelerate.cpp
         src/advec_cell.cpp
         src/advec_mom.cpp
@@ -51,15 +45,38 @@ SET(SOURCES
         src/update_tile_halo_kernel.cpp
         src/viscosity.cpp
         src/visit.cpp
-
-#        src/_main.cpp
+#
+#         src/_main.cpp
+#        src/_main_nosycl.cpp
         )
 
-add_executable(clover_leaf ${SOURCES})
-target_link_libraries(clover_leaf ${MPI_CXX_LIBRARIES})
 
+
+
+add_executable(clover_leaf ${SOURCES})
+
+
+target_compile_options(clover_leaf
+        PUBLIC
+        -Wall
+        -Wextra
+        -Wcast-align
+        -Wpedantic
+        -Werror=return-type
+        -Wno-unused-parameter
+        -Wno-unused-variable
+        -Wno-ignored-attributes
+        )
+
+# -fsanitize=address
+set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer  -march=native -g)
+set(RELEASE_OPTIONS -O3 -march=native -g)
+
+#target_link_libraries(clover_leaf PUBLIC $<$<CONFIG:DEBUG>:-Wl,-lasan>) # must come before any other libraries
+target_link_libraries(clover_leaf PRIVATE ${MPI_CXX_LIBRARIES})
+target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_OPTIONS}>")
 
 add_sycl_to_target(
         TARGET clover_leaf
-        SOURCES src/_main.cpp
-        ${CMAKE_CURRENT_BINARY_DIR})
+        SOURCES ${SOURCES}
+        ${CMAKE_CURRENT_BINARY_DIR}) # must be the last

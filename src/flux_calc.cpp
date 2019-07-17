@@ -29,14 +29,14 @@ void flux_calc_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		const AccDP2RW::View &xarea,
-		const AccDP2RW::View &yarea,
-		const AccDP2RW::View &xvel0,
-		const AccDP2RW::View &yvel0,
-		const AccDP2RW::View &xvel1,
-		const AccDP2RW::View &yvel1,
-		const AccDP2RW::View &vol_flux_x,
-		const AccDP2RW::View &vol_flux_y) {
+		AccDP2RW::Type xarea,
+		AccDP2RW::Type yarea,
+		AccDP2RW::Type xvel0,
+		AccDP2RW::Type yvel0,
+		AccDP2RW::Type xvel1,
+		AccDP2RW::Type yvel1,
+		AccDP2RW::Type vol_flux_x,
+		AccDP2RW::Type vol_flux_y) {
 
 	// DO k=y_min,y_max+1
 	//   DO j=x_min,x_max+1

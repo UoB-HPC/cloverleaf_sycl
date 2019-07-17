@@ -27,10 +27,10 @@
 void ideal_gas_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
-		const AccDP2RW::View &density,
-		const AccDP2RW::View &energy,
-		const AccDP2RW::View &pressure,
-		const AccDP2RW::View &soundspeed) {
+		AccDP2RW::Type density,
+		AccDP2RW::Type energy,
+		AccDP2RW::Type pressure,
+		AccDP2RW::Type soundspeed) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
@@ -54,6 +54,7 @@ void ideal_gas_kernel(
 //  state using the specified time level data.
 
 void ideal_gas(global_variables &globals, const int tile, bool predict) {
+	if (DEBUG) std::cout << "ideal_gas(tile " << tile << ")" << std::endl;
 
 	tile_type &t = globals.chunk.tiles[tile];
 

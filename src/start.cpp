@@ -25,6 +25,7 @@
 //  generation routines. It calls the equation of state to calculate initial
 //  pressure before priming the halo cells and writing an initial field summary.
 
+
 #include "start.h"
 #include "build_field.h"
 #include "initialise_chunk.h"
@@ -33,6 +34,7 @@
 #include "field_summary.h"
 #include "update_halo.h"
 #include "visit.h"
+#include "cxx14_compat.hpp"
 
 extern std::ostream g_out;
 
@@ -53,6 +55,9 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 	// clover_get_num_chunks()
 
 	int left, right, bottom, top;
+	auto chunkNeighbours = clover_decompose(config, parallel,
+	                                        config.grid.x_cells, config.grid.y_cells, left, right,
+	                                        bottom, top);
 
 	// Create the chunks
 //	globals.chunk.task = parallel.task;
@@ -62,15 +67,13 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 
 
 	global_variables globals(config, cl::sycl::queue(),
-	                           chunk_type(
-			                           clover_decompose(config, parallel,
-			                                            config.grid.x_cells, config.grid.y_cells, left, right,
-			                                            bottom, top),
-			                           parallel.task, 1, 1, x_cells, y_cells,
-			                           left, right, bottom, top,
-			                           1, config.grid.x_cells,
-			                           1, config.grid.y_cells,
-			                           config.tiles_per_chunk));
+	                         chunk_type(
+			                         chunkNeighbours,
+			                         parallel.task, 1, 1, x_cells, y_cells,
+			                         left, right, bottom, top,
+			                         1, config.grid.x_cells,
+			                         1, config.grid.y_cells,
+			                         config.tiles_per_chunk));
 
 
 //	globals.chunk.left = left;
@@ -86,11 +89,20 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 //	globals.chunk.x_max = x_cells;
 //	globals.chunk.y_max = y_cells;
 
+	if (DEBUG) std::cout << "Globals configured" << std::endl;
 
 	auto infos = clover_tile_decompose(globals, x_cells, y_cells);
 
 	std::transform(infos.begin(), infos.end(), std::back_inserter(globals.chunk.tiles),
 	               [](const tile_info &ti) { return tile_type(ti); });
+
+
+
+//	for(tile_type &tt : globals.chunk.tiles){
+//		std::cout << tt.info.
+//
+//	}
+
 
 
 	// Line 92 start.f90
@@ -154,6 +166,6 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 
 	globals.profiler_on = profiler_off;
 
-	return std::make_unique<global_variables>(globals);
+	return make_unique<global_variables>(globals);
 }
 

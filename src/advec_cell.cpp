@@ -33,22 +33,22 @@ void advec_cell_kernel(
 		int y_max,
 		int dir,
 		int sweep_number,
-		const AccDP1RW::View &vertexdx,
-		const AccDP1RW::View &vertexdy,
-		const AccDP2RW::View &volume,
-		const AccDP2RW::View &density1,
-		const AccDP2RW::View &energy1,
-		const AccDP2RW::View &mass_flux_x,
-		const AccDP2RW::View &vol_flux_x,
-		const AccDP2RW::View &mass_flux_y,
-		const AccDP2RW::View &vol_flux_y,
-		const AccDP2RW::View &pre_vol,
-		const AccDP2RW::View &post_vol,
-		const AccDP2RW::View &pre_mass,
-		const AccDP2RW::View &post_mass,
-		const AccDP2RW::View &advec_vol,
-		const AccDP2RW::View &post_ener,
-		const AccDP2RW::View &ener_flux) {
+		AccDP1RW::Type vertexdx,
+		AccDP1RW::Type vertexdy,
+		AccDP2RW::Type volume,
+		AccDP2RW::Type density1,
+		AccDP2RW::Type energy1,
+		AccDP2RW::Type mass_flux_x,
+		AccDP2RW::Type vol_flux_x,
+		AccDP2RW::Type mass_flux_y,
+		AccDP2RW::Type vol_flux_y,
+		AccDP2RW::Type pre_vol,
+		AccDP2RW::Type post_vol,
+		AccDP2RW::Type pre_mass,
+		AccDP2RW::Type post_mass,
+		AccDP2RW::Type advec_vol,
+		AccDP2RW::Type post_ener,
+		AccDP2RW::Type ener_flux) {
 
 	const double one_by_six = 1.0 / 6.0;
 
@@ -164,14 +164,14 @@ void advec_cell_kernel(
 		Range2d policy(x_min - 2 + 1, y_min - 2 + 1, x_max + 2 + 2, y_max + 2 + 2);
 
 		if (sweep_number == 1) {
-			par_ranged<class advec_cell_ydir_s1>(h, policy, [=](id<2> id) {
+			par_ranged<class APPEND_LN(advec_cell_ydir_s1)>(h, policy, [=](id<2> id) {
 				pre_vol[id] = volume[id] +
 				              (vol_flux_y[k<1>(id)] - vol_flux_y[id] + vol_flux_x[j<1>(id)] -
 				               vol_flux_x[id]);
 				post_vol[id] = pre_vol[id] - (vol_flux_y[k<1>(id)] - vol_flux_y[id]);
 			});
 		} else {
-			par_ranged<class advec_cell_ydir_s1>(h, policy, [=](id<2> id) {
+			par_ranged<class APPEND_LN(advec_cell_ydir_s1)>(h, policy, [=](id<2> id) {
 				pre_vol[id] = volume[id] + vol_flux_y[k<1>(id)] - vol_flux_y[id];
 				post_vol[id] = volume[id];
 			});

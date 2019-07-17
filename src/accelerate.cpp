@@ -29,16 +29,16 @@ void accelerate_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		const AccDP2RW::View &xarea,
-		const AccDP2RW::View &yarea,
-		const AccDP2RW::View &volume,
-		const AccDP2RW::View &density0,
-		const AccDP2RW::View &pressure,
-		const AccDP2RW::View &viscosity,
-		const AccDP2RW::View &xvel0,
-		const AccDP2RW::View &yvel0,
-		const AccDP2RW::View &xvel1,
-		const AccDP2RW::View &yvel1) {
+		AccDP2RW::Type xarea,
+		AccDP2RW::Type yarea,
+		AccDP2RW::Type volume,
+		AccDP2RW::Type density0,
+		AccDP2RW::Type pressure,
+		AccDP2RW::Type viscosity,
+		AccDP2RW::Type xvel0,
+		AccDP2RW::Type yvel0,
+		AccDP2RW::Type xvel1,
+		AccDP2RW::Type yvel1) {
 
 	double halfdt = 0.5 * dt;
 
