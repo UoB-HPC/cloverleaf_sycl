@@ -141,7 +141,10 @@ inline void execute(cl::sycl::queue &queue, T cgf) {
 		queue.submit(cgf);
 		queue.wait_and_throw();
 	} catch (cl::sycl::device_error &e) {
-		std::cerr << "Execution failed: `" << e.what() << "`" << std::endl;
+		std::cerr << "[SYCL] Device error: : `" << e.what() << "`" << std::endl;
+		throw e;
+	} catch (cl::sycl::exception &e) {
+		std::cerr << "[SYCL] Exception : `" << e.what() << "`" << std::endl;
 		throw e;
 	}
 }

@@ -16,37 +16,37 @@ include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 SET(SOURCES
         src/cxx14_compat.hpp
 
-        src/accelerate.cpp
-        src/advec_cell.cpp
-        src/advec_mom.cpp
-        src/advection.cpp
-        src/build_field.cpp
-        src/calc_dt.cpp
-        src/clover_leaf.cpp
-        src/comms.cpp
-        src/field_summary.cpp
-        src/flux_calc.cpp
-        src/generate_chunk.cpp
-        src/hydro.cpp
-        src/ideal_gas.cpp
-        src/initialise_chunk.cpp
-        src/initialise.cpp
-        src/pack_kernel.cpp
-        src/PdV.cpp
-        src/read_input.cpp
-        src/report.cpp
-        src/reset_field.cpp
-        src/revert.cpp
-        src/start.cpp
-        src/timer.cpp
-        src/timestep.cpp
-        src/update_halo.cpp
-        src/update_tile_halo.cpp
-        src/update_tile_halo_kernel.cpp
-        src/viscosity.cpp
-        src/visit.cpp
+#        src/accelerate.cpp
+#        src/advec_cell.cpp
+#        src/advec_mom.cpp
+#        src/advection.cpp
+#        src/build_field.cpp
+#        src/calc_dt.cpp
+#        src/clover_leaf.cpp
+#        src/comms.cpp
+#        src/field_summary.cpp
+#        src/flux_calc.cpp
+#        src/generate_chunk.cpp
+#        src/hydro.cpp
+#        src/ideal_gas.cpp
+#        src/initialise_chunk.cpp
+#        src/initialise.cpp
+#        src/pack_kernel.cpp
+#        src/PdV.cpp
+#        src/read_input.cpp
+#        src/report.cpp
+#        src/reset_field.cpp
+#        src/revert.cpp
+#        src/start.cpp
+#        src/timer.cpp
+#        src/timestep.cpp
+#        src/update_halo.cpp
+#        src/update_tile_halo.cpp
+#        src/update_tile_halo_kernel.cpp
+#        src/viscosity.cpp
+#        src/visit.cpp
 #
-#         src/_main.cpp
+         src/_main.cpp
 #        src/_main_nosycl.cpp
         )
 

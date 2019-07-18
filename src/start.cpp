@@ -66,7 +66,20 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 	int y_cells = top - bottom + 1;
 
 
-	global_variables globals(config, cl::sycl::queue(),
+
+	auto handler = [] (cl::sycl::exception_list exceptions) {
+		for (std::exception_ptr const& e : exceptions) {
+			try {
+				std::rethrow_exception(e);
+			} catch(cl::sycl::exception const& e) {
+				std::cout << "[SYCL] Async exception:\n"
+				          << e.what() << std::endl;
+			}
+		}
+	};
+
+	global_variables globals(config,
+	                         cl::sycl::queue(cl::sycl::default_selector{}, handler),
 	                         chunk_type(
 			                         chunkNeighbours,
 			                         parallel.task, 1, 1, x_cells, y_cells,

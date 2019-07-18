@@ -68,14 +68,10 @@ void initialise_chunk(const int tile, global_variables &globals) {
 
 	execute(globals.queue, [&](handler &h) {
 
-		auto vertexx = field.vertexx.access<RW>(h);
-		auto vertexdx = field.vertexdx.access<RW>(h);
-		auto vertexy = field.vertexy.access<RW>(h);
-		auto vertexdy = field.vertexdy.access<RW>(h);
-		auto cellx = field.cellx.access<RW>(h);
-		auto celldx = field.celldx.access<RW>(h);
-		auto celly = field.celly.access<RW>(h);
-		auto celldy = field.celldy.access<RW>(h);
+		auto vertexx = field.vertexx.access<W>(h);
+		auto vertexdx = field.vertexdx.access<W>(h);
+		auto vertexy = field.vertexy.access<W>(h);
+		auto vertexdy = field.vertexdy.access<W>(h);
 
 
 		par_ranged<class APPEND_LN(initialise)>(h, {0, xrange}, [=](id<1> j) {
@@ -91,20 +87,24 @@ void initialise_chunk(const int tile, global_variables &globals) {
 		xrange = (x_max + 2) - (x_min - 2) + 1;
 		yrange = (y_max + 2) - (y_min - 2) + 1;
 
+		auto cellx = field.cellx.access<W>(h);
+		auto celldx = field.celldx.access<W>(h);
 		par_ranged<class APPEND_LN(initialise)>(h, {0, xrange}, [=](id<1> j) {
 			cellx[j] = 0.5 * (vertexx[j] + vertexx[j[0] + 1]);
 			celldx[j] = dx;
 		});
 
+		auto celly = field.celly.access<W>(h);
+		auto celldy = field.celldy.access<W>(h);
 		par_ranged<class APPEND_LN(initialise)>(h, {0, yrange}, [=](id<1> k) {
 			celly[k] = 0.5 * (vertexy[k] + vertexy[k[0] + 1]);
 			celldy[k] = dy;
 		});
 
 
-		auto volume = field.volume.access<RW>(h);
-		auto xarea = field.xarea.access<RW>(h);
-		auto yarea = field.yarea.access<RW>(h);
+		auto volume = field.volume.access<W>(h);
+		auto xarea = field.xarea.access<W>(h);
+		auto yarea = field.yarea.access<W>(h);
 
 		par_ranged<class APPEND_LN(initialise)>(h, {0, 0, xrange, yrange}, [=](id<2> idx) {
 			volume[idx] = dx * dy;

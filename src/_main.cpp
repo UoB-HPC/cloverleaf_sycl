@@ -19,11 +19,11 @@ void test() {
 
 
 
-		par_ranged(h, {0, 0, 10, 10}, [=](id<2> idx) {
+		par_ranged<class aa>(h, {0, 0, 10, 10}, [=](id<2> idx) {
 			xsa[idx] = 42.3;
 		});
 
-		par_ranged(h, {0, 0, 10, 10}, [=](id<2> idx) {
+		par_ranged<class bb>(h, {0, 0, 10, 10}, [=](id<2> idx) {
 			xsa[idx] *=2;
 		});
 
