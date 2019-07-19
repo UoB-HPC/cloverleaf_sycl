@@ -94,10 +94,10 @@ void viscosity_kernel(handler &h, int x_min, int x_max, int y_min, int y_max,
 //  viscosity.
 void viscosity(global_variables &globals) {
 
-	execute(globals.queue, [&](handler &h) {
 
-		for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
-			tile_type &t = globals.chunk.tiles[tile];
+	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
+		tile_type &t = globals.chunk.tiles[tile];
+		execute(globals.queue, [&](handler &h) {
 			viscosity_kernel(h,
 			                 t.info.t_xmin,
 			                 t.info.t_xmax,
@@ -110,8 +110,8 @@ void viscosity(global_variables &globals) {
 			                 t.field.viscosity.access<RW>(h),
 			                 t.field.xvel0.access<RW>(h),
 			                 t.field.yvel0.access<RW>(h));
-		}
-	});
+		});
+	}
 
 }
 

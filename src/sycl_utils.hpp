@@ -150,5 +150,4 @@ inline void execute(cl::sycl::queue &queue, T cgf) {
 }
 
 
-
 #endif //CLOVERLEAF_SYCL_SYCL_UTILS_HPP

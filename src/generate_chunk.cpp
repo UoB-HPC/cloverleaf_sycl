@@ -86,32 +86,20 @@ void generate_chunk(const int tile, global_variables &globals) {
 
 	Range2d xyrange_policy(0, 0, xrange, yrange);
 
-	execute(globals.queue, [&](handler &h) {
 
-		field_type &field = globals.chunk.tiles[tile].field;
+	field_type &field = globals.chunk.tiles[tile].field;
+
+
+	execute(globals.queue, [&](handler &h) {
+		auto density0 = field.density0.access<RW>(h);
+		auto xvel0 = field.xvel0.access<RW>(h);
+		auto yvel0 = field.yvel0.access<RW>(h);
+		auto energy0 = field.energy0.access<RW>(h);
 
 		auto state_density = hm_state_density.access<R>(h);
 		auto state_energy = hm_state_energy.access<R>(h);
 		auto state_xvel = hm_state_xvel.access<R>(h);
 		auto state_yvel = hm_state_yvel.access<R>(h);
-		auto state_xmin = hm_state_xmin.access<R>(h);
-		auto state_xmax = hm_state_xmax.access<R>(h);
-		auto state_ymin = hm_state_ymin.access<R>(h);
-		auto state_ymax = hm_state_ymax.access<R>(h);
-		auto state_radius = hm_state_radius.access<R>(h);
-		auto state_geometry = hm_state_geometry.access<R>(h);
-
-		auto energy0 = field.energy0.access<RW>(h);
-		auto density0 = field.density0.access<RW>(h);
-		auto xvel0 = field.xvel0.access<RW>(h);
-		auto yvel0 = field.yvel0.access<RW>(h);
-
-		auto cellx = field.cellx.access<RW>(h);
-		auto celly = field.celly.access<RW>(h);
-
-		auto vertexx = field.vertexx.access<RW>(h);
-		auto vertexy = field.vertexy.access<RW>(h);
-
 		// State 1 is always the background state
 		par_ranged<class generate_chunk_1>(h, xyrange_policy, [=](id<2> idx) {
 			energy0[idx] = state_energy[0];
@@ -119,8 +107,35 @@ void generate_chunk(const int tile, global_variables &globals) {
 			xvel0[idx] = state_xvel[0];
 			yvel0[idx] = state_yvel[0];
 		});
+	});
 
-		for (int state = 1; state < globals.config.number_of_states; ++state) {
+	for (int state = 1; state < globals.config.number_of_states; ++state) {
+		execute(globals.queue, [&](handler &h) {
+
+			auto density0 = field.density0.access<RW>(h);
+			auto xvel0 = field.xvel0.access<RW>(h);
+			auto yvel0 = field.yvel0.access<RW>(h);
+			auto energy0 = field.energy0.access<RW>(h);
+
+			auto state_density = hm_state_density.access<R>(h);
+			auto state_energy = hm_state_energy.access<R>(h);
+			auto state_xvel = hm_state_xvel.access<R>(h);
+			auto state_yvel = hm_state_yvel.access<R>(h);
+
+			auto state_xmin = hm_state_xmin.access<R>(h);
+			auto state_xmax = hm_state_xmax.access<R>(h);
+			auto state_ymin = hm_state_ymin.access<R>(h);
+			auto state_ymax = hm_state_ymax.access<R>(h);
+			auto state_radius = hm_state_radius.access<R>(h);
+			auto state_geometry = hm_state_geometry.access<R>(h);
+
+
+			auto cellx = field.cellx.access<RW>(h);
+			auto celly = field.celly.access<RW>(h);
+
+			auto vertexx = field.vertexx.access<RW>(h);
+			auto vertexy = field.vertexy.access<RW>(h);
+
 			par_ranged<class generate_chunk_2>(h, xyrange_policy, [=](id<2> idx) {
 
 				const int j = idx.get(0);
@@ -170,8 +185,8 @@ void generate_chunk(const int tile, global_variables &globals) {
 					}
 				}
 			});
-		}
-	});
+		});
+	}
 
 
 }

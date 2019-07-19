@@ -103,16 +103,7 @@ void build_field(global_variables &globals) {
 		std::cout << "Device:" << deviceQueue.get_device().get_info<cl::sycl::info::device::vendor>()
 		          << std::endl;
 
-//		auto bs = Buffer<double, 2>(range<2>(10,  10));
 		execute(deviceQueue, [&](cl::sycl::handler &h) {
-
-//			auto bsa = bs.access<RW>(h);
-//
-//
-//			par_ranged<class foo>(h, {0, 0, 10, 10}, [=](id<2> idx) {
-//				 bsa[idx] = 42.3;
-//			});
-
 			auto work_array1 = field.work_array1.access<W>(h);
 			auto work_array2 = field.work_array2.access<W>(h);
 			auto work_array3 = field.work_array3.access<W>(h);
@@ -120,12 +111,10 @@ void build_field(global_variables &globals) {
 			auto work_array5 = field.work_array5.access<W>(h);
 			auto work_array6 = field.work_array6.access<W>(h);
 			auto work_array7 = field.work_array7.access<W>(h);
-
 			auto xvel0 = field.xvel0.access<W>(h);
 			auto xvel1 = field.xvel1.access<W>(h);
 			auto yvel0 = field.yvel0.access<W>(h);
 			auto yvel1 = field.yvel1.access<W>(h);
-
 			// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+3) inclusive
 			par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange + 1, yrange + 1}, [=](
 					id<2> id) {
@@ -142,7 +131,9 @@ void build_field(global_variables &globals) {
 				yvel0[id] = 0.0;
 				yvel1[id] = 0.0;
 			});
+		});
 
+		execute(deviceQueue, [&](cl::sycl::handler &h) {
 			auto density0 = field.density0.access<W>(h);
 			auto density1 = field.density1.access<W>(h);
 			auto energy0 = field.energy0.access<W>(h);
@@ -151,7 +142,6 @@ void build_field(global_variables &globals) {
 			auto viscosity = field.viscosity.access<W>(h);
 			auto soundspeed = field.soundspeed.access<W>(h);
 			auto volume = field.volume.access<W>(h);
-
 			// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+2) inclusive
 			par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange, yrange}, [=](id<2> id) {
 				density0[id] = 0.0;
@@ -163,58 +153,63 @@ void build_field(global_variables &globals) {
 				soundspeed[id] = 0.0;
 				volume[id] = 0.0;
 			});
+		});
 
+		execute(deviceQueue, [&](cl::sycl::handler &h) {
 			auto vol_flux_x = field.vol_flux_x.access<W>(h);
 			auto mass_flux_x = field.mass_flux_x.access<W>(h);
 			auto xarea = field.xarea.access<W>(h);
-
 			// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+3) inclusive
 			par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange, yrange}, [=](id<2> id) {
 				vol_flux_x[id] = 0.0;
 				mass_flux_x[id] = 0.0;
 				xarea[id] = 0.0;
 			});
+		});
 
+		execute(deviceQueue, [&](cl::sycl::handler &h) {
 			auto vol_flux_y = field.vol_flux_y.access<W>(h);
 			auto mass_flux_y = field.mass_flux_y.access<W>(h);
 			auto yarea = field.yarea.access<W>(h);
-
 			// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+2) inclusive
 			par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange, yrange + 1}, [=](id<2> id) {
 				vol_flux_y[id] = 0.0;
 				mass_flux_y[id] = 0.0;
 				yarea[id] = 0.0;
 			});
+		});
 
+		execute(deviceQueue, [&](cl::sycl::handler &h) {
 			auto cellx = field.cellx.access<W>(h);
 			auto celldx = field.celldx.access<W>(h);
-
 			// (t_xmin-2:t_xmax+2) inclusive
 			par_ranged<class APPEND_LN(build_field)>(h, {0, xrange}, [=](id<1> id) {
 				cellx[id] = 0.0;
 				celldx[id] = 0.0;
 			});
+		});
 
+		execute(deviceQueue, [&](cl::sycl::handler &h) {
 			auto celly = field.celly.access<W>(h);
 			auto celldy = field.celldy.access<W>(h);
-
-
 			// (t_ymin-2:t_ymax+2) inclusive
 			par_ranged<class APPEND_LN(build_field)>(h, {0, yrange}, [=](id<1> id) {
 				celly[id] = 0.0;
 				celldy[id] = 0.0;
 			});
+		});
 
+		execute(deviceQueue, [&](cl::sycl::handler &h) {
 			auto vertexx = field.vertexx.access<W>(h);
 			auto vertexdx = field.vertexdx.access<W>(h);
-
-
 			// (t_xmin-2:t_xmax+3) inclusive
 			par_ranged<class APPEND_LN(build_field)>(h, {0, xrange + 1}, [=](id<1> id) {
 				vertexx[id] = 0.0;
 				vertexdx[id] = 0.0;
 			});
+		});
 
+		execute(deviceQueue, [&](cl::sycl::handler &h) {
 			auto vertexy = field.vertexy.access<W>(h);
 			auto vertexdy = field.vertexdy.access<W>(h);
 			// (t_ymin-2:t_ymax+3) inclusive
@@ -222,8 +217,8 @@ void build_field(global_variables &globals) {
 				vertexy[id] = 0.0;
 				vertexdy[id] = 0.0;
 			});
-
 		});
+
 
 	}
 

@@ -116,6 +116,11 @@ void calc_dt_kernel(
 //	},
 //	Kokkos::Min<double>(dt_min_val));
 
+	par_ranged<class dt_min>(h, {0, 1}, [=](id<2>) {
+		// TODO remove
+	});
+
+
 	//  Extract the mimimum timestep information
 	dtl_control = 10.01 * (jk_control - (int) (jk_control));
 	jk_control = jk_control - (jk_control - (int) (jk_control));

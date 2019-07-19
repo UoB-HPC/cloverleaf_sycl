@@ -27,32 +27,44 @@
 //  @details Copies all of the final end of step filed data to the begining of
 //  step data, ready for the next timestep.
 void reset_field_kernel(
-		handler &h,
+		queue &q,
 		int x_min, int x_max, int y_min, int y_max,
-		Accessor<double, 2, RW>::Type density0,
-		Accessor<double, 2, RW>::Type density1,
-		Accessor<double, 2, RW>::Type energy0,
-		Accessor<double, 2, RW>::Type energy1,
-		Accessor<double, 2, RW>::Type xvel0,
-		Accessor<double, 2, RW>::Type xvel1,
-		Accessor<double, 2, RW>::Type yvel0,
-		Accessor<double, 2, RW>::Type yvel1) {
+		Buffer<double, 2> &density0_buffer,
+		Buffer<double, 2> &density1_buffer,
+		Buffer<double, 2> &energy0_buffer,
+		Buffer<double, 2> &energy1_buffer,
+		Buffer<double, 2> &xvel0_buffer,
+		Buffer<double, 2> &xvel1_buffer,
+		Buffer<double, 2> &yvel0_buffer,
+		Buffer<double, 2> &yvel1_buffer) {
 
-	// DO k=y_min,y_max
-	//   DO j=x_min,x_max
-	par_ranged<class reset_field_1>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
-			id<2> idx) {
-		density0[idx] = density1[idx];
-		energy0[idx] = energy1[idx];
+	execute(q, [&](handler &h) {
+		auto density0 = density0_buffer.access<RW>(h);
+		auto density1 = density1_buffer.access<RW>(h);
+		auto energy0 = energy0_buffer.access<RW>(h);
+		auto energy1 = energy1_buffer.access<RW>(h);
+		// DO k=y_min,y_max
+		//   DO j=x_min,x_max
+		par_ranged<class reset_field_1>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
+				id<2> idx) {
+			density0[idx] = density1[idx];
+			energy0[idx] = energy1[idx];
 
+		});
 	});
 
-	// DO k=y_min,y_max+1
-	//   DO j=x_min,x_max+1
-	par_ranged<class reset_field_2>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
-			id<2> idx) {
-		xvel0[idx] = xvel1[idx];
-		yvel0[idx] = yvel1[idx];
+	execute(q, [&](handler &h) {
+		auto xvel1 = xvel1_buffer.access<RW>(h);
+		auto yvel0 = yvel0_buffer.access<RW>(h);
+		auto yvel1 = yvel1_buffer.access<RW>(h);
+		auto xvel0 = xvel0_buffer.access<RW>(h);
+		// DO k=y_min,y_max+1
+		//   DO j=x_min,x_max+1
+		par_ranged<class reset_field_2>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
+				id<2> idx) {
+			xvel0[idx] = xvel1[idx];
+			yvel0[idx] = yvel1[idx];
+		});
 	});
 
 }
@@ -67,27 +79,25 @@ void reset_field(global_variables &globals) {
 	if (globals.profiler_on) kernel_time = timer();
 
 
-	execute(globals.queue, [&](handler &h) {
+	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 
-		for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
+		tile_type &t = globals.chunk.tiles[tile];
+		reset_field_kernel(
+				globals.queue,
+				t.info.t_xmin,
+				t.info.t_xmax,
+				t.info.t_ymin,
+				t.info.t_ymax,
 
-			tile_type &t = globals.chunk.tiles[tile];
-			reset_field_kernel(
-					h,
-					t.info.t_xmin,
-					t.info.t_xmax,
-					t.info.t_ymin,
-					t.info.t_ymax,
-					t.field.density0.access<RW>(h),
-					t.field.density1.access<RW>(h),
-					t.field.energy0.access<RW>(h),
-					t.field.energy1.access<RW>(h),
-					t.field.xvel0.access<RW>(h),
-					t.field.xvel1.access<RW>(h),
-					t.field.yvel0.access<RW>(h),
-					t.field.yvel1.access<RW>(h));
-		}
-	});
+				t.field.density0,
+				t.field.density1,
+				t.field.energy0,
+				t.field.energy1,
+				t.field.xvel0,
+				t.field.xvel1,
+				t.field.yvel0,
+				t.field.yvel1);
+	}
 
 
 	if (globals.profiler_on) globals.profiler.reset += timer() - kernel_time;

@@ -24,44 +24,43 @@
 #include "definitions.h"
 #include "sycl_utils.hpp"
 
-void
-clover_pack_message_left(handler&h, int x_min, int x_max, int y_min, int y_max, Accessor<double, 2, RW>::Type field,
-                         Accessor<double, 1, RW>::Type left_snd_buffer, int cell_data, int vertex_data,
-                         int x_face_fata, int y_face_data, int depth, int field_type,
-                         int buffer_offset);
-void clover_unpack_message_left(handler&h, int x_min, int x_max, int y_min, int y_max,
-                                Accessor<double, 2, RW>::Type field,
-                                Accessor<double, 1, RW>::Type left_rcv_buffer, int cell_data,
+void clover_pack_message_left(queue &q, int x_min, int x_max, int y_min, int y_max,
+                              Buffer<double, 2> &field,
+                              Buffer<double, 1> &left_snd_buffer, int cell_data, int vertex_data,
+                              int x_face_fata, int y_face_data, int depth, int field_type,
+                              int buffer_offset);
+void clover_unpack_message_left(queue &q, int x_min, int x_max, int y_min, int y_max,
+                                Buffer<double, 2> &field,
+                                Buffer<double, 1> &left_rcv_buffer, int cell_data,
                                 int vertex_data, int x_face_fata, int y_face_data, int depth,
                                 int field_type, int buffer_offset);
-void clover_pack_message_right(handler&h, int x_min, int x_max, int y_min, int y_max,
-                               Accessor<double, 2, RW>::Type field,
-                               Accessor<double, 1, RW>::Type right_snd_buffer, int cell_data,
+void clover_pack_message_right(queue &q, int x_min, int x_max, int y_min, int y_max,
+                               Buffer<double, 2> &field,
+                               Buffer<double, 1> &right_snd_buffer, int cell_data,
                                int vertex_data, int x_face_fata, int y_face_data, int depth,
                                int field_type, int buffer_offset);
-void clover_unpack_message_right(handler&h, int x_min, int x_max, int y_min, int y_max,
-                                 Accessor<double, 2, RW>::Type field,
-                                 Accessor<double, 1, RW>::Type right_rcv_buffer, int cell_data,
+void clover_unpack_message_right(queue &q, int x_min, int x_max, int y_min, int y_max,
+                                 Buffer<double, 2> &field,
+                                 Buffer<double, 1> &right_rcv_buffer, int cell_data,
                                  int vertex_data, int x_face_fata, int y_face_data, int depth,
                                  int field_type, int buffer_offset);
-void
-clover_pack_message_top(handler&h, int x_min, int x_max, int y_min, int y_max, Accessor<double, 2, RW>::Type field,
-                        Accessor<double, 1, RW>::Type top_snd_buffer, int cell_data, int vertex_data,
-                        int x_face_fata, int y_face_data, int depth, int field_type,
-                        int buffer_offset);
-void clover_unpack_message_top(handler&h, int x_min, int x_max, int y_min, int y_max,
-                               Accessor<double, 2, RW>::Type field,
-                               Accessor<double, 1, RW>::Type top_rcv_buffer, int cell_data,
+void clover_pack_message_top(queue &q, int x_min, int x_max, int y_min, int y_max, Buffer<double, 2> &field,
+                             Buffer<double, 1> &top_snd_buffer, int cell_data, int vertex_data,
+                             int x_face_fata, int y_face_data, int depth, int field_type,
+                             int buffer_offset);
+void clover_unpack_message_top(queue &q, int x_min, int x_max, int y_min, int y_max,
+                               Buffer<double, 2> &field,
+                               Buffer<double, 1> &top_rcv_buffer, int cell_data,
                                int vertex_data, int x_face_fata, int y_face_data, int depth,
                                int field_type, int buffer_offset);
-void clover_pack_message_bottom(handler&h, int x_min, int x_max, int y_min, int y_max,
-                                Accessor<double, 2, RW>::Type field,
-                                Accessor<double, 1, RW>::Type bottom_snd_buffer, int cell_data,
+void clover_pack_message_bottom(queue &q, int x_min, int x_max, int y_min, int y_max,
+                                Buffer<double, 2> &field,
+                                Buffer<double, 1> &bottom_snd_buffer, int cell_data,
                                 int vertex_data, int x_face_fata, int y_face_data, int depth,
                                 int field_type, int buffer_offset);
-void clover_unpack_message_bottom(handler&h, int x_min, int x_max, int y_min, int y_max,
-                                  Accessor<double, 2, RW>::Type field,
-                                  Accessor<double, 1, RW>::Type bottom_rcv_buffer, int cell_data,
+void clover_unpack_message_bottom(queue &q, int x_min, int x_max, int y_min, int y_max,
+                                  Buffer<double, 2> &field,
+                                  Buffer<double, 1> &bottom_rcv_buffer, int cell_data,
                                   int vertex_data, int x_face_fata, int y_face_data, int depth,
                                   int field_type, int buffer_offset);
 

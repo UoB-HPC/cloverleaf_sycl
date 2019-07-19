@@ -52,11 +52,9 @@ void revert_kernel(
 void revert(global_variables &globals) {
 
 
-	execute(globals.queue, [&](handler &h) {
+	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 
-
-		for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
-
+		execute(globals.queue, [&](handler &h) {
 			tile_type &t = globals.chunk.tiles[tile];
 			revert_kernel(
 					h,
@@ -68,8 +66,8 @@ void revert(global_variables &globals) {
 					t.field.density1.access<RW>(h),
 					t.field.energy0.access<RW>(h),
 					t.field.energy1.access<RW>(h));
-		}
-	});
+		});
+	}
 
 }
 
