@@ -11,12 +11,11 @@ void test() {
 	std::cout << "Device:" << deviceQueue.get_device().get_info<cl::sycl::info::device::vendor>()
 	          << std::endl;
 
-	auto xs = Buffer<double , 2>(range<2>(10, 10));
+	auto xs = Buffer<double, 2>(range<2>(10, 10));
 
 	execute(deviceQueue, [&](cl::sycl::handler &h) {
 		cl::sycl::stream os(1024, 128, h);
 		auto xsa = xs.access<RW>(h);
-
 
 
 		par_ranged<class aa>(h, {0, 0, 10, 10}, [=](id<2> idx) {
@@ -24,7 +23,7 @@ void test() {
 		});
 
 		par_ranged<class bb>(h, {0, 0, 10, 10}, [=](id<2> idx) {
-			xsa[idx] *=2;
+			xsa[idx] *= 2;
 		});
 
 

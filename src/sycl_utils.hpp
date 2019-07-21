@@ -50,10 +50,12 @@ struct Buffer {
 //	Buffer() {};
 
 	static cl::sycl::range<N> show(cl::sycl::range<N> range) {
-		if (N == 1)
-			std::cout << "Buffer<" << N << ">(range1d=" << range.get(0) << ")\n";
-		else if (N == 2)
-			std::cout << "Buffer<" << N << ">(range2d=" << range.get(0) << "," << range.get(1) << ")\n";
+		if (DEBUG) {
+			if (N == 1)
+				std::cout << "Buffer<" << N << ">(range1d=" << range.get(0) << ")\n";
+			else if (N == 2)
+				std::cout << "Buffer<" << N << ">(range2d=" << range.get(0) << "," << range.get(1) << ")\n";
+		}
 		return range;
 	}
 
@@ -69,11 +71,12 @@ struct Buffer {
 	template<cl::sycl::access::mode mode>
 	inline typename Accessor<T, N, mode>::Type
 	access(cl::sycl::handler &cgh) {
-
-		if (N == 1) std::cout << "buffer->access_1d( " << buffer.get_range().get(0) << " )\n";
-		else if (N == 2)
-			std::cout << "buffer->access_2d( " << buffer.get_range().get(0) << "," << buffer.get_range().get(1)
-			          << " )\n";
+		if (DEBUG) {
+			if (N == 1) std::cout << "buffer->access_1d( " << buffer.get_range().get(0) << " )\n";
+			else if (N == 2)
+				std::cout << "buffer->access_2d( " << buffer.get_range().get(0) << "," << buffer.get_range().get(1)
+				          << " )\n";
+		}
 		return Accessor<T, N, mode>::from(buffer, cgh);
 	}
 
@@ -133,13 +136,10 @@ inline void par_ranged(cl::sycl::handler &cgh, const Range2d &range, const funct
 }
 template<typename T>
 inline void execute(cl::sycl::queue &queue, T cgf) {
-
-
 	if (DEBUG) std::cout << "Execute" << std::endl;
-
 	try {
 		queue.submit(cgf);
-		queue.wait_and_throw();
+		if (DEBUG) queue.wait_and_throw();
 	} catch (cl::sycl::device_error &e) {
 		std::cerr << "[SYCL] Device error: : `" << e.what() << "`" << std::endl;
 		throw e;

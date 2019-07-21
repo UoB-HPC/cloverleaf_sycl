@@ -35,6 +35,8 @@
 #include "update_halo.h"
 #include "visit.h"
 #include "cxx14_compat.hpp"
+#include <string>
+#include <sstream>
 
 extern std::ostream g_out;
 
@@ -66,12 +68,11 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 	int y_cells = top - bottom + 1;
 
 
-
-	auto handler = [] (cl::sycl::exception_list exceptions) {
-		for (std::exception_ptr const& e : exceptions) {
+	auto handler = [](cl::sycl::exception_list exceptions) {
+		for (std::exception_ptr const &e : exceptions) {
 			try {
 				std::rethrow_exception(e);
-			} catch(cl::sycl::exception const& e) {
+			} catch (cl::sycl::exception const &e) {
 				std::cout << "[SYCL] Async exception:\n"
 				          << e.what() << std::endl;
 			}
@@ -88,6 +89,17 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 			                         1, config.grid.y_cells,
 			                         config.tiles_per_chunk));
 
+
+	const cl::sycl::device &device = globals.queue.get_device();
+
+	auto exts = device.get_info<cl::sycl::info::device::extensions>();
+	std::ostringstream extensions;
+	std::copy(exts.begin(), exts.end(), std::ostream_iterator<std::string>(extensions, ","));
+
+
+	std::cout << "[SYCL] Device        : " << device.get_info<cl::sycl::info::device::name>() << "\n";
+	std::cout << "[SYCL]  - Vendor     : " << device.get_info<cl::sycl::info::device::vendor>() << "\n";
+	std::cout << "[SYCL]  - Extensions : " << extensions.str() << "\n";
 
 //	globals.chunk.left = left;
 //	globals.chunk.bottom = bottom;

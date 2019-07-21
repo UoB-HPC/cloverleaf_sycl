@@ -20,7 +20,7 @@
 #ifndef GRID_H
 #define GRID_H
 
-#define DEBUG true
+#define DEBUG false
 
 #define CL_TARGET_OPENCL_VERSION 220
 
@@ -70,7 +70,6 @@ template<int N = 1>
 inline id<2> j(id<2> x) { return xy<N, 0>(x); }
 template<int N = 1>
 inline id<2> k(id<2> x) { return xy<0, N>(x); }
-
 
 
 enum geometry_type {
@@ -235,11 +234,7 @@ struct field_type {
 			vertexdy(range<1>(yrange + 1)),
 			volume(range<2>(xrange, yrange)),
 			xarea(range<2>(xrange + 1, yrange)),
-			yarea(range<2>(xrange, yrange + 1)) {
-
-		std::cout << "f_t mkrange x=" << xrange << ", y=" << yrange << std::endl;
-
-	}
+			yarea(range<2>(xrange, yrange + 1)) {}
 
 
 };
