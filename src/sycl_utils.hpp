@@ -24,6 +24,8 @@
 #include <iostream>
 #include <utility>
 
+#define DEBUG false
+
 template<typename T,
 		int N,
 		cl::sycl::access::mode mode>

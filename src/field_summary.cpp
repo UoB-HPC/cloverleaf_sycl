@@ -22,6 +22,7 @@
 #include "timer.h"
 #include "ideal_gas.h"
 #include "sycl_utils.hpp"
+#include "sycl_reduction.hpp"
 
 #include <iomanip>
 
@@ -31,105 +32,6 @@ extern std::ostream g_out;
 //  @author Wayne Gaudin
 //  @details The total mass, internal energy, kinetic energy and volume weighted
 //  pressure for the chunk is calculated.
-
-// Kokkos cannot yet handle reductions over multiple variables using Lambda functions, but can using the functor version.
-struct field_summary_functor {
-
-	// Structure of variables to reduce
-	typedef struct {
-		double vol, mass, ie, ke, press;
-	} value_type;
-
-	// Functor data member (kernel arguments)
-	int x_min, x_max, y_min, y_max;
-	Buffer<double, 2> volume;
-	Buffer<double, 2> density0;
-	Buffer<double, 2> energy0;
-	Buffer<double, 2> pressure;
-	Buffer<double, 2> xvel0;
-	Buffer<double, 2> yvel0;
-
-	// Constructor, which saves the kernel arguments
-	field_summary_functor(
-			int x_min_, int x_max_, int y_min_, int y_max_,
-			Buffer<double, 2> volume_,
-			Buffer<double, 2> density0_,
-			Buffer<double, 2> energy0_,
-			Buffer<double, 2> pressure_,
-			Buffer<double, 2> xvel0_,
-			Buffer<double, 2> yvel0) :
-
-			x_min(x_min_), x_max(x_max_), y_min(y_min_), y_max(y_max_),
-			volume(volume_),
-			density0(density0_),
-			energy0(energy0_),
-			pressure(pressure_),
-			xvel0(xvel0_),
-			yvel0(yvel0) {}
-
-	// Kernel body
-	// KOKKOS_INLINE_FUNCTION
-	void operator()(const int i, value_type &update) const {
-
-		const int j = x_min + 1 + i % (x_max - x_min + 1);
-		const int k = y_min + 1 + i / (x_max - x_min + 1);
-
-		//
-		// START OF THE KERNEL
-		//
-
-		// FIXME enable and rewrite
-//		double vsqrd = 0.0;
-//		for (int kv = k; kv <= k + 1; ++kv) {
-//			for (int jv = j; jv <= j + 1; ++jv) {
-//				vsqrd += 0.25 * (xvel0(jv, kv) * xvel0(jv, kv) + yvel0(jv, kv) * yvel0(jv, kv));
-//			}
-//		}
-//		double cell_vol = volume(j, k);
-//		double cell_mass = cell_vol * density0(j, k);
-//		update.vol += cell_vol;
-//		update.mass += cell_mass;
-//		update.ie += cell_mass * energy0(j, k);
-//		update.ke += cell_mass * 0.5 * vsqrd;
-//		update.press += cell_vol * pressure(j, k);
-
-		//
-		// END  OF THE KERNEL
-		//
-
-	};
-
-	// Tell Kokkos how to reduce value_type
-	// KOKKOS_INLINE_FUNCTION
-	void join(value_type &update, const value_type &input) const {
-		update.vol += input.vol;
-		update.mass += input.mass;
-		update.ie += input.ie;
-		update.ke += input.ke;
-		update.press += input.press;
-	}
-
-	// KOKKOS_INLINE_FUNCTION
-	void join(volatile value_type &update, const volatile value_type &input) const {
-		update.vol += input.vol;
-		update.mass += input.mass;
-		update.ie += input.ie;
-		update.ke += input.ke;
-		update.press += input.press;
-	}
-
-	// Initial values
-	// KOKKOS_INLINE_FUNCTION
-	static void init(value_type &update) {
-		update.vol = 0.0;
-		update.mass = 0.0;
-		update.ie = 0.0;
-		update.ke = 0.0;
-		update.press = 0.0;
-	}
-};
-
-
 //  @brief Driver for the field summary kernels
 //  @author Wayne Gaudin
 //  @details The user specified field summary kernel is invoked here. A summation
@@ -138,6 +40,22 @@ struct field_summary_functor {
 //  result and the difference output.
 //  Note the reference solution is the value returned from an Intel compiler with
 //  ieee options set on a single core crun.
+
+
+struct captures {
+	Accessor<double, 2, RW>::Type volume;
+	Accessor<double, 2, RW>::Type density0;
+	Accessor<double, 2, RW>::Type energy0;
+	Accessor<double, 2, RW>::Type pressure;
+	Accessor<double, 2, RW>::Type xvel0;
+	Accessor<double, 2, RW>::Type yvel0;
+};
+
+struct value_type {
+	double vol = 0.0, mass = 0.0, ie = 0.0, ke = 0.0, press = 0.0;
+};
+
+typedef local_reducer<value_type, value_type, captures> ctx;
 
 void field_summary(global_variables &globals, parallel_ &parallel) {
 
@@ -172,35 +90,72 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 	double ke = 0.0;
 	double press = 0.0;
 
+
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
-		field_summary_functor functor(
-				globals.chunk.tiles[tile].info.t_xmin,
-				globals.chunk.tiles[tile].info.t_xmax,
-				globals.chunk.tiles[tile].info.t_ymin,
-				globals.chunk.tiles[tile].info.t_ymax,
-				globals.chunk.tiles[tile].field.volume,
-				globals.chunk.tiles[tile].field.density0,
-				globals.chunk.tiles[tile].field.energy0,
-				globals.chunk.tiles[tile].field.pressure,
-				globals.chunk.tiles[tile].field.xvel0,
-				globals.chunk.tiles[tile].field.yvel0);
+		tile_type &t = globals.chunk.tiles[tile];
 
-		typename field_summary_functor::value_type result;
+		int ymax = t.info.t_ymax;
+		int ymin = t.info.t_ymin;
+		int xmax = t.info.t_xmax;
+		int xmin = t.info.t_xmin;
+		Range1d policy(0, (ymax - ymin + 1) * (xmax - xmin + 1));
 
-		// Use a 1D parallel for because 2D reduction results in shared memory segfaults on a GPU
+		Buffer<value_type, 1> result(range<1>(policy.size));
 
-		// FIXME enable and rewrite
-//		Kokkos::parallel_reduce("field_summary",
-//		                        (globals.chunk.tiles[tile].t_ymax -
-//		                         globals.chunk.tiles[tile].t_ymin + 1) *
-//		                        (globals.chunk.tiles[tile].t_xmax -
-//		                         globals.chunk.tiles[tile].t_xmin + 1), functor, result);
+		par_reduce_1d<class field_summary>(
+				globals.queue, policy,
+				[=](handler &h, size_t &size) mutable {
+					return ctx(h, size,
+					           {t.field.volume.access<RW>(h),
+					            t.field.density0.access<RW>(h),
+					            t.field.energy0.access<RW>(h),
+					            t.field.pressure.access<RW>(h),
+					            t.field.xvel0.access<RW>(h),
+					            t.field.yvel0.access<RW>(h)},
+					           result.buffer);
+				},
+				[](ctx ctx, id<1> lidx) { ctx.local[lidx] = {}; },
+				[ymax, ymin, xmax, xmin](ctx ctx, id<1> lidx, id<1> idx) {
 
-		vol = result.vol;
-		mass = result.mass;
-		ie = result.ie;
-		ke = result.ke;
-		press = result.press;
+					const int j = xmin + 1 + idx[0] % (xmax - xmin + 1);
+					const int k = ymin + 1 + idx[0] / (xmax - xmin + 1);
+
+
+					double vsqrd = 0.0;
+					for (int kv = k; kv <= k + 1; ++kv) {
+						for (int jv = j; jv <= j + 1; ++jv) {
+							vsqrd += 0.25 * (
+									ctx.actual.xvel0[jv][kv] * ctx.actual.xvel0[jv][kv] +
+									ctx.actual.yvel0[jv][kv] * ctx.actual.yvel0[jv][kv]);
+						}
+					}
+					double cell_vol = ctx.actual.volume[j][k];
+					double cell_mass = cell_vol * ctx.actual.density0[j][k];
+
+					ctx.local[lidx].vol = cell_vol;
+					ctx.local[lidx].mass = cell_mass;
+					ctx.local[lidx].ie = cell_mass * ctx.actual.energy0[j][k];
+					ctx.local[lidx].ke = cell_mass * 0.5 * vsqrd;
+					ctx.local[lidx].press = cell_vol * ctx.actual.pressure[j][k];
+				},
+				[](ctx ctx, id<1> idx, id<1> idy) {
+					ctx.local[idx].vol += ctx.local[idy].vol;
+					ctx.local[idx].mass += ctx.local[idy].mass;
+					ctx.local[idx].ie += ctx.local[idy].ie;
+					ctx.local[idx].ke += ctx.local[idy].ke;
+					ctx.local[idx].press += ctx.local[idy].press;
+				},
+				[](ctx ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
+
+		{
+			vol = result.access<R>()[0].vol;
+			mass = result.access<R>()[0].mass;
+			ie = result.access<R>()[0].ie;
+			ke = result.access<R>()[0].ke;
+			press = result.access<R>()[0].press;
+		}
+
+
 	}
 
 	clover_sum(vol);

@@ -16,6 +16,9 @@ include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 SET(SOURCES
         src/cxx14_compat.hpp
 
+        src/sycl_reduction.hpp
+        src/sycl_utils.hpp
+
         src/accelerate.cpp
         src/advec_cell.cpp
         src/advec_mom.cpp
@@ -45,12 +48,10 @@ SET(SOURCES
         src/update_tile_halo_kernel.cpp
         src/viscosity.cpp
         src/visit.cpp
-#
-#         src/_main.cpp
-#        src/_main_nosycl.cpp
+
+#                src/_main.cpp
+        #        src/_main_nosycl.cpp
         )
-
-
 
 
 add_executable(clover_leaf ${SOURCES})
@@ -69,7 +70,7 @@ target_compile_options(clover_leaf
         )
 
 # -fsanitize=address
-set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer  -march=native -g)
+set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer -march=native -g)
 set(RELEASE_OPTIONS -O3 -march=native -g)
 
 #target_link_libraries(clover_leaf PUBLIC $<$<CONFIG:DEBUG>:-Wl,-lasan>) # must come before any other libraries
