@@ -30,12 +30,12 @@ void accelerate_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		Accessor<double, 2, RW>::Type xarea,
-		Accessor<double, 2, RW>::Type yarea,
-		Accessor<double, 2, RW>::Type volume,
-		Accessor<double, 2, RW>::Type density0,
-		Accessor<double, 2, RW>::Type pressure,
-		Accessor<double, 2, RW>::Type viscosity,
+		Accessor<double, 2, R>::Type xarea,
+		Accessor<double, 2, R>::Type yarea,
+		Accessor<double, 2, R>::Type volume,
+		Accessor<double, 2, R>::Type density0,
+		Accessor<double, 2, R>::Type pressure,
+		Accessor<double, 2, R>::Type viscosity,
 		Accessor<double, 2, RW>::Type xvel0,
 		Accessor<double, 2, RW>::Type yvel0,
 		Accessor<double, 2, RW>::Type xvel1,
@@ -50,34 +50,26 @@ void accelerate_kernel(
 
 
 	par_ranged<class accelerate>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
-			id<2> id) {
+			id<2> idx) {
 
-		double stepbymass_s = halfdt / ((density0[jk<-1, -1>(id)] * volume[jk<-1, -1>(id)]
-		                                 + density0[j<-1>(id)] * volume[j<-1>(id)]
-		                                 + density0[id] * volume[id]
-		                                 + density0[k<-1>(id)] * volume[k<-1>(id)])
+		double stepbymass_s = halfdt / ((density0[jk<-1, -1>(idx)] * volume[jk<-1, -1>(idx)]
+		                                 + density0[j<-1>(idx)] * volume[j<-1>(idx)]
+		                                 + density0[idx] * volume[idx]
+		                                 + density0[k<-1>(idx)] * volume[k<-1>(idx)])
 		                                * 0.25);
 
-		xvel1[id] =
-				xvel0[id] - stepbymass_s * (xarea[id] * (pressure[id] - pressure[k<-1>(id)])
-				                            + xarea[j<-1>(id)] *
-				                              (pressure[j<-1>(id)] -
-				                               pressure[jk<-1, -1>(id)]));
-		yvel1[id] =
-				yvel0[id] - stepbymass_s * (yarea[id] * (pressure[id] - pressure[j<-1>(id)])
-				                            + yarea[k<-1>(id)] *
-				                              (pressure[k<-1>(id)] -
-				                               pressure[jk<-1, -1>(id)]));
-		xvel1[id] =
-				xvel1[id] -
-				stepbymass_s * (xarea[id] * (viscosity[id] - viscosity[k<-1>(id)])
-				                + xarea[j<-1>(id)] *
-				                  (viscosity[j<-1>(id)] - viscosity[jk<-1, -1>(id)]));
-		yvel1[id] =
-				yvel1[id] -
-				stepbymass_s * (yarea[id] * (viscosity[id] - viscosity[j<-1>(id)])
-				                + yarea[k<-1>(id)] *
-				                  (viscosity[k<-1>(id)] - viscosity[jk<-1, -1>(id)]));
+		xvel1[idx] = xvel0[idx] - stepbymass_s *
+		                          (xarea[idx] * (pressure[idx] - pressure[j<-1>(idx)]) +
+		                           xarea[k<-1>(idx)] * (pressure[k<-1>(idx)] - pressure[jk<-1, -1>(idx)]));
+		yvel1[idx] = yvel0[idx] - stepbymass_s *
+		                          (yarea[idx] * (pressure[idx] - pressure[k<-1>(idx)]) +
+		                           yarea[j<-1>(idx)] * (pressure[j<-1>(idx)] - pressure[jk<-1, -1>(idx)]));
+		xvel1[idx] = xvel1[idx] - stepbymass_s *
+		                          (xarea[idx] * (viscosity[idx] - viscosity[j<-1>(idx)]) +
+		                           xarea[k<-1>(idx)] * (viscosity[k<-1>(idx)] - viscosity[jk<-1, -1>(idx)]));
+		yvel1[idx] = yvel1[idx] - stepbymass_s *
+		                          (yarea[idx] * (viscosity[idx] - viscosity[k<-1>(idx)]) +
+		                           yarea[j<-1>(idx)] * (viscosity[j<-1>(idx)] - viscosity[jk<-1, -1>(idx)]));
 
 
 	});
@@ -105,12 +97,12 @@ void accelerate(global_variables &globals) {
 					t.info.t_ymin,
 					t.info.t_ymax,
 					globals.dt,
-					t.field.xarea.access<RW>(h),
-					t.field.yarea.access<RW>(h),
-					t.field.volume.access<RW>(h),
-					t.field.density0.access<RW>(h),
-					t.field.pressure.access<RW>(h),
-					t.field.viscosity.access<RW>(h),
+					t.field.xarea.access<R>(h),
+					t.field.yarea.access<R>(h),
+					t.field.volume.access<R>(h),
+					t.field.density0.access<R>(h),
+					t.field.pressure.access<R>(h),
+					t.field.viscosity.access<R>(h),
 					t.field.xvel0.access<RW>(h),
 					t.field.yvel0.access<RW>(h),
 					t.field.xvel1.access<RW>(h),

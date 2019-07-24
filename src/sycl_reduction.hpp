@@ -141,8 +141,8 @@ static inline void par_reduce_2d(cl::sycl::queue &q, const Range2d &range,
 	>(q, range,
 	  [](Range2d r) { return r.sizeX * r.sizeY; },
 	  [](cl::sycl::id<1> gid, Range2d r) {
-		  const size_t x = gid[0] % r.sizeX + r.fromX;
-		  const size_t y = gid[0] / r.sizeY + r.fromY;
+		  const size_t x = r.fromX + (gid[0] % (r.sizeX));
+		  const size_t y = r.fromY + (gid[0] / (r.sizeX));
 		  return cl::sycl::id<2>(x, y);
 	  },
 	  allocator, empty, functor, combiner, finaliser);

@@ -26,6 +26,7 @@
 
 #define DEBUG false
 
+
 template<typename T,
 		int N,
 		cl::sycl::access::mode mode>
@@ -115,6 +116,13 @@ struct Range2d {
 		assert(sizeX != 0);
 		assert(sizeY != 0);
 	}
+	friend std::ostream &operator<<(std::ostream &os, const Range2d &d) {
+		os << "Range2d{"
+		   << " X[" << d.fromX << "->" << d.toX << " (" << d.sizeX << ")]"
+		   << " Y[" << d.fromY << "->" << d.toY << " (" << d.sizeY << ")]"
+		   << "}";
+		return os;
+	}
 };
 
 template<typename nameT, typename functorT>
@@ -141,7 +149,7 @@ inline void execute(cl::sycl::queue &queue, T cgf) {
 	if (DEBUG) std::cout << "Execute" << std::endl;
 	try {
 		queue.submit(cgf);
-		if (DEBUG) queue.wait_and_throw();
+		queue.wait_and_throw();
 	} catch (cl::sycl::device_error &e) {
 		std::cerr << "[SYCL] Device error: : `" << e.what() << "`" << std::endl;
 		throw e;

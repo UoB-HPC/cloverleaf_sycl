@@ -59,18 +59,54 @@ constexpr cl::sycl::access::mode W = cl::sycl::access::mode::write;
 constexpr cl::sycl::access::mode RW = cl::sycl::access::mode::read_write;
 
 
-template<int X = 0, int Y = 0>
-inline id<2> xy(id<2> x) { return x + id<2>(X, Y); }
+template<int X, int Y>
+inline id<2> xy(id<2> x) {
+	return id<2>(static_cast<int>(x[0]) + X, static_cast<int>(x[1]) + Y);
+}
 
 template<int X = 0, int Y = 0>
 inline id<2> jk(id<2> x) { return xy<X, Y>(x); }
 
 
-template<int N = 1>
+template<int N>
 inline id<2> j(id<2> x) { return xy<N, 0>(x); }
-template<int N = 1>
+template<int N>
 inline id<2> k(id<2> x) { return xy<0, N>(x); }
 
+
+#include <fstream>
+#include <iostream>
+
+static inline void record(const std::string &name, const std::function<void(std::ofstream &)> &f) {
+	std::ofstream out;
+	out.open(name, std::ofstream::out | std::ofstream::trunc);
+	f(out);
+	out.close();
+}
+
+static inline void show(std::ostream &out, const std::string &name, Buffer<double, 1> &buffer) {
+	auto view = buffer.template access<R>();
+	const range<1> &range = view.get_range();
+	out << name << "(" << 1 << ") [" << range[0] << "]" << std::endl;
+	out << "\t";
+	for (size_t i = 0; i < range[0]; ++i) {
+		out << view[i] << ", ";
+	}
+	out << std::endl;
+}
+
+static inline void show(std::ostream &out, const std::string &name, Buffer<double, 2> &buffer) {
+	auto view = buffer.access<R>();
+	const range<2> &range = view.get_range();
+	out << name << "(" << 2 << ") [" << range[0] << "x" << range[1] << "]" << std::endl;
+	for (size_t i = 0; i < range[0]; ++i) {
+		out << "\t";
+		for (size_t j = 0; j < range[1]; ++j) {
+			out << view[i][j] << ", ";
+		}
+		out << std::endl;
+	}
+}
 
 enum geometry_type {
 	g_rect = 1, g_circ = 2, g_point = 3
@@ -387,7 +423,7 @@ struct global_variables {
 	double dt;
 	double dtold;
 
-	bool complete;
+	bool complete = false;
 	int jdt, kdt;
 
 
@@ -405,6 +441,89 @@ struct global_variables {
 			dt(config.dtinit),
 			dtold(config.dtinit),
 			profiler_on(config.profiler_on) {}
+
+
+	void dump(const std::string &name) {
+
+		record(name, [&](std::ostream &out) {
+			out << "Dump(tileCount = " << chunk.tiles.size() << ")" << std::endl;
+
+
+			out << "error_condition" << '=' << error_condition << std::endl;
+
+			out << "step" << '=' << step << std::endl;
+			out << "advect_x" << '=' << advect_x << std::endl;
+			out << "time" << '=' << time << std::endl;
+
+			out << "dt" << '=' << dt << std::endl;
+			out << "dtold" << '=' << dtold << std::endl;
+
+			out << "complete" << '=' << complete << std::endl;
+			out << "jdt" << '=' << jdt << std::endl;
+			out << "kdt" << '=' << kdt << std::endl;
+
+
+			for (size_t i = 0; i < chunk.tiles.size(); ++i) {
+				auto fs = chunk.tiles[i].field;
+				out << "\tTile[ " << i << "]:" << std::endl;
+
+				tile_info &info = chunk.tiles[i].info;
+				for (int l = 0; l < 4; ++l) {
+					out << "info.tile_neighbours[i]" << '=' << info.tile_neighbours[i] << std::endl;
+					out << "info.external_tile_mask[i]" << '=' << info.external_tile_mask[i] << std::endl;
+				}
+
+				out << "info.t_xmin" << '=' << info.t_xmin << std::endl;
+				out << "info.t_xmax" << '=' << info.t_xmax << std::endl;
+				out << "info.t_ymin" << '=' << info.t_ymin << std::endl;
+				out << "info.t_ymax" << '=' << info.t_ymax << std::endl;
+				out << "info.t_left" << '=' << info.t_left << std::endl;
+				out << "info.t_right" << '=' << info.t_right << std::endl;
+				out << "info.t_bottom" << '=' << info.t_bottom << std::endl;
+				out << "info.t_top" << '=' << info.t_top << std::endl;
+
+
+				show(out, "density0", fs.density0);
+				show(out, "density1", fs.density1);
+				show(out, "energy0", fs.energy0);
+				show(out, "energy1", fs.energy1);
+				show(out, "pressure", fs.pressure);
+				show(out, "viscosity", fs.viscosity);
+				show(out, "soundspeed", fs.soundspeed);
+				show(out, "xvel0", fs.xvel0);
+				show(out, "xvel1", fs.xvel1);
+				show(out, "yvel0", fs.yvel0);
+				show(out, "yvel1", fs.yvel1);
+				show(out, "vol_flux_x", fs.vol_flux_x);
+				show(out, "vol_flux_y", fs.vol_flux_y);
+				show(out, "mass_flux_x", fs.mass_flux_x);
+				show(out, "mass_flux_y", fs.mass_flux_y);
+
+				show(out, "work_array1", fs.work_array1); // node_flux, stepbymass, volume_change, pre_vol
+				show(out, "work_array2", fs.work_array2); // node_mass_post, post_vol
+				show(out, "work_array3", fs.work_array3); // node_mass_pre,pre_mass
+				show(out, "work_array4", fs.work_array4); // advec_vel, post_mass
+				show(out, "work_array5", fs.work_array5); // mom_flux, advec_vol
+				show(out, "work_array6", fs.work_array6); // pre_vol, post_ener
+				show(out, "work_array7", fs.work_array7); // post_vol, ener_flux
+
+				show(out, "cellx", fs.cellx);
+				show(out, "celldx", fs.celldx);
+				show(out, "celly", fs.celly);
+				show(out, "celldy", fs.celldy);
+				show(out, "vertexx", fs.vertexx);
+				show(out, "vertexdx", fs.vertexdx);
+				show(out, "vertexy", fs.vertexy);
+				show(out, "vertexdy", fs.vertexdy);
+
+				show(out, "volume", fs.volume);
+				show(out, "xarea", fs.xarea);
+				show(out, "yarea", fs.yarea);
+			}
+		});
+
+	}
+
 };
 
 

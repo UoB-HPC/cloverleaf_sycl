@@ -65,7 +65,6 @@ void calc_dt_kernel(
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	// FIXME need par reduction for sycl
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
 	struct captures {
@@ -91,7 +90,7 @@ void calc_dt_kernel(
 
 
 	auto policy = Range2d(x_min + 1, y_min + 1, x_max + 2, y_max + 2);
-	Buffer<double, 1> result(range<1>(policy.sizeX *policy.sizeY));
+	Buffer<double, 1> result(range<1>(policy.sizeX * policy.sizeY));
 
 
 	par_reduce_2d<class dt_kernel_reduce>(
@@ -161,66 +160,8 @@ void calc_dt_kernel(
 			[](ctx ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
 
 	{
-		std::cout << "V=" << dt_min_val << ";\n";
 		dt_min_val = result.access<R>()[0];
-		std::cout << "V=" << dt_min_val << ";\n";
 	}
-
-
-
-//	Kokkos::parallel_reduce("calc_dt", policy,
-//	                        KOKKOS_LAMBDA(
-//	const int j,
-//	const int k,
-//	double &dt_min_val) {
-//
-//		double dsx = celldx(j);
-//		double dsy = celldy(k);
-//
-//		double cc = soundspeed(j, k) * soundspeed(j, k);
-//		cc = cc + 2.0 * viscosity_a(j, k) / density0(j, k);
-//		cc = MAX(sqrt(cc), g_small);
-//
-//		double dtct = dtc_safe * MIN(dsx, dsy) / cc;
-//
-//		double div = 0.0;
-//
-//		double dv1 = (xvel0(j, k) + xvel0(j, k + 1)) * xarea(j, k);
-//		double dv2 = (xvel0(j + 1, k) + xvel0(j + 1, k + 1)) * xarea(j + 1, k);
-//
-//		div = div + dv2 - dv1;
-//
-//		double dtut = dtu_safe * 2.0 * volume(j, k) /
-//		              MAX(MAX(fabs(dv1), fabs(dv2)), g_small * volume(j, k));
-//
-//		dv1 = (yvel0(j, k) + yvel0(j + 1, k)) * yarea(j, k);
-//		dv2 = (yvel0(j, k + 1) + yvel0(j + 1, k + 1)) * yarea(j, k + 1);
-//
-//		div = div + dv2 - dv1;
-//
-//		double dtvt = dtv_safe * 2.0 * volume(j, k) /
-//		              MAX(MAX(fabs(dv1), fabs(dv2)), g_small * volume(j, k));
-//
-//		div = div / (2.0 * volume(j, k));
-//
-//		double dtdivt;
-//		if (div < -g_small) {
-//			dtdivt = dtdiv_safe * (-1.0 / div);
-//		} else {
-//			dtdivt = g_big;
-//		}
-//
-//		dt_min_val = MIN(dt_min_val, dtct);
-//		dt_min_val = MIN(dt_min_val, dtut);
-//		dt_min_val = MIN(dt_min_val, dtvt);
-//		dt_min_val = MIN(dt_min_val, dtdivt);
-//
-//	},
-//	Kokkos::Min<double>(dt_min_val));
-
-//	par_ranged<class dt_min>(h, {0, 1}, [=](id<2>) {
-//		// TODO remove
-//	});
 
 
 	//  Extract the mimimum timestep information
@@ -233,10 +174,6 @@ void calc_dt_kernel(
 	//yl_pos = celly(kldt+1);
 
 	if (dt_min_val < dtmin) small = 1;
-
-//	cl::sycl::stream os(1024, 128, h);
-//
-
 
 
 	if (small != 0) {

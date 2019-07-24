@@ -70,6 +70,7 @@ target_compile_options(clover_leaf
         )
 
 # -fsanitize=address
+#set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer -fsanitize=address -march=native -g)
 set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer -march=native -g)
 set(RELEASE_OPTIONS -O3 -march=native -g)
 

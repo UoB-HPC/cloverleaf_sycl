@@ -70,7 +70,7 @@ void initialise_chunk(const int tile, global_variables &globals) {
 		auto vertexx = field.vertexx.access<W>(h);
 		auto vertexdx = field.vertexdx.access<W>(h);
 		par_ranged<class APPEND_LN(initialise)>(h, {0, xrange}, [=](id<1> j) {
-			vertexx[j] = xmin + dx * (double) (j[0] - 1 - x_min);
+			vertexx[j] = xmin + dx * (static_cast<int>(j[0]) - 1 - x_min);
 			vertexdx[j] = dx;
 		});
 	});
@@ -79,7 +79,7 @@ void initialise_chunk(const int tile, global_variables &globals) {
 		auto vertexy = field.vertexy.access<W>(h);
 		auto vertexdy = field.vertexdy.access<W>(h);
 		par_ranged<class APPEND_LN(initialise)>(h, {0, yrange}, [=](id<1> k) {
-			vertexy[k] = ymin + dy * (double) (k[0] - 1 - y_min);
+			vertexy[k] = ymin + dy * (static_cast<int>(k[0]) - 1 - y_min);
 			vertexdy[k] = dy;
 		});
 	});
