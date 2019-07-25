@@ -112,7 +112,7 @@ std::unique_ptr<global_variables> initialise(parallel_ &parallel) {
 
 	auto globals = start(parallel, config);
 
-	clover_barrier();
+	clover_barrier(*globals);
 
 	if (parallel.boss) {
 		g_out << "Starting the calculation" << std::endl;

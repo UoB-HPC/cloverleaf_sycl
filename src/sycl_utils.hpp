@@ -126,7 +126,7 @@ struct Range2d {
 };
 
 template<typename nameT, typename functorT>
-inline void par_ranged(cl::sycl::handler &cgh, const Range1d &range, const functorT &functor) {
+static inline void par_ranged(cl::sycl::handler &cgh, const Range1d &range, const functorT &functor) {
 	if (DEBUG)
 		std::cout << "par_ranged 1d:x=" << range.from << "(" << range.size << ")" << std::endl;
 	cgh.parallel_for<nameT>(
@@ -135,7 +135,7 @@ inline void par_ranged(cl::sycl::handler &cgh, const Range1d &range, const funct
 			functor);
 }
 template<typename nameT, typename functorT>
-inline void par_ranged(cl::sycl::handler &cgh, const Range2d &range, const functorT &functor) {
+static inline void par_ranged(cl::sycl::handler &cgh, const Range2d &range, const functorT &functor) {
 	if (DEBUG)
 		std::cout << "par_ranged 2d(x=" << range.fromX << "(" << range.sizeX << ")" << ", " << range.fromY << "("
 		          << range.sizeY << "))" << std::endl;
@@ -145,11 +145,11 @@ inline void par_ranged(cl::sycl::handler &cgh, const Range2d &range, const funct
 			functor);
 }
 template<typename T>
-inline void execute(cl::sycl::queue &queue, T cgf) {
+static void execute(cl::sycl::queue &queue, T cgf) {
 	if (DEBUG) std::cout << "Execute" << std::endl;
 	try {
 		queue.submit(cgf);
-		queue.wait_and_throw();
+		if (DEBUG) queue.wait_and_throw();
 	} catch (cl::sycl::device_error &e) {
 		std::cerr << "[SYCL] Device error: : `" << e.what() << "`" << std::endl;
 		throw e;

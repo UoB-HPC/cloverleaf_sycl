@@ -49,6 +49,7 @@ struct parallel_ {
 };
 
 void clover_abort();
+void clover_barrier(global_variables &globals);
 void clover_barrier();
 
 std::array<int, 4> clover_decompose(const global_config &globals, parallel_ &parallel, int x_cells, int y_cells,

@@ -133,7 +133,7 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 	// Line 92 start.f90
 	build_field(globals);
 
-	clover_barrier();
+	clover_barrier(globals);
 
 	clover_allocate_buffers(globals, parallel); // FIXME remove; basically no-op, moved to ctor
 
@@ -148,7 +148,7 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 
 //	globals.advect_x = true;
 
-	clover_barrier();
+	clover_barrier(globals);
 
 	// Do no profile the start up costs otherwise the total times will not add up
 	// at the end
@@ -187,7 +187,7 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 
 	if (config.visit_frequency != 0) visit(globals, parallel);
 
-	clover_barrier();
+	clover_barrier(globals);
 
 	globals.profiler_on = profiler_off;
 

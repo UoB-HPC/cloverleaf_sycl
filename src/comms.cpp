@@ -65,6 +65,11 @@ void clover_barrier() {
 	MPI_Barrier(MPI_COMM_WORLD);
 }
 
+void clover_barrier(global_variables &globals) {
+	clover_barrier();
+	globals.queue.wait_and_throw();
+}
+
 
 //  This decomposes the mesh into a number of chunks.
 //  The number of chunks may be a multiple of the number of mpi tasks
