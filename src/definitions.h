@@ -37,8 +37,6 @@
 #define NUM_FIELDS 15
 
 // Cannot call std::min or std::max from a CUDA kernel, so use these macros instead.
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#define MAX(a, b) (((a) >= (b)) ? (a) : (b))
 
 
 #define PP_CAT(a, b) PP_CAT_I(a, b)
@@ -47,16 +45,19 @@
 
 #define APPEND_LN(base) PP_CAT(base, __LINE__)
 
-using cl::sycl::accessor;
-using cl::sycl::queue;
-using cl::sycl::buffer;
-using cl::sycl::range;
-using cl::sycl::handler;
-using cl::sycl::id;
+using namespace cl;
 
-constexpr cl::sycl::access::mode R = cl::sycl::access::mode::read;
-constexpr cl::sycl::access::mode W = cl::sycl::access::mode::write;
-constexpr cl::sycl::access::mode RW = cl::sycl::access::mode::read_write;
+using sycl::accessor;
+using sycl::queue;
+using sycl::buffer;
+using sycl::range;
+using sycl::handler;
+using sycl::id;
+
+
+constexpr sycl::access::mode R = sycl::access::mode::read;
+constexpr sycl::access::mode W = sycl::access::mode::write;
+constexpr sycl::access::mode RW = sycl::access::mode::read_write;
 
 
 

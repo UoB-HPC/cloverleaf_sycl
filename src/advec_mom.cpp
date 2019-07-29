@@ -190,20 +190,19 @@ void advec_mom_kernel(
 							dif = upwind;
 						}
 
-						sigma = fabs(node_flux[idx]) / (node_mass_pre[donor][k]);
+						sigma = sycl::fabs(node_flux[idx]) / (node_mass_pre[donor][k]);
 						width = celldx[j];
 						vdiffuw = vel1[donor][k] - vel1[upwind][k];
 						vdiffdw = vel1[downwind][k] - vel1[donor][k];
 						limiter = 0.0;
 						if (vdiffuw * vdiffdw > 0.0) {
-							auw = fabs(vdiffuw);
-							adw = fabs(vdiffdw);
+							auw = sycl::fabs(vdiffuw);
+							adw = sycl::fabs(vdiffdw);
 							wind = 1.0;
 							if (vdiffdw <= 0.0) wind = -1.0;
-							limiter = wind * MIN(MIN(width * ((2.0 - sigma) * adw / width +
-							                                  (1.0 + sigma) * auw / celldx[dif]) / 6.0,
-							                         auw),
-							                     adw);
+							limiter = wind * sycl::fmin(sycl::fmin(
+									width * ((2.0 - sigma) * adw / width + (1.0 + sigma) * auw / celldx[dif]) / 6.0,
+									auw), adw);
 						}
 						advec_vel_s = vel1[donor][k] + (1.0 - sigma) * limiter;
 						mom_flux[idx] = advec_vel_s * node_flux[idx];
@@ -303,20 +302,19 @@ void advec_mom_kernel(
 						}
 
 
-						sigma = fabs(node_flux[idx]) / (node_mass_pre[j][donor]);
+						sigma = sycl::fabs(node_flux[idx]) / (node_mass_pre[j][donor]);
 						width = celldy[k];
 						vdiffuw = vel1[j][donor] - vel1[j][upwind];
 						vdiffdw = vel1[j][downwind] - vel1[j][donor];
 						limiter = 0.0;
 						if (vdiffuw * vdiffdw > 0.0) {
-							auw = fabs(vdiffuw);
-							adw = fabs(vdiffdw);
+							auw = sycl::fabs(vdiffuw);
+							adw = sycl::fabs(vdiffdw);
 							wind = 1.0;
 							if (vdiffdw <= 0.0) wind = -1.0;
-							limiter = wind * MIN(MIN(width * ((2.0 - sigma) * adw / width +
-							                                  (1.0 + sigma) * auw / celldy[dif]) / 6.0,
-							                         auw),
-							                     adw);
+							limiter = wind * sycl::fmin(sycl::fmin(
+									width * ((2.0 - sigma) * adw / width + (1.0 + sigma) * auw / celldy[dif]) / 6.0,
+									auw), adw);
 						}
 						advec_vel_s = vel1[j][donor] + (1.0 - sigma) * limiter;
 						mom_flux[idx] = advec_vel_s * node_flux[idx];

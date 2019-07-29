@@ -65,21 +65,21 @@ void viscosity_kernel(handler &h, int x_min, int x_max, int y_min, int y_max,
 				((0.5 * (ugrad) / celldx[idx[0]]) * pgradx2 +
 				 (0.5 * (vgrad) / celldy[idx[1]]) * pgrady2 +
 				 strain2 * pgradx * pgrady)
-				/ MAX(pgradx2 + pgrady2, 1.0e-16);
+				/ sycl::fmax(pgradx2 + pgrady2, 1.0e-16);
 
 		if ((limiter > 0.0) || (div >= 0.0)) {
 			viscosity[idx] = 0.0;
 		} else {
 			double dirx = 1.0;
 			if (pgradx < 0.0) dirx = -1.0;
-			pgradx = dirx * MAX(1.0e-16, fabs(pgradx));
+			pgradx = dirx * sycl::fmax(1.0e-16, sycl::fabs(pgradx));
 			double diry = 1.0;
 			if (pgradx < 0.0) diry = -1.0;
-			pgrady = diry * MAX(1.0e-16, fabs(pgrady));
+			pgrady = diry * sycl::fmax(1.0e-16, sycl::fabs(pgrady));
 			double pgrad = sqrt(pgradx * pgradx + pgrady * pgrady);
-			double xgrad = fabs(celldx[idx[0]] * pgrad / pgradx);
-			double ygrad = fabs(celldy[idx[1]] * pgrad / pgrady);
-			double grad = MIN(xgrad, ygrad);
+			double xgrad = sycl::fabs(celldx[idx[0]] * pgrad / pgradx);
+			double ygrad = sycl::fabs(celldy[idx[1]] * pgrad / pgrady);
+			double grad = sycl::fmin(xgrad, ygrad);
 			double grad2 = grad * grad;
 
 			viscosity[idx] = 2.0 * density0[idx] * grad2 * limiter * limiter;

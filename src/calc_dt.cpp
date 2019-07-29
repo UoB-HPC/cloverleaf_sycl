@@ -123,9 +123,9 @@ void calc_dt_kernel(
 
 				double cc = ctx.actual.soundspeed[idx] * ctx.actual.soundspeed[idx];
 				cc = cc + 2.0 * ctx.actual.viscosity_a[idx] / ctx.actual.density0[idx];
-				cc = MAX(sqrt(cc), g_small);
+				cc = sycl::fmax(sqrt(cc), g_small);
 
-				double dtct = dtc_safe * MIN(dsx, dsy) / cc;
+				double dtct = dtc_safe * sycl::fmin(dsx, dsy) / cc;
 
 				double div = 0.0;
 
@@ -138,7 +138,8 @@ void calc_dt_kernel(
 				div = div + dv2 - dv1;
 
 				double dtut = dtu_safe * 2.0 * ctx.actual.volume[idx] /
-				              MAX(MAX(fabs(dv1), fabs(dv2)), g_small * ctx.actual.volume[idx]);
+				              sycl::fmax(sycl::fmax(
+						              sycl::fabs(dv1), sycl::fabs(dv2)), g_small * ctx.actual.volume[idx]);
 
 				dv1 = (ctx.actual.yvel0[idx] + ctx.actual.yvel0[offset(idx, 1, 0)]) * ctx.actual.yarea[idx];
 				dv2 = (ctx.actual.yvel0[offset(idx, 0, 1)] + ctx.actual.yvel0[offset(idx, 1, 1)]) *
@@ -148,7 +149,8 @@ void calc_dt_kernel(
 				div = div + dv2 - dv1;
 
 				double dtvt = dtv_safe * 2.0 * ctx.actual.volume[idx] /
-				              MAX(MAX(fabs(dv1), fabs(dv2)), g_small * ctx.actual.volume[idx]);
+				              sycl::fmax(sycl::fmax(
+						              sycl::fabs(dv1), sycl::fabs(dv2)), g_small * ctx.actual.volume[idx]);
 
 				div = div / (2.0 * ctx.actual.volume[idx]);
 
@@ -158,9 +160,9 @@ void calc_dt_kernel(
 				} else {
 					dtdivt = g_big;
 				}
-				ctx.local[lidx] = MIN(dtct, MIN(dtut, MIN(dtvt, MIN(dtdivt, g_big))));
+				ctx.local[lidx] = sycl::fmin(dtct, sycl::fmin(dtut, sycl::fmin(dtvt, sycl::fmin(dtdivt, (1.0e+21)))));
 			},
-			[](ctx ctx, id<1> idx, id<1> idy) { ctx.local[idx] = MIN(ctx.local[idx], ctx.local[idy]); },
+			[](ctx ctx, id<1> idx, id<1> idy) { ctx.local[idx] = sycl::fmin(ctx.local[idx], ctx.local[idy]); },
 			[](ctx ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
 
 	{

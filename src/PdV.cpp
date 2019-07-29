@@ -84,9 +84,8 @@ void PdV_kernel(
 			double volume_change_s = volume[idx] / (volume[idx] + total_flux);
 
 			double min_cell_volume =
-					MIN(MIN(volume[idx] + right_flux - left_flux + top_flux - bottom_flux,
-					        volume[idx] + right_flux - left_flux),
-					    volume[idx] + top_flux - bottom_flux);
+					sycl::fmin(sycl::fmin(volume[idx] + right_flux - left_flux + top_flux - bottom_flux,
+					          volume[idx] + right_flux - left_flux), volume[idx] + top_flux - bottom_flux);
 
 			double recip_volume = 1.0 / volume[idx];
 
@@ -124,9 +123,8 @@ void PdV_kernel(
 			double volume_change_s = volume[idx] / (volume[idx] + total_flux);
 
 			double min_cell_volume =
-					MIN(MIN(volume[idx] + right_flux - left_flux + top_flux - bottom_flux,
-					        volume[idx] + right_flux - left_flux),
-					    volume[idx] + top_flux - bottom_flux);
+					sycl::fmin(sycl::fmin(volume[idx] + right_flux - left_flux + top_flux - bottom_flux,
+					          volume[idx] + right_flux - left_flux), volume[idx] + top_flux - bottom_flux);
 
 			double recip_volume = 1.0 / volume[idx];
 

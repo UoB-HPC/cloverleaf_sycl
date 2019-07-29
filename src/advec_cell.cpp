@@ -118,14 +118,14 @@ void advec_cell_kernel(
 							downwind = j;
 							dif = donor;
 						} else {
-							upwind = MIN(j + 1, x_max + 2);
+							upwind = sycl::min(j + 1, x_max + 2);
 							donor = j;
 							downwind = j - 1;
 							dif = upwind;
 						}
 
 
-						sigmat = fabs(vol_flux_x[idx]) / pre_vol[donor][k];
+						sigmat = sycl::fabs(vol_flux_x[idx]) / pre_vol[donor][k];
 						sigma3 = (1.0 + sigmat) * (vertexdx[j] / vertexdx[dif]);
 						sigma4 = 2.0 - sigmat;
 
@@ -137,29 +137,26 @@ void advec_cell_kernel(
 						wind = 1.0;
 						if (diffdw <= 0.0) wind = -1.0;
 						if (diffuw * diffdw > 0.0) {
-							limiter = (1.0 - sigmav) * wind *
-							          MIN(MIN(fabs(diffuw), fabs(diffdw)), one_by_six *
-									          (sigma3 *
-									           fabs(diffuw) +
-									           sigma4 *
-									           fabs(diffdw)));
+							limiter = (1.0 - sigmav) *
+							          wind *
+							          sycl::fmin(sycl::fmin(sycl::fabs(diffuw), sycl::fabs(diffdw)),
+							                     one_by_six *
+							                     (sigma3 * sycl::fabs(diffuw) + sigma4 * sycl::fabs(diffdw)));
 						} else {
 							limiter = 0.0;
 						}
 						mass_flux_x[idx] = vol_flux_x[idx] * (density1[donor][k] + limiter);
 
-						sigmam = fabs(mass_flux_x[idx]) / (density1[donor][k] * pre_vol[donor][k]);
+						sigmam = sycl::fabs(mass_flux_x[idx]) / (density1[donor][k] * pre_vol[donor][k]);
 						diffuw = energy1[donor][k] - energy1[upwind][k];
 						diffdw = energy1[downwind][k] - energy1[donor][k];
 						wind = 1.0;
 						if (diffdw <= 0.0) wind = -1.0;
 						if (diffuw * diffdw > 0.0) {
 							limiter = (1.0 - sigmam) * wind *
-							          MIN(MIN(fabs(diffuw), fabs(diffdw)), one_by_six *
-									          (sigma3 *
-									           fabs(diffuw) +
-									           sigma4 *
-									           fabs(diffdw)));
+							          sycl::fmin(sycl::fmin(sycl::fabs(diffuw), sycl::fabs(diffdw)),
+							                     one_by_six *
+							                     (sigma3 * sycl::fabs(diffuw) + sigma4 * sycl::fabs(diffdw)));
 						} else {
 							limiter = 0.0;
 						}
@@ -255,13 +252,13 @@ void advec_cell_kernel(
 							downwind = k;
 							dif = donor;
 						} else {
-							upwind = MIN(k + 1, y_max + 2);
+							upwind = sycl::min(k + 1, y_max + 2);
 							donor = k;
 							downwind = k - 1;
 							dif = upwind;
 						}
 
-						sigmat = fabs(vol_flux_y[idx]) / pre_vol[j][donor];
+						sigmat = sycl::fabs(vol_flux_y[idx]) / pre_vol[j][donor];
 						sigma3 = (1.0 + sigmat) * (vertexdy[k] / vertexdy[dif]);
 						sigma4 = 2.0 - sigmat;
 
@@ -273,23 +270,25 @@ void advec_cell_kernel(
 						wind = 1.0;
 						if (diffdw <= 0.0) wind = -1.0;
 						if (diffuw * diffdw > 0.0) {
-							limiter = (1.0 - sigmav) * wind * MIN(MIN(fabs(diffuw), fabs(diffdw)),
-							                                      one_by_six * (sigma3 * fabs(diffuw) +
-							                                                    sigma4 * fabs(diffdw)));
+							limiter = (1.0 - sigmav) * wind * sycl::fmin(
+									sycl::fmin(sycl::fabs(diffuw), sycl::fabs(diffdw)),
+									one_by_six *
+									(sigma3 * sycl::fabs(diffuw) + sigma4 * sycl::fabs(diffdw)));
 						} else {
 							limiter = 0.0;
 						}
 						mass_flux_y[idx] = vol_flux_y[idx] * (density1[j][donor] + limiter);
 
-						sigmam = fabs(mass_flux_y[idx]) / (density1[j][donor] * pre_vol[j][donor]);
+						sigmam = sycl::fabs(mass_flux_y[idx]) / (density1[j][donor] * pre_vol[j][donor]);
 						diffuw = energy1[j][donor] - energy1[j][upwind];
 						diffdw = energy1[j][downwind] - energy1[j][donor];
 						wind = 1.0;
 						if (diffdw <= 0.0) wind = -1.0;
 						if (diffuw * diffdw > 0.0) {
-							limiter = (1.0 - sigmam) * wind * MIN(MIN(fabs(diffuw), fabs(diffdw)),
-							                                      one_by_six * (sigma3 * fabs(diffuw) +
-							                                                    sigma4 * fabs(diffdw)));
+							limiter = (1.0 - sigmam) * wind * sycl::fmin(
+									sycl::fmin(sycl::fabs(diffuw), sycl::fabs(diffdw)),
+									one_by_six *
+									(sigma3 * sycl::fabs(diffuw) + sigma4 * sycl::fabs(diffdw)));
 						} else {
 							limiter = 0.0;
 						}

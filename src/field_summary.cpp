@@ -186,15 +186,15 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		if (parallel.boss) {
 			if (globals.config.test_problem >= 1) {
 				if (globals.config.test_problem == 1)
-					qa_diff = fabs((100.0 * (ke / 1.82280367310258)) - 100.0);
+					qa_diff = sycl::fabs((100.0 * (ke / 1.82280367310258)) - 100.0);
 				if (globals.config.test_problem == 2)
-					qa_diff = fabs((100.0 * (ke / 1.19316898756307)) - 100.0);
+					qa_diff = sycl::fabs((100.0 * (ke / 1.19316898756307)) - 100.0);
 				if (globals.config.test_problem == 3)
-					qa_diff = fabs((100.0 * (ke / 2.58984003503994)) - 100.0);
+					qa_diff = sycl::fabs((100.0 * (ke / 2.58984003503994)) - 100.0);
 				if (globals.config.test_problem == 4)
-					qa_diff = fabs((100.0 * (ke / 0.307475452287895)) - 100.0);
+					qa_diff = sycl::fabs((100.0 * (ke / 0.307475452287895)) - 100.0);
 				if (globals.config.test_problem == 5)
-					qa_diff = fabs((100.0 * (ke / 4.85350315783719)) - 100.0);
+					qa_diff = sycl::fabs((100.0 * (ke / 4.85350315783719)) - 100.0);
 				std::cout << "Test problem " << globals.config.test_problem << " is within " << qa_diff
 				          << "% of the expected solution" << std::endl;
 				g_out << "Test problem " << globals.config.test_problem << " is within " << qa_diff
