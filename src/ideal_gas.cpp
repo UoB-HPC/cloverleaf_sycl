@@ -38,13 +38,13 @@ void ideal_gas_kernel(
 
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
-	par_ranged<class ideal_gas>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](id<2> id) {
-		double v = 1.0 / density[id];
-		pressure[id] = (1.4 - 1.0) * density[id] * energy[id];
-		double pressurebyenergy = (1.4 - 1.0) * density[id];
-		double pressurebyvolume = -density[id] * pressure[id];
-		double sound_speed_squared = v * v * (pressure[id] * pressurebyenergy - pressurebyvolume);
-		soundspeed[id] = sqrt(sound_speed_squared);
+	par_ranged<class ideal_gas>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](id<2> idx) {
+		double v = 1.0 / density[idx];
+		pressure[idx] = (1.4 - 1.0) * density[idx] * energy[idx];
+		double pressurebyenergy = (1.4 - 1.0) * density[idx];
+		double pressurebyvolume = -density[idx] * pressure[idx];
+		double sound_speed_squared = v * v * (pressure[idx] * pressurebyenergy - pressurebyvolume);
+		soundspeed[idx] = sqrt(sound_speed_squared);
 	});
 
 }

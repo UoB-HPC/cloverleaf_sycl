@@ -69,12 +69,12 @@ void advec_cell_kernel(
 				auto pre_vol = pre_vol_buffer.access<RW>(h);
 				auto post_vol = post_vol_buffer.access<RW>(h);
 				auto advec_vol = advec_vol_buffer.access<RW>(h);
-				par_ranged<class advec_cell_xdir_seq1>(h, policy, [=](id<2> id) {
+				par_ranged<class advec_cell_xdir_seq1>(h, policy, [=](id<2> idx) {
 
-					pre_vol[id] = volume[id] +
-					              (vol_flux_x[j<1>(id)] - vol_flux_x[id] + vol_flux_y[k<1>(id)] -
-					               vol_flux_y[id]);
-					post_vol[id] = pre_vol[id] - (vol_flux_x[j<1>(id)] - vol_flux_x[id]);
+					pre_vol[idx] = volume[idx] +
+					               (vol_flux_x[offset(idx, 1, 0)] - vol_flux_x[idx] + vol_flux_y[offset(idx, 0, 1)] -
+					                vol_flux_y[idx]);
+					post_vol[idx] = pre_vol[idx] - (vol_flux_x[offset(idx, 1, 0)] - vol_flux_x[idx]);
 				});
 			});
 
@@ -86,9 +86,9 @@ void advec_cell_kernel(
 				auto pre_vol = pre_vol_buffer.access<RW>(h);
 				auto post_vol = post_vol_buffer.access<RW>(h);
 				auto advec_vol = advec_vol_buffer.access<RW>(h);
-				par_ranged<class advec_cell_xdir_sne1>(h, policy, [=](id<2> id) {
-					pre_vol[id] = volume[id] + vol_flux_x[j<1>(id)] - vol_flux_x[id];
-					post_vol[id] = volume[id];
+				par_ranged<class advec_cell_xdir_sne1>(h, policy, [=](id<2> idx) {
+					pre_vol[idx] = volume[idx] + vol_flux_x[offset(idx, 1, 0)] - vol_flux_x[idx];
+					post_vol[idx] = volume[idx];
 				});
 			});
 		}
@@ -103,16 +103,16 @@ void advec_cell_kernel(
 			// DO k=y_min,y_max
 			//   DO j=x_min,x_max+2
 			par_ranged<class advec_cell_xdir_ener_flux>(
-					h, {x_min + 1, y_min + 1, x_max + 2 + 2, y_max + 2}, [=](id<2> id) {
+					h, {x_min + 1, y_min + 1, x_max + 2 + 2, y_max + 2}, [=](id<2> idx) {
 
 
 						int upwind, donor, downwind, dif;
 						double sigmat, sigma3, sigma4, sigmav, sigma, sigmam, diffuw, diffdw, limiter, wind;
 
-						const int j = id.get(0);
-						const int k = id.get(1);
+						const int j = idx.get(0);
+						const int k = idx.get(1);
 
-						if (vol_flux_x[id] > 0.0) {
+						if (vol_flux_x[idx] > 0.0) {
 							upwind = j - 2;
 							donor = j - 1;
 							downwind = j;
@@ -125,7 +125,7 @@ void advec_cell_kernel(
 						}
 
 
-						sigmat = fabs(vol_flux_x[id]) / pre_vol[donor][k];
+						sigmat = fabs(vol_flux_x[idx]) / pre_vol[donor][k];
 						sigma3 = (1.0 + sigmat) * (vertexdx[j] / vertexdx[dif]);
 						sigma4 = 2.0 - sigmat;
 
@@ -146,9 +146,9 @@ void advec_cell_kernel(
 						} else {
 							limiter = 0.0;
 						}
-						mass_flux_x[id] = vol_flux_x[id] * (density1[donor][k] + limiter);
+						mass_flux_x[idx] = vol_flux_x[idx] * (density1[donor][k] + limiter);
 
-						sigmam = fabs(mass_flux_x[id]) / (density1[donor][k] * pre_vol[donor][k]);
+						sigmam = fabs(mass_flux_x[idx]) / (density1[donor][k] * pre_vol[donor][k]);
 						diffuw = energy1[donor][k] - energy1[upwind][k];
 						diffdw = energy1[downwind][k] - energy1[donor][k];
 						wind = 1.0;
@@ -164,7 +164,7 @@ void advec_cell_kernel(
 							limiter = 0.0;
 						}
 
-						ener_flux[id] = mass_flux_x[id] * (energy1[donor][k] + limiter);
+						ener_flux[idx] = mass_flux_x[idx] * (energy1[donor][k] + limiter);
 
 					});
 
@@ -182,15 +182,15 @@ void advec_cell_kernel(
 			//   DO j=x_min,x_max
 
 			par_ranged<class advec_cell_xdir_d1e1>(
-					h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](id<2> id) {
-						double pre_mass_s = density1[id] * pre_vol[id];
-						double post_mass_s = pre_mass_s + mass_flux_x[id] - mass_flux_x[j<1>(id)];
+					h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](id<2> idx) {
+						double pre_mass_s = density1[idx] * pre_vol[idx];
+						double post_mass_s = pre_mass_s + mass_flux_x[idx] - mass_flux_x[offset(idx, 1, 0)];
 						double post_ener_s =
-								(energy1[id] * pre_mass_s + ener_flux[id] - ener_flux[j<1>(id)]) /
+								(energy1[idx] * pre_mass_s + ener_flux[idx] - ener_flux[offset(idx, 1, 0)]) /
 								post_mass_s;
-						double advec_vol_s = pre_vol[id] + vol_flux_x[id] - vol_flux_x[j<1>(id)];
-						density1[id] = post_mass_s / advec_vol_s;
-						energy1[id] = post_ener_s;
+						double advec_vol_s = pre_vol[idx] + vol_flux_x[idx] - vol_flux_x[offset(idx, 1, 0)];
+						density1[idx] = post_mass_s / advec_vol_s;
+						energy1[idx] = post_ener_s;
 					});
 
 		});
@@ -208,11 +208,11 @@ void advec_cell_kernel(
 				auto pre_vol = pre_vol_buffer.access<RW>(h);
 				auto post_vol = post_vol_buffer.access<RW>(h);
 				auto advec_vol = advec_vol_buffer.access<RW>(h);
-				par_ranged<class APPEND_LN(advec_cell_ydir_s1)>(h, policy, [=](id<2> id) {
-					pre_vol[id] = volume[id] +
-					              (vol_flux_y[k<1>(id)] - vol_flux_y[id] + vol_flux_x[j<1>(id)] -
-					               vol_flux_x[id]);
-					post_vol[id] = pre_vol[id] - (vol_flux_y[k<1>(id)] - vol_flux_y[id]);
+				par_ranged<class APPEND_LN(advec_cell_ydir_s1)>(h, policy, [=](id<2> idx) {
+					pre_vol[idx] = volume[idx] +
+					               (vol_flux_y[offset(idx, 0, 1)] - vol_flux_y[idx] + vol_flux_x[offset(idx, 1, 0)] -
+					                vol_flux_x[idx]);
+					post_vol[idx] = pre_vol[idx] - (vol_flux_y[offset(idx, 0, 1)] - vol_flux_y[idx]);
 				});
 			});
 		} else {
@@ -223,9 +223,9 @@ void advec_cell_kernel(
 				auto pre_vol = pre_vol_buffer.access<RW>(h);
 				auto post_vol = post_vol_buffer.access<RW>(h);
 				auto advec_vol = advec_vol_buffer.access<RW>(h);
-				par_ranged<class APPEND_LN(advec_cell_ydir_s1)>(h, policy, [=](id<2> id) {
-					pre_vol[id] = volume[id] + vol_flux_y[k<1>(id)] - vol_flux_y[id];
-					post_vol[id] = volume[id];
+				par_ranged<class APPEND_LN(advec_cell_ydir_s1)>(h, policy, [=](id<2> idx) {
+					pre_vol[idx] = volume[idx] + vol_flux_y[offset(idx, 0, 1)] - vol_flux_y[idx];
+					post_vol[idx] = volume[idx];
 				});
 			});
 		}
@@ -242,14 +242,14 @@ void advec_cell_kernel(
 			// DO k=y_min,y_max+2
 			//   DO j=x_min,x_max
 			par_ranged<class advec_cell_ydir_ener_flux>(
-					h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2 + 2}, [=](id<2> id) {
+					h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2 + 2}, [=](id<2> idx) {
 						int upwind, donor, downwind, dif;
 						double sigmat, sigma3, sigma4, sigmav, sigma, sigmam, diffuw, diffdw, limiter, wind;
 
-						const int j = id.get(0);
-						const int k = id.get(1);
+						const int j = idx.get(0);
+						const int k = idx.get(1);
 
-						if (vol_flux_y[id] > 0.0) {
+						if (vol_flux_y[idx] > 0.0) {
 							upwind = k - 2;
 							donor = k - 1;
 							downwind = k;
@@ -261,7 +261,7 @@ void advec_cell_kernel(
 							dif = upwind;
 						}
 
-						sigmat = fabs(vol_flux_y[id]) / pre_vol[j][donor];
+						sigmat = fabs(vol_flux_y[idx]) / pre_vol[j][donor];
 						sigma3 = (1.0 + sigmat) * (vertexdy[k] / vertexdy[dif]);
 						sigma4 = 2.0 - sigmat;
 
@@ -279,9 +279,9 @@ void advec_cell_kernel(
 						} else {
 							limiter = 0.0;
 						}
-						mass_flux_y[id] = vol_flux_y[id] * (density1[j][donor] + limiter);
+						mass_flux_y[idx] = vol_flux_y[idx] * (density1[j][donor] + limiter);
 
-						sigmam = fabs(mass_flux_y[id]) / (density1[j][donor] * pre_vol[j][donor]);
+						sigmam = fabs(mass_flux_y[idx]) / (density1[j][donor] * pre_vol[j][donor]);
 						diffuw = energy1[j][donor] - energy1[j][upwind];
 						diffdw = energy1[j][downwind] - energy1[j][donor];
 						wind = 1.0;
@@ -293,7 +293,7 @@ void advec_cell_kernel(
 						} else {
 							limiter = 0.0;
 						}
-						ener_flux[id] = mass_flux_y[id] * (energy1[j][donor] + limiter);
+						ener_flux[idx] = mass_flux_y[idx] * (energy1[j][donor] + limiter);
 					});
 
 		});
@@ -309,16 +309,16 @@ void advec_cell_kernel(
 			// DO k=y_min,y_max
 			//   DO j=x_min,x_max
 			par_ranged<class advec_cell_ydir_e1d1>(
-					h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](id<2> id) {
+					h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](id<2> idx) {
 
-						double pre_mass_s = density1[id] * pre_vol[id];
-						double post_mass_s = pre_mass_s + mass_flux_y[id] - mass_flux_y[k<1>(id)];
+						double pre_mass_s = density1[idx] * pre_vol[idx];
+						double post_mass_s = pre_mass_s + mass_flux_y[idx] - mass_flux_y[offset(idx, 0, 1)];
 						double post_ener_s =
-								(energy1[id] * pre_mass_s + ener_flux[id] - ener_flux[k<1>(id)]) /
+								(energy1[idx] * pre_mass_s + ener_flux[idx] - ener_flux[offset(idx, 0, 1)]) /
 								post_mass_s;
-						double advec_vol_s = pre_vol[id] + vol_flux_y[id] - vol_flux_y[k<1>(id)];
-						density1[id] = post_mass_s / advec_vol_s;
-						energy1[id] = post_ener_s;
+						double advec_vol_s = pre_vol[idx] + vol_flux_y[idx] - vol_flux_y[offset(idx, 0, 1)];
+						density1[idx] = post_mass_s / advec_vol_s;
+						energy1[idx] = post_ener_s;
 					});
 		});
 

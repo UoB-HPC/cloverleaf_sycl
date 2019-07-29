@@ -137,15 +137,15 @@ void build_field(global_variables &globals) {
 			auto soundspeed = field.soundspeed.access<W>(h);
 			auto volume = field.volume.access<W>(h);
 			// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+2) inclusive
-			par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange, yrange}, [=](id<2> id) {
-				density0[id] = 0.0;
-				density1[id] = 0.0;
-				energy0[id] = 0.0;
-				energy1[id] = 0.0;
-				pressure[id] = 0.0;
-				viscosity[id] = 0.0;
-				soundspeed[id] = 0.0;
-				volume[id] = 0.0;
+			par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange, yrange}, [=](id<2> idx) {
+				density0[idx] = 0.0;
+				density1[idx] = 0.0;
+				energy0[idx] = 0.0;
+				energy1[idx] = 0.0;
+				pressure[idx] = 0.0;
+				viscosity[idx] = 0.0;
+				soundspeed[idx] = 0.0;
+				volume[idx] = 0.0;
 			});
 		});
 
@@ -154,10 +154,10 @@ void build_field(global_variables &globals) {
 			auto mass_flux_x = field.mass_flux_x.access<W>(h);
 			auto xarea = field.xarea.access<W>(h);
 			// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+3) inclusive
-			par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange, yrange}, [=](id<2> id) {
-				vol_flux_x[id] = 0.0;
-				mass_flux_x[id] = 0.0;
-				xarea[id] = 0.0;
+			par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange, yrange}, [=](id<2> idx) {
+				vol_flux_x[idx] = 0.0;
+				mass_flux_x[idx] = 0.0;
+				xarea[idx] = 0.0;
 			});
 		});
 
@@ -166,10 +166,10 @@ void build_field(global_variables &globals) {
 			auto mass_flux_y = field.mass_flux_y.access<W>(h);
 			auto yarea = field.yarea.access<W>(h);
 			// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+2) inclusive
-			par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange, yrange + 1}, [=](id<2> id) {
-				vol_flux_y[id] = 0.0;
-				mass_flux_y[id] = 0.0;
-				yarea[id] = 0.0;
+			par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange, yrange + 1}, [=](id<2> idx) {
+				vol_flux_y[idx] = 0.0;
+				mass_flux_y[idx] = 0.0;
+				yarea[idx] = 0.0;
 			});
 		});
 

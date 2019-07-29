@@ -41,21 +41,21 @@ void viscosity_kernel(handler &h, int x_min, int x_max, int y_min, int y_max,
 	par_ranged<class viscosity_>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
 			id<2> idx) {
 
-		double ugrad = (xvel0[j<1>(idx)] + xvel0[jk<1, 1>(idx)]) - (xvel0[idx] + xvel0[k<1>(idx)]);
+		double ugrad = (xvel0[offset(idx, 1, 0)] + xvel0[offset(idx, 1, 1)]) - (xvel0[idx] + xvel0[offset(idx, 0, 1)]);
 
-		double vgrad = (yvel0[k<1>(idx)] + yvel0[jk<1, 1>(idx)]) - (yvel0[idx] + yvel0[j<1>(idx)]);
+		double vgrad = (yvel0[offset(idx, 0, 1)] + yvel0[offset(idx, 1, 1)]) - (yvel0[idx] + yvel0[offset(idx, 1, 0)]);
 
 		double div = (celldx[idx[0]] * (ugrad) + celldy[idx[1]] * (vgrad));
 
 		double strain2 =
-				0.5 * (xvel0[k<1>(idx)] + xvel0[jk<1, 1>(idx)] - xvel0[idx] - xvel0[j<1>(idx)]) /
+				0.5 * (xvel0[offset(idx, 0, 1)] + xvel0[offset(idx, 1, 1)] - xvel0[idx] - xvel0[offset(idx, 1, 0)]) /
 				celldy[idx[1]]
-				+ 0.5 * (yvel0[j<1>(idx)] + yvel0[jk<1, 1>(idx)] - yvel0[idx] - yvel0[k<1>(idx)]) /
+				+ 0.5 * (yvel0[offset(idx, 1, 0)] + yvel0[offset(idx, 1, 1)] - yvel0[idx] - yvel0[offset(idx, 0, 1)]) /
 				  celldx[idx[0]];
 
-		double pgradx = (pressure[j<1>(idx)] - pressure[j<-1>(idx)]) /
+		double pgradx = (pressure[offset(idx, 1, 0)] - pressure[offset(idx, -1, 0)]) /
 		                (celldx[idx[0]] + celldx[idx[0] + 1]);
-		double pgrady = (pressure[k<1>(idx)] - pressure[k<-1>(idx)]) /
+		double pgrady = (pressure[offset(idx, 0, 1)] - pressure[offset(idx, 0, -1)]) /
 		                (celldy[idx[1]] + celldy[idx[1] + 2]);
 
 		double pgradx2 = pgradx * pgradx;

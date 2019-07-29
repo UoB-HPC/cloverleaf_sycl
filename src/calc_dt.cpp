@@ -129,17 +129,21 @@ void calc_dt_kernel(
 
 				double div = 0.0;
 
-				double dv1 = (ctx.actual.xvel0[idx] + ctx.actual.xvel0[k<1>(idx)]) * ctx.actual.xarea[idx];
+				double dv1 = (ctx.actual.xvel0[idx] + ctx.actual.xvel0[offset(idx, 0, 1)]) * ctx.actual.xarea[idx];
 				double dv2 =
-						(ctx.actual.xvel0[j<1>(idx)] + ctx.actual.xvel0[jk<1, 1>(idx)]) * ctx.actual.xarea[j<1>(idx)];
+						(ctx.actual.xvel0[offset(idx, 1, 0)] + ctx.actual.xvel0[offset(idx, 1, 1)]) *
+						ctx.actual.xarea[offset(
+								idx, 1, 0)];
 
 				div = div + dv2 - dv1;
 
 				double dtut = dtu_safe * 2.0 * ctx.actual.volume[idx] /
 				              MAX(MAX(fabs(dv1), fabs(dv2)), g_small * ctx.actual.volume[idx]);
 
-				dv1 = (ctx.actual.yvel0[idx] + ctx.actual.yvel0[j<1>(idx)]) * ctx.actual.yarea[idx];
-				dv2 = (ctx.actual.yvel0[k<1>(idx)] + ctx.actual.yvel0[jk<1, 1>(idx)]) * ctx.actual.yarea[k<1>(idx)];
+				dv1 = (ctx.actual.yvel0[idx] + ctx.actual.yvel0[offset(idx, 1, 0)]) * ctx.actual.yarea[idx];
+				dv2 = (ctx.actual.yvel0[offset(idx, 0, 1)] + ctx.actual.yvel0[offset(idx, 1, 1)]) *
+				      ctx.actual.yarea[offset(
+						      idx, 0, 1)];
 
 				div = div + dv2 - dv1;
 

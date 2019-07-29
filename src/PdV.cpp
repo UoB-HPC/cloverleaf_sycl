@@ -63,19 +63,20 @@ void PdV_kernel(
 		par_ranged<class PdV_predict_true>(h, policy, [=](id<2> idx) {
 
 
-			double left_flux = (xarea[idx] * (xvel0[idx] + xvel0[k<1>(idx)]
-			                                  + xvel0[idx] + xvel0[k<1>(idx)])) * 0.25 * dt * 0.5;
+			double left_flux = (xarea[idx] * (xvel0[idx] + xvel0[offset(idx, 0, 1)]
+			                                  + xvel0[idx] + xvel0[offset(idx, 0, 1)])) * 0.25 * dt * 0.5;
 
-			double right_flux = (xarea[j<1>(idx)] * (xvel0[j<1>(idx)] + xvel0[jk<1, 1>(idx)]
-			                                         + xvel0[j<1>(idx)] + xvel0[jk<1, 1>(idx)])) *
+			double right_flux = (xarea[offset(idx, 1, 0)] * (xvel0[offset(idx, 1, 0)] + xvel0[offset(idx, 1, 1)]
+			                                                 + xvel0[offset(idx, 1, 0)] + xvel0[offset(idx, 1, 1)])) *
 			                    0.25 * dt * 0.5;
 
-			double bottom_flux = (yarea[idx] * (yvel0[idx] + yvel0[j<1>(idx)]
-			                                    + yvel0[idx] + yvel0[j<1>(idx)])) * 0.25 * dt *
+			double bottom_flux = (yarea[idx] * (yvel0[idx] + yvel0[offset(idx, 1, 0)]
+			                                    + yvel0[idx] + yvel0[offset(idx, 1, 0)])) * 0.25 * dt *
 			                     0.5;
 
-			double top_flux = (yarea[k<1>(idx)] * (yvel0[k<1>(idx)] + yvel0[jk<1, 1>(idx)]
-			                                       + yvel0[k<1>(idx)] + yvel0[jk<1, 1>(idx)])) * 0.25 *
+			double top_flux = (yarea[offset(idx, 0, 1)] * (yvel0[offset(idx, 0, 1)] + yvel0[offset(idx, 1, 1)]
+			                                               + yvel0[offset(idx, 0, 1)] + yvel0[offset(idx, 1, 1)])) *
+			                  0.25 *
 			                  dt * 0.5;
 
 			double total_flux = right_flux - left_flux + top_flux - bottom_flux;
@@ -103,18 +104,19 @@ void PdV_kernel(
 
 		par_ranged<class PdV_predict_false>(h, policy, [=](id<2> idx) {
 
-			double left_flux = (xarea[idx] * (xvel0[idx] + xvel0[k<1>(idx)]
-			                                  + xvel1[idx] + xvel1[k<1>(idx)])) * 0.25 * dt;
+			double left_flux = (xarea[idx] * (xvel0[idx] + xvel0[offset(idx, 0, 1)]
+			                                  + xvel1[idx] + xvel1[offset(idx, 0, 1)])) * 0.25 * dt;
 
-			double right_flux = (xarea[j<1>(idx)] * (xvel0[j<1>(idx)] + xvel0[jk<1, 1>(idx)]
-			                                         + xvel1[j<1>(idx)] + xvel1[jk<1, 1>(idx)])) *
+			double right_flux = (xarea[offset(idx, 1, 0)] * (xvel0[offset(idx, 1, 0)] + xvel0[offset(idx, 1, 1)]
+			                                                 + xvel1[offset(idx, 1, 0)] + xvel1[offset(idx, 1, 1)])) *
 			                    0.25 * dt;
 
-			double bottom_flux = (yarea[idx] * (yvel0[idx] + yvel0[j<1>(idx)]
-			                                    + yvel1[idx] + yvel1[j<1>(idx)])) * 0.25 * dt;
+			double bottom_flux = (yarea[idx] * (yvel0[idx] + yvel0[offset(idx, 1, 0)]
+			                                    + yvel1[idx] + yvel1[offset(idx, 1, 0)])) * 0.25 * dt;
 
-			double top_flux = (yarea[k<1>(idx)] * (yvel0[k<1>(idx)] + yvel0[jk<1, 1>(idx)]
-			                                       + yvel1[k<1>(idx)] + yvel1[jk<1, 1>(idx)])) * 0.25 *
+			double top_flux = (yarea[offset(idx, 0, 1)] * (yvel0[offset(idx, 0, 1)] + yvel0[offset(idx, 1, 1)]
+			                                               + yvel1[offset(idx, 0, 1)] + yvel1[offset(idx, 1, 1)])) *
+			                  0.25 *
 			                  dt;
 
 			double total_flux = right_flux - left_flux + top_flux - bottom_flux;

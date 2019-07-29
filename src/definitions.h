@@ -59,22 +59,12 @@ constexpr cl::sycl::access::mode W = cl::sycl::access::mode::write;
 constexpr cl::sycl::access::mode RW = cl::sycl::access::mode::read_write;
 
 
-//template<int X, int Y>
-//static id<2> xy(const id<2> x) {
-//	return id<2>(static_cast<int>(x[0]) + X, static_cast<int>(x[1]) + Y);
-//}
 
-template<int X, int Y>
-static id<2> jk(const id<2> x) {
-	return id<2>(x[0] + X, x[1] + Y);
+static inline id<2> offset(const id<2> idx, const int j, const int k) {
+	int jj = static_cast<int>(idx[0]) + j;
+	int kk = static_cast<int>(idx[1]) + k;
+	return id<2>(jj, kk);
 }
-
-
-template<int N>
-static id<2> j(const id<2> x) { return jk<N, 0>(x); }
-template<int N>
-static id<2> k(const id<2> x) { return jk<0, N>(x); }
-
 
 #include <fstream>
 #include <iostream>

@@ -52,24 +52,30 @@ void accelerate_kernel(
 	par_ranged<class accelerate>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
 			id<2> idx) {
 
-		double stepbymass_s = halfdt / ((density0[jk<-1, -1>(idx)] * volume[jk<-1, -1>(idx)]
-		                                 + density0[j<-1>(idx)] * volume[j<-1>(idx)]
+		double stepbymass_s = halfdt / ((density0[offset(idx, -1, -1)] * volume[offset(idx, -1, -1)]
+		                                 + density0[offset(idx, -1, 0)] * volume[offset(idx, -1, 0)]
 		                                 + density0[idx] * volume[idx]
-		                                 + density0[k<-1>(idx)] * volume[k<-1>(idx)])
+		                                 + density0[offset(idx, 0, -1)] * volume[offset(idx, 0, -1)])
 		                                * 0.25);
 
 		xvel1[idx] = xvel0[idx] - stepbymass_s *
-		                          (xarea[idx] * (pressure[idx] - pressure[j<-1>(idx)]) +
-		                           xarea[k<-1>(idx)] * (pressure[k<-1>(idx)] - pressure[jk<-1, -1>(idx)]));
+		                          (xarea[idx] * (pressure[idx] - pressure[offset(idx, -1, 0)]) +
+		                           xarea[offset(idx, 0, -1)] *
+		                           (pressure[offset(idx, 0, -1)] - pressure[offset(idx, -1, -1)]));
 		yvel1[idx] = yvel0[idx] - stepbymass_s *
-		                          (yarea[idx] * (pressure[idx] - pressure[k<-1>(idx)]) +
-		                           yarea[j<-1>(idx)] * (pressure[j<-1>(idx)] - pressure[jk<-1, -1>(idx)]));
+		                          (yarea[idx] * (pressure[idx] - pressure[offset(idx, 0, -1)]) +
+		                           yarea[offset(idx, -1, 0)] *
+		                           (pressure[offset(idx, -1, 0)] - pressure[offset(idx, -1, -1)]));
 		xvel1[idx] = xvel1[idx] - stepbymass_s *
-		                          (xarea[idx] * (viscosity[idx] - viscosity[j<-1>(idx)]) +
-		                           xarea[k<-1>(idx)] * (viscosity[k<-1>(idx)] - viscosity[jk<-1, -1>(idx)]));
+		                          (xarea[idx] * (viscosity[idx] - viscosity[offset(idx, -1, 0)]) +
+		                           xarea[offset(idx, 0, -1)] *
+		                           (viscosity[offset(idx, 0, -1)] - viscosity[offset(idx, -1,
+		                                                                             -1)]));
 		yvel1[idx] = yvel1[idx] - stepbymass_s *
-		                          (yarea[idx] * (viscosity[idx] - viscosity[k<-1>(idx)]) +
-		                           yarea[j<-1>(idx)] * (viscosity[j<-1>(idx)] - viscosity[jk<-1, -1>(idx)]));
+		                          (yarea[idx] * (viscosity[idx] - viscosity[offset(idx, 0, -1)]) +
+		                           yarea[offset(idx, -1, 0)] *
+		                           (viscosity[offset(idx, -1, 0)] - viscosity[offset(idx, -1,
+		                                                                             -1)]));
 
 
 	});
