@@ -63,12 +63,12 @@ void advec_cell_kernel(
 
 		if (sweep_number == 1) {
 			execute(queue, [&](handler &h) {
-				auto volume = volume_buffer.access<RW>(h);
-				auto vol_flux_x = vol_flux_x_buffer.access<RW>(h);
-				auto vol_flux_y = vol_flux_y_buffer.access<RW>(h);
+				auto volume = volume_buffer.access<R>(h);
+				auto vol_flux_x = vol_flux_x_buffer.access<R>(h);
+				auto vol_flux_y = vol_flux_y_buffer.access<R>(h);
 				auto pre_vol = pre_vol_buffer.access<RW>(h);
 				auto post_vol = post_vol_buffer.access<RW>(h);
-				auto advec_vol = advec_vol_buffer.access<RW>(h);
+				auto advec_vol = advec_vol_buffer.access<R>(h);
 				par_ranged<class advec_cell_xdir_seq1>(h, policy, [=](id<2> idx) {
 
 					pre_vol[idx] = volume[idx] +
@@ -80,12 +80,12 @@ void advec_cell_kernel(
 
 		} else {
 			execute(queue, [&](handler &h) {
-				auto volume = volume_buffer.access<RW>(h);
-				auto vol_flux_x = vol_flux_x_buffer.access<RW>(h);
-				auto vol_flux_y = vol_flux_y_buffer.access<RW>(h);
+				auto volume = volume_buffer.access<R>(h);
+				auto vol_flux_x = vol_flux_x_buffer.access<R>(h);
+				auto vol_flux_y = vol_flux_y_buffer.access<R>(h);
 				auto pre_vol = pre_vol_buffer.access<RW>(h);
 				auto post_vol = post_vol_buffer.access<RW>(h);
-				auto advec_vol = advec_vol_buffer.access<RW>(h);
+				auto advec_vol = advec_vol_buffer.access<R>(h);
 				par_ranged<class advec_cell_xdir_sne1>(h, policy, [=](id<2> idx) {
 					pre_vol[idx] = volume[idx] + vol_flux_x[offset(idx, 1, 0)] - vol_flux_x[idx];
 					post_vol[idx] = volume[idx];
@@ -93,12 +93,12 @@ void advec_cell_kernel(
 			});
 		}
 		execute(queue, [&](handler &h) {
-			auto vertexdx = vertexdx_buffer.access<RW>(h);
-			auto density1 = density1_buffer.access<RW>(h);
-			auto energy1 = energy1_buffer.access<RW>(h);
+			auto vertexdx = vertexdx_buffer.access<R>(h);
+			auto density1 = density1_buffer.access<R>(h);
+			auto energy1 = energy1_buffer.access<R>(h);
 			auto mass_flux_x = mass_flux_x_buffer.access<RW>(h);
-			auto vol_flux_x = vol_flux_x_buffer.access<RW>(h);
-			auto pre_vol = pre_vol_buffer.access<RW>(h);
+			auto vol_flux_x = vol_flux_x_buffer.access<R>(h);
+			auto pre_vol = pre_vol_buffer.access<R>(h);
 			auto ener_flux = ener_flux_buffer.access<RW>(h);
 			// DO k=y_min,y_max
 			//   DO j=x_min,x_max+2
@@ -168,13 +168,13 @@ void advec_cell_kernel(
 
 		});
 		execute(queue, [&](handler &h) {
-			auto vertexdx = vertexdx_buffer.access<RW>(h);
+			auto vertexdx = vertexdx_buffer.access<R>(h);
 			auto density1 = density1_buffer.access<RW>(h);
 			auto energy1 = energy1_buffer.access<RW>(h);
-			auto mass_flux_x = mass_flux_x_buffer.access<RW>(h);
-			auto vol_flux_x = vol_flux_x_buffer.access<RW>(h);
-			auto pre_vol = pre_vol_buffer.access<RW>(h);
-			auto ener_flux = ener_flux_buffer.access<RW>(h);
+			auto mass_flux_x = mass_flux_x_buffer.access<R>(h);
+			auto vol_flux_x = vol_flux_x_buffer.access<R>(h);
+			auto pre_vol = pre_vol_buffer.access<R>(h);
+			auto ener_flux = ener_flux_buffer.access<R>(h);
 			// DO k=y_min,y_max
 			//   DO j=x_min,x_max
 
@@ -199,12 +199,12 @@ void advec_cell_kernel(
 
 		if (sweep_number == 1) {
 			execute(queue, [&](handler &h) {
-				auto volume = volume_buffer.access<RW>(h);
-				auto vol_flux_x = vol_flux_x_buffer.access<RW>(h);
-				auto vol_flux_y = vol_flux_y_buffer.access<RW>(h);
+				auto volume = volume_buffer.access<R>(h);
+				auto vol_flux_x = vol_flux_x_buffer.access<R>(h);
+				auto vol_flux_y = vol_flux_y_buffer.access<R>(h);
 				auto pre_vol = pre_vol_buffer.access<RW>(h);
 				auto post_vol = post_vol_buffer.access<RW>(h);
-				auto advec_vol = advec_vol_buffer.access<RW>(h);
+				auto advec_vol = advec_vol_buffer.access<R>(h);
 				par_ranged<class APPEND_LN(advec_cell_ydir_s1)>(h, policy, [=](id<2> idx) {
 					pre_vol[idx] = volume[idx] +
 					               (vol_flux_y[offset(idx, 0, 1)] - vol_flux_y[idx] + vol_flux_x[offset(idx, 1, 0)] -
@@ -214,12 +214,12 @@ void advec_cell_kernel(
 			});
 		} else {
 			execute(queue, [&](handler &h) {
-				auto volume = volume_buffer.access<RW>(h);
-				auto vol_flux_x = vol_flux_x_buffer.access<RW>(h);
-				auto vol_flux_y = vol_flux_y_buffer.access<RW>(h);
+				auto volume = volume_buffer.access<R>(h);
+				auto vol_flux_x = vol_flux_x_buffer.access<R>(h);
+				auto vol_flux_y = vol_flux_y_buffer.access<R>(h);
 				auto pre_vol = pre_vol_buffer.access<RW>(h);
 				auto post_vol = post_vol_buffer.access<RW>(h);
-				auto advec_vol = advec_vol_buffer.access<RW>(h);
+				auto advec_vol = advec_vol_buffer.access<R>(h);
 				par_ranged<class APPEND_LN(advec_cell_ydir_s1)>(h, policy, [=](id<2> idx) {
 					pre_vol[idx] = volume[idx] + vol_flux_y[offset(idx, 0, 1)] - vol_flux_y[idx];
 					post_vol[idx] = volume[idx];
@@ -229,12 +229,12 @@ void advec_cell_kernel(
 
 
 		execute(queue, [&](handler &h) {
-			auto vertexdy = vertexdy_buffer.access<RW>(h);
-			auto density1 = density1_buffer.access<RW>(h);
-			auto energy1 = energy1_buffer.access<RW>(h);
+			auto vertexdy = vertexdy_buffer.access<R>(h);
+			auto density1 = density1_buffer.access<R>(h);
+			auto energy1 = energy1_buffer.access<R>(h);
 			auto mass_flux_y = mass_flux_y_buffer.access<RW>(h);
-			auto vol_flux_y = vol_flux_y_buffer.access<RW>(h);
-			auto pre_vol = pre_vol_buffer.access<RW>(h);
+			auto vol_flux_y = vol_flux_y_buffer.access<R>(h);
+			auto pre_vol = pre_vol_buffer.access<R>(h);
 			auto ener_flux = ener_flux_buffer.access<RW>(h);
 			// DO k=y_min,y_max+2
 			//   DO j=x_min,x_max
@@ -298,13 +298,13 @@ void advec_cell_kernel(
 		});
 
 		execute(queue, [&](handler &h) {
-			auto vertexdy = vertexdy_buffer.access<RW>(h);
+			auto vertexdy = vertexdy_buffer.access<R>(h);
 			auto density1 = density1_buffer.access<RW>(h);
 			auto energy1 = energy1_buffer.access<RW>(h);
-			auto mass_flux_y = mass_flux_y_buffer.access<RW>(h);
-			auto vol_flux_y = vol_flux_y_buffer.access<RW>(h);
-			auto pre_vol = pre_vol_buffer.access<RW>(h);
-			auto ener_flux = ener_flux_buffer.access<RW>(h);
+			auto mass_flux_y = mass_flux_y_buffer.access<R>(h);
+			auto vol_flux_y = vol_flux_y_buffer.access<R>(h);
+			auto pre_vol = pre_vol_buffer.access<R>(h);
+			auto ener_flux = ener_flux_buffer.access<R>(h);
 			// DO k=y_min,y_max
 			//   DO j=x_min,x_max
 			par_ranged<class advec_cell_ydir_e1d1>(

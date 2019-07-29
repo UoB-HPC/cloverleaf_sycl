@@ -28,8 +28,8 @@
 void ideal_gas_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
-		Accessor<double, 2, RW>::Type density,
-		Accessor<double, 2, RW>::Type energy,
+		Accessor<double, 2, R>::Type density,
+		Accessor<double, 2, R>::Type energy,
 		Accessor<double, 2, RW>::Type pressure,
 		Accessor<double, 2, RW>::Type soundspeed) {
 
@@ -68,8 +68,8 @@ void ideal_gas(global_variables &globals, const int tile, bool predict) {
 					t.info.t_xmax,
 					t.info.t_ymin,
 					t.info.t_ymax,
-					t.field.density0.access<RW>(h),
-					t.field.energy0.access<RW>(h),
+					t.field.density0.access<R>(h),
+					t.field.energy0.access<R>(h),
 					t.field.pressure.access<RW>(h),
 					t.field.soundspeed.access<RW>(h)
 			);
@@ -80,8 +80,8 @@ void ideal_gas(global_variables &globals, const int tile, bool predict) {
 					t.info.t_xmax,
 					t.info.t_ymin,
 					t.info.t_ymax,
-					t.field.density1.access<RW>(h),
-					t.field.energy1.access<RW>(h),
+					t.field.density1.access<R>(h),
+					t.field.energy1.access<R>(h),
 					t.field.pressure.access<RW>(h),
 					t.field.soundspeed.access<RW>(h)
 			);

@@ -113,19 +113,8 @@ void advec_mom_kernel(
 			//   DO j=x_min-2,x_max+2
 
 			execute(q, [&](handler &h) {
-
-				auto vel1 = vel1_buffer.access<RW>(h);
-				auto mass_flux_x = mass_flux_x_buffer.access<RW>(h);
-				auto mass_flux_y = mass_flux_y_buffer.access<RW>(h);
-				auto density1 = density1_buffer.access<RW>(h);
+				auto mass_flux_x = mass_flux_x_buffer.access<R>(h);
 				auto node_flux = node_flux_buffer.access<RW>(h);
-				auto node_mass_post = node_mass_post_buffer.access<RW>(h);
-				auto node_mass_pre = node_mass_pre_buffer.access<RW>(h);
-				auto mom_flux = mom_flux_buffer.access<RW>(h);
-				auto pre_vol = pre_vol_buffer.access<RW>(h);
-				auto post_vol = post_vol_buffer.access<RW>(h);
-				auto celldx = celldx_buffer.access<RW>(h);
-				auto celldy = celldy_buffer.access<RW>(h);
 				par_ranged<class advec_mom_dir1_vel1_node_flux>(
 						h, {x_min - 2 + 1, y_min + 1, x_max + 2 + 2, y_max + 1 + 2}, [=](id<2> idx) {
 							// Find staggered mesh mass fluxes, nodal masses and volumes.
@@ -139,11 +128,11 @@ void advec_mom_kernel(
 			//   DO j=x_min-1,x_max+2
 
 			execute(q, [&](handler &h) {
-				auto density1 = density1_buffer.access<RW>(h);
-				auto node_flux = node_flux_buffer.access<RW>(h);
+				auto density1 = density1_buffer.access<R>(h);
+				auto node_flux = node_flux_buffer.access<R>(h);
 				auto node_mass_post = node_mass_post_buffer.access<RW>(h);
 				auto node_mass_pre = node_mass_pre_buffer.access<RW>(h);
-				auto post_vol = post_vol_buffer.access<RW>(h);
+				auto post_vol = post_vol_buffer.access<R>(h);
 				par_ranged<class advec_mom_dir1_vel1_node_mass_pre>(
 						h, {x_min - 1 + 1, y_min + 1, x_max + 2 + 2, y_max + 1 + 2}, [=](id<2> idx) {
 							// Staggered cell mass post advection
@@ -163,12 +152,12 @@ void advec_mom_kernel(
 		//  DO j=x_min-1,x_max+1
 
 		execute(q, [&](handler &h) {
-			auto vel1 = vel1_buffer.access<RW>(h);
-			auto node_flux = node_flux_buffer.access<RW>(h);
-			auto node_mass_post = node_mass_post_buffer.access<RW>(h);
-			auto node_mass_pre = node_mass_pre_buffer.access<RW>(h);
+			auto vel1 = vel1_buffer.access<R>(h);
+			auto node_flux = node_flux_buffer.access<R>(h);
+			auto node_mass_post = node_mass_post_buffer.access<R>(h);
+			auto node_mass_pre = node_mass_pre_buffer.access<R>(h);
 			auto mom_flux = mom_flux_buffer.access<RW>(h);
-			auto celldx = celldx_buffer.access<RW>(h);
+			auto celldx = celldx_buffer.access<R>(h);
 			par_ranged<class advec_mom_dir1_mom_flux>(
 					h, {x_min - 1 + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](id<2> idx) {
 
@@ -214,9 +203,9 @@ void advec_mom_kernel(
 
 		execute(q, [&](handler &h) {
 			auto vel1 = vel1_buffer.access<RW>(h);
-			auto node_mass_post = node_mass_post_buffer.access<RW>(h);
-			auto node_mass_pre = node_mass_pre_buffer.access<RW>(h);
-			auto mom_flux = mom_flux_buffer.access<RW>(h);
+			auto node_mass_post = node_mass_post_buffer.access<R>(h);
+			auto node_mass_pre = node_mass_pre_buffer.access<R>(h);
+			auto mom_flux = mom_flux_buffer.access<R>(h);
 			par_ranged<class advec_mom_dir1_vel1>(
 					h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](id<2> idx) {
 						vel1[idx] = (vel1[idx] * node_mass_pre[idx] + mom_flux[offset(idx, -1, 0)] -
@@ -230,12 +219,12 @@ void advec_mom_kernel(
 			//   DO j=x_min,x_max+1
 
 			execute(q, [&](handler &h) {
-				auto density1 = density1_buffer.access<RW>(h);
+				auto density1 = density1_buffer.access<R>(h);
 				auto node_flux = node_flux_buffer.access<RW>(h);
-				auto node_mass_post = node_mass_post_buffer.access<RW>(h);
-				auto node_mass_pre = node_mass_pre_buffer.access<RW>(h);
-				auto post_vol = post_vol_buffer.access<RW>(h);
-				auto mass_flux_y = mass_flux_y_buffer.access<RW>(h);
+				auto node_mass_post = node_mass_post_buffer.access<R>(h);
+				auto node_mass_pre = node_mass_pre_buffer.access<R>(h);
+				auto post_vol = post_vol_buffer.access<R>(h);
+				auto mass_flux_y = mass_flux_y_buffer.access<R>(h);
 				par_ranged<class advec_mom_dir2_vel1_node_flux>(
 						h, {x_min + 1, y_min - 2 + 1, x_max + 1 + 2, y_max + 2 + 2}, [=](id<2> idx) {
 							// Find staggered mesh mass fluxes and nodal masses and volumes.
@@ -251,11 +240,11 @@ void advec_mom_kernel(
 
 			execute(q, [&](handler &h) {
 
-				auto density1 = density1_buffer.access<RW>(h);
-				auto node_flux = node_flux_buffer.access<RW>(h);
+				auto density1 = density1_buffer.access<R>(h);
+				auto node_flux = node_flux_buffer.access<R>(h);
 				auto node_mass_post = node_mass_post_buffer.access<RW>(h);
 				auto node_mass_pre = node_mass_pre_buffer.access<RW>(h);
-				auto post_vol = post_vol_buffer.access<RW>(h);
+				auto post_vol = post_vol_buffer.access<R>(h);
 				par_ranged<class advec_mom_dir2_vel1_node_mass_pre>(
 						h, {x_min + 1, y_min - 1 + 1, x_max + 1 + 2, y_max + 2 + 2}, [=](id<2> idx) {
 							node_mass_post[idx] = 0.25 * (density1[offset(idx, 0, -1)] * post_vol[offset(idx, 0, -1)]
@@ -274,12 +263,12 @@ void advec_mom_kernel(
 		//   DO j=x_min,x_max+1
 
 		execute(q, [&](handler &h) {
-			auto vel1 = vel1_buffer.access<RW>(h);
-			auto node_flux = node_flux_buffer.access<RW>(h);
-			auto node_mass_post = node_mass_post_buffer.access<RW>(h);
-			auto node_mass_pre = node_mass_pre_buffer.access<RW>(h);
+			auto vel1 = vel1_buffer.access<R>(h);
+			auto node_flux = node_flux_buffer.access<R>(h);
+			auto node_mass_post = node_mass_post_buffer.access<R>(h);
+			auto node_mass_pre = node_mass_pre_buffer.access<R>(h);
 			auto mom_flux = mom_flux_buffer.access<RW>(h);
-			auto celldy = celldy_buffer.access<RW>(h);
+			auto celldy = celldy_buffer.access<R>(h);
 			par_ranged<class advec_mom_dir2_mom_flux>(
 					h, {x_min + 1, y_min - 1 + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](id<2> idx) {
 
@@ -327,9 +316,9 @@ void advec_mom_kernel(
 
 		execute(q, [&](handler &h) {
 			auto vel1 = vel1_buffer.access<RW>(h);
-			auto node_mass_post = node_mass_post_buffer.access<RW>(h);
-			auto node_mass_pre = node_mass_pre_buffer.access<RW>(h);
-			auto mom_flux = mom_flux_buffer.access<RW>(h);
+			auto node_mass_post = node_mass_post_buffer.access<R>(h);
+			auto node_mass_pre = node_mass_pre_buffer.access<R>(h);
+			auto mom_flux = mom_flux_buffer.access<R>(h);
 			par_ranged<class advec_mom_dir2_vel1>(
 					h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](id<2> idx) {
 						vel1[idx] = (vel1[idx] * node_mass_pre[idx] + mom_flux[offset(idx, 0, -1)] - mom_flux[idx]) /

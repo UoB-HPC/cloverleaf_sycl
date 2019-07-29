@@ -56,8 +56,8 @@ void clover_pack_message_left(queue &q, int x_min, int x_max, int y_min, int y_m
 	// DO k=y_min-depth,y_max+y_inc+depth
 
 	execute(q, [&](handler &h) {
-		auto field = field_buffer.access<RW>(h);
-		auto left_snd_buffer = left_snd_buffer_buffer.access<RW>(h);
+		auto field = field_buffer.access<R>(h);
+		auto left_snd_buffer = left_snd_buffer_buffer.access<W>(h);
 		par_ranged<class APPEND_LN(clover_pack_message_left)>(
 				h, {y_min - depth + 1, y_max + y_inc + depth + 2}, [=](id<1> k) {
 					for (int j = 0; j < depth; ++j) {
@@ -101,8 +101,8 @@ void clover_unpack_message_left(queue &q, int x_min, int x_max, int y_min, int y
 	// DO k=y_min-depth,y_max+y_inc+depth
 
 	execute(q, [&](handler &h) {
-		auto field = field_buffer.access<RW>(h);
-		auto left_rcv_buffer = left_rcv_buffer_buffer.access<RW>(h);
+		auto field = field_buffer.access<W>(h);
+		auto left_rcv_buffer = left_rcv_buffer_buffer.access<R>(h);
 		par_ranged<class APPEND_LN(clover_unpack_message_left)>(
 				h, {y_min - depth + 1, y_max + y_inc + depth + 2}, [=](id<1> k) {
 					for (int j = 0; j < depth; ++j) {
@@ -145,8 +145,8 @@ void clover_pack_message_right(queue &q, int x_min, int x_max, int y_min, int y_
 
 	// DO k=y_min-depth,y_max+y_inc+depth
 	execute(q, [&](handler &h) {
-		auto field = field_buffer.access<RW>(h);
-		auto right_snd_buffer = right_snd_buffer_buffer.access<RW>(h);
+		auto field = field_buffer.access<R>(h);
+		auto right_snd_buffer = right_snd_buffer_buffer.access<W>(h);
 		par_ranged<class APPEND_LN(clover_pack_message_right)>(
 				h, {y_min - depth + 1, y_max + y_inc + depth + 2}, [=](id<1> k) {
 					for (int j = 0; j < depth; ++j) {
@@ -190,8 +190,8 @@ void clover_unpack_message_right(queue &q, int x_min, int x_max, int y_min, int 
 	// DO k=y_min-depth,y_max+y_inc+depth
 
 	execute(q, [&](handler &h) {
-		auto field = field_buffer.access<RW>(h);
-		auto right_rcv_buffer = right_rcv_buffer_buffer.access<RW>(h);
+		auto field = field_buffer.access<R>(h);
+		auto right_rcv_buffer = right_rcv_buffer_buffer.access<W>(h);
 		par_ranged<class APPEND_LN(clover_pack_message_left)>(
 				h, {y_min - depth + 1, y_max + y_inc + depth + 2}, [=](id<1> k) {
 					for (int j = 0; j < depth; ++j) {
@@ -234,8 +234,8 @@ void clover_pack_message_top(queue &q, int x_min, int x_max, int y_min, int y_ma
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
 		execute(q, [&](handler &h) {
-			auto field = field_buffer.access<RW>(h);
-			auto top_snd_buffer = top_snd_buffer_buffer.access<RW>(h);
+			auto field = field_buffer.access<R>(h);
+			auto top_snd_buffer = top_snd_buffer_buffer.access<W>(h);
 			par_ranged<class APPEND_LN(clover_pack_message_top)>(
 					h, {x_min - depth + 1, x_max + x_inc + depth + 2}, [=](id<1> j) {
 						int index = buffer_offset + k + (j.get(0) + depth - 1) * depth;
@@ -277,8 +277,8 @@ void clover_unpack_message_top(queue &q, int x_min, int x_max, int y_min, int y_
 		// DO j=x_min-depth,x_max+x_inc+depth
 
 		execute(q, [&](handler &h) {
-			auto field = field_buffer.access<RW>(h);
-			auto top_rcv_buffer = top_rcv_buffer_buffer.access<RW>(h);
+			auto field = field_buffer.access<W>(h);
+			auto top_rcv_buffer = top_rcv_buffer_buffer.access<R>(h);
 			par_ranged<class APPEND_LN(clover_unpack_message_top)>(
 					h, {x_min - depth + 1, x_max + x_inc + depth + 2}, [=](id<1> j) {
 						int index = buffer_offset + k + (j.get(0) + depth - 1) * depth;
@@ -321,8 +321,8 @@ void clover_pack_message_bottom(queue &q, int x_min, int x_max, int y_min, int y
 		// DO j=x_min-depth,x_max+x_inc+depth
 
 		execute(q, [&](handler &h) {
-			auto field = field_buffer.access<RW>(h);
-			auto bottom_snd_buffer = bottom_snd_buffer_buffer.access<RW>(h);
+			auto field = field_buffer.access<R>(h);
+			auto bottom_snd_buffer = bottom_snd_buffer_buffer.access<W>(h);
 			par_ranged<class APPEND_LN(clover_pack_message_bottom)>(
 					h, {x_min - depth + 1, x_max + x_inc + depth + 2}, [=](id<1> j) {
 						int index = buffer_offset + k + (j.get(0) + depth - 1) * depth;
@@ -363,8 +363,8 @@ void clover_unpack_message_bottom(queue &q, int x_min, int x_max, int y_min, int
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
 		execute(q, [&](handler &h) {
-			auto field = field_buffer.access<RW>(h);
-			auto bottom_rcv_buffer = bottom_rcv_buffer_buffer.access<RW>(h);
+			auto field = field_buffer.access<W>(h);
+			auto bottom_rcv_buffer = bottom_rcv_buffer_buffer.access<R>(h);
 			par_ranged<class APPEND_LN(clover_unpack_message_top)>(
 					h, {x_min - depth + 1, x_max + x_inc + depth + 2}, [=](id<1> j) {
 						int index = buffer_offset + k + (j.get(0) + depth - 1) * depth;

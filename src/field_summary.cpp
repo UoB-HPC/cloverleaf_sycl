@@ -43,12 +43,12 @@ extern std::ostream g_out;
 
 
 struct captures {
-	Accessor<double, 2, RW>::Type volume;
-	Accessor<double, 2, RW>::Type density0;
-	Accessor<double, 2, RW>::Type energy0;
-	Accessor<double, 2, RW>::Type pressure;
-	Accessor<double, 2, RW>::Type xvel0;
-	Accessor<double, 2, RW>::Type yvel0;
+	Accessor<double, 2, R>::Type volume;
+	Accessor<double, 2, R>::Type density0;
+	Accessor<double, 2, R>::Type energy0;
+	Accessor<double, 2, R>::Type pressure;
+	Accessor<double, 2, R>::Type xvel0;
+	Accessor<double, 2, R>::Type yvel0;
 };
 
 struct value_type {
@@ -106,15 +106,15 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 				globals.queue, policy,
 				[=](handler &h, size_t &size) mutable {
 					return ctx(h, size,
-					           {t.field.volume.access<RW>(h),
-					            t.field.density0.access<RW>(h),
-					            t.field.energy0.access<RW>(h),
-					            t.field.pressure.access<RW>(h),
-					            t.field.xvel0.access<RW>(h),
-					            t.field.yvel0.access<RW>(h)},
+					           {t.field.volume.access<R>(h),
+					            t.field.density0.access<R>(h),
+					            t.field.energy0.access<R>(h),
+					            t.field.pressure.access<R>(h),
+					            t.field.xvel0.access<R>(h),
+					            t.field.yvel0.access<R>(h)},
 					           result.buffer);
 				},
-				[](ctx ctx, id<1> lidx) { ctx.local[lidx] = {}; },
+				[](const ctx& ctx, id<1> lidx) { ctx.local[lidx] = {}; },
 				[ymax, ymin, xmax, xmin](ctx ctx, id<1> lidx, id<1> idx) {
 
 					const int j = xmin + 1 + idx[0] % (xmax - xmin + 1);
@@ -138,14 +138,14 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 					ctx.local[lidx].ke = cell_mass * 0.5 * vsqrd;
 					ctx.local[lidx].press = cell_vol * ctx.actual.pressure[j][k];
 				},
-				[](ctx ctx, id<1> idx, id<1> idy) {
+				[](const ctx& ctx, id<1> idx, id<1> idy) {
 					ctx.local[idx].vol += ctx.local[idy].vol;
 					ctx.local[idx].mass += ctx.local[idy].mass;
 					ctx.local[idx].ie += ctx.local[idy].ie;
 					ctx.local[idx].ke += ctx.local[idy].ke;
 					ctx.local[idx].press += ctx.local[idy].press;
 				},
-				[](ctx ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
+				[](const ctx& ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
 
 		{
 			vol = result.access<R>()[0].vol;

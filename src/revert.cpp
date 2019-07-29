@@ -30,10 +30,10 @@
 void revert_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
-		Accessor<double, 2, RW>::Type density0,
-		Accessor<double, 2, RW>::Type density1,
-		Accessor<double, 2, RW>::Type energy0,
-		Accessor<double, 2, RW>::Type energy1) {
+		Accessor<double, 2, R>::Type density0,
+		Accessor<double, 2, W>::Type density1,
+		Accessor<double, 2, R>::Type energy0,
+		Accessor<double, 2, W>::Type energy1) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
@@ -62,10 +62,10 @@ void revert(global_variables &globals) {
 					t.info.t_xmax,
 					t.info.t_ymin,
 					t.info.t_ymax,
-					t.field.density0.access<RW>(h),
-					t.field.density1.access<RW>(h),
-					t.field.energy0.access<RW>(h),
-					t.field.energy1.access<RW>(h));
+					t.field.density0.access<R>(h),
+					t.field.density1.access<W>(h),
+					t.field.energy0.access<R>(h),
+					t.field.energy1.access<W>(h));
 		});
 	}
 

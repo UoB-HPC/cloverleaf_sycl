@@ -68,21 +68,21 @@ void calc_dt_kernel(
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
 	struct captures {
-		Accessor<double, 2, RW>::Type xarea;
-		Accessor<double, 2, RW>::Type yarea;
-		Accessor<double, 1, RW>::Type cellx;
-		Accessor<double, 1, RW>::Type celly;
-		Accessor<double, 1, RW>::Type celldx;
-		Accessor<double, 1, RW>::Type celldy;
-		Accessor<double, 2, RW>::Type volume;
-		Accessor<double, 2, RW>::Type density0;
-		Accessor<double, 2, RW>::Type energy0;
-		Accessor<double, 2, RW>::Type pressure;
-		Accessor<double, 2, RW>::Type viscosity_a;
-		Accessor<double, 2, RW>::Type soundspeed;
-		Accessor<double, 2, RW>::Type xvel0;
-		Accessor<double, 2, RW>::Type yvel0;
-		Accessor<double, 2, RW>::Type dt_min;
+		Accessor<double, 2, R>::Type xarea;
+		Accessor<double, 2, R>::Type yarea;
+		Accessor<double, 1, R>::Type cellx;
+		Accessor<double, 1, R>::Type celly;
+		Accessor<double, 1, R>::Type celldx;
+		Accessor<double, 1, R>::Type celldy;
+		Accessor<double, 2, R>::Type volume;
+		Accessor<double, 2, R>::Type density0;
+		Accessor<double, 2, R>::Type energy0;
+		Accessor<double, 2, R>::Type pressure;
+		Accessor<double, 2, R>::Type viscosity_a;
+		Accessor<double, 2, R>::Type soundspeed;
+		Accessor<double, 2, R>::Type xvel0;
+		Accessor<double, 2, R>::Type yvel0;
+		Accessor<double, 2, R>::Type dt_min;
 	};
 
 
@@ -97,24 +97,24 @@ void calc_dt_kernel(
 			q, policy,
 			[=](handler &h, size_t &size) mutable {
 				return ctx(h, size,
-				           {xarea.access<RW>(h),
-				            yarea.access<RW>(h),
-				            cellx.access<RW>(h),
-				            celly.access<RW>(h),
-				            celldx.access<RW>(h),
-				            celldy.access<RW>(h),
-				            volume.access<RW>(h),
-				            density0.access<RW>(h),
-				            energy0.access<RW>(h),
-				            pressure.access<RW>(h),
-				            viscosity_a.access<RW>(h),
-				            soundspeed.access<RW>(h),
-				            xvel0.access<RW>(h),
-				            yvel0.access<RW>(h),
-				            dt_min.access<RW>(h)},
+				           {xarea.access<R>(h),
+				            yarea.access<R>(h),
+				            cellx.access<R>(h),
+				            celly.access<R>(h),
+				            celldx.access<R>(h),
+				            celldy.access<R>(h),
+				            volume.access<R>(h),
+				            density0.access<R>(h),
+				            energy0.access<R>(h),
+				            pressure.access<R>(h),
+				            viscosity_a.access<R>(h),
+				            soundspeed.access<R>(h),
+				            xvel0.access<R>(h),
+				            yvel0.access<R>(h),
+				            dt_min.access<R>(h)},
 				           result.buffer);
 			},
-			[](ctx ctx, id<1> lidx) { ctx.local[lidx] = g_big; },
+			[](const ctx &ctx, id<1> lidx) { ctx.local[lidx] = g_big; },
 			[dtc_safe, dtv_safe, dtu_safe, dtdiv_safe](ctx ctx, id<1> lidx, id<2> idx) {
 
 
@@ -162,8 +162,8 @@ void calc_dt_kernel(
 				}
 				ctx.local[lidx] = sycl::fmin(dtct, sycl::fmin(dtut, sycl::fmin(dtvt, sycl::fmin(dtdivt, (1.0e+21)))));
 			},
-			[](ctx ctx, id<1> idx, id<1> idy) { ctx.local[idx] = sycl::fmin(ctx.local[idx], ctx.local[idy]); },
-			[](ctx ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
+			[](const ctx &ctx, id<1> idx, id<1> idy) { ctx.local[idx] = sycl::fmin(ctx.local[idx], ctx.local[idy]); },
+			[](const ctx &ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
 
 	{
 		dt_min_val = result.access<R>()[0];
@@ -184,14 +184,14 @@ void calc_dt_kernel(
 
 	if (small != 0) {
 
-		auto cellx_acc = cellx.access<RW>();
-		auto celly_acc = celly.access<RW>();
-		auto density0_acc = density0.access<RW>();
-		auto energy0_acc = energy0.access<RW>();
-		auto pressure_acc = pressure.access<RW>();
-		auto soundspeed_acc = soundspeed.access<RW>();
-		auto xvel0_acc = xvel0.access<RW>();
-		auto yvel0_acc = yvel0.access<RW>();
+		auto cellx_acc = cellx.access<R>();
+		auto celly_acc = celly.access<R>();
+		auto density0_acc = density0.access<R>();
+		auto energy0_acc = energy0.access<R>();
+		auto pressure_acc = pressure.access<R>();
+		auto soundspeed_acc = soundspeed.access<R>();
+		auto xvel0_acc = xvel0.access<R>();
+		auto yvel0_acc = yvel0.access<R>();
 
 		std::cout
 				<< "Timestep information:" << std::endl

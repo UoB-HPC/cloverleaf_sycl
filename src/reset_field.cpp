@@ -39,10 +39,10 @@ void reset_field_kernel(
 		Buffer<double, 2> &yvel1_buffer) {
 
 	execute(q, [&](handler &h) {
-		auto density0 = density0_buffer.access<RW>(h);
-		auto density1 = density1_buffer.access<RW>(h);
-		auto energy0 = energy0_buffer.access<RW>(h);
-		auto energy1 = energy1_buffer.access<RW>(h);
+		auto density0 = density0_buffer.access<W>(h);
+		auto density1 = density1_buffer.access<R>(h);
+		auto energy0 = energy0_buffer.access<W>(h);
+		auto energy1 = energy1_buffer.access<R>(h);
 		// DO k=y_min,y_max
 		//   DO j=x_min,x_max
 		par_ranged<class reset_field_1>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
@@ -54,10 +54,10 @@ void reset_field_kernel(
 	});
 
 	execute(q, [&](handler &h) {
-		auto xvel1 = xvel1_buffer.access<RW>(h);
-		auto yvel0 = yvel0_buffer.access<RW>(h);
-		auto yvel1 = yvel1_buffer.access<RW>(h);
-		auto xvel0 = xvel0_buffer.access<RW>(h);
+		auto xvel1 = xvel1_buffer.access<R>(h);
+		auto yvel0 = yvel0_buffer.access<W>(h);
+		auto yvel1 = yvel1_buffer.access<R>(h);
+		auto xvel0 = xvel0_buffer.access<W>(h);
 		// DO k=y_min,y_max+1
 		//   DO j=x_min,x_max+1
 		par_ranged<class reset_field_2>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
