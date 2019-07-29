@@ -408,6 +408,7 @@ void clover_exchange(global_variables &globals, int fields[NUM_FIELDS], const in
 	}
 
 	// make a call to wait / sync
+	globals.queue.wait_and_throw();
 	MPI_Waitall(message_count, request, MPI_STATUS_IGNORE);
 
 	// Copy back to the device
@@ -473,6 +474,7 @@ void clover_exchange(global_variables &globals, int fields[NUM_FIELDS], const in
 	}
 
 	// need to make a call to wait / sync
+	globals.queue.wait_and_throw();
 	MPI_Waitall(message_count, request, MPI_STATUS_IGNORE);
 
 	// Copy back to the device

@@ -79,10 +79,8 @@ int main(int argc, char *argv[]) {
 
 	// Finilise programming models
 //	Kokkos::finalize();
-	MPI_Finalize();
-
-
 	config->queue.wait_and_throw();
+	MPI_Finalize();
 
 	std::cout << "Done" << std::endl;
 	return EXIT_SUCCESS;
