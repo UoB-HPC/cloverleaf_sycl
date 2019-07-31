@@ -93,7 +93,7 @@ void calc_dt_kernel(
 	Buffer<double, 1> result(range<1>(policy.sizeX * policy.sizeY));
 
 
-	par_reduce_2d<class dt_kernel_reduce>(
+	par_reduce_2d<class dt_kernel_reduce, double>(
 			q, policy,
 			[=](handler &h, size_t &size) mutable {
 				return ctx(h, size,
@@ -123,7 +123,7 @@ void calc_dt_kernel(
 
 				double cc = ctx.actual.soundspeed[idx] * ctx.actual.soundspeed[idx];
 				cc = cc + 2.0 * ctx.actual.viscosity_a[idx] / ctx.actual.density0[idx];
-				cc = sycl::fmax(sqrt(cc), g_small);
+				cc = sycl::fmax(sycl::sqrt(cc), g_small);
 
 				double dtct = dtc_safe * sycl::fmin(dsx, dsy) / cc;
 

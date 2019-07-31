@@ -88,6 +88,7 @@ void timestep(global_variables &globals, parallel_ &parallel) {
 
 	globals.dt = std::min(std::min(globals.dt, globals.dtold * globals.config.dtrise), globals.config.dtmax);
 
+//	globals.queue.wait_and_throw();
 	clover_min(globals.dt);
 	if (globals.profiler_on) globals.profiler.timestep += timer() - kernel_time;
 

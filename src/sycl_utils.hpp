@@ -24,7 +24,7 @@
 #include <iostream>
 #include <utility>
 
-#define DEBUG false
+#define SYCL_DEBUG false
 
 
 template<typename T,
@@ -53,7 +53,7 @@ struct Buffer {
 //	Buffer() {};
 
 	static cl::sycl::range<N> show(cl::sycl::range<N> range) {
-		if (DEBUG) {
+		if (SYCL_DEBUG) {
 			if (N == 1)
 				std::cout << "Buffer<" << N << ">(range1d=" << range.get(0) << ")\n";
 			else if (N == 2)
@@ -74,7 +74,7 @@ struct Buffer {
 	template<cl::sycl::access::mode mode>
 	inline typename Accessor<T, N, mode>::Type
 	access(cl::sycl::handler &cgh) {
-		if (DEBUG) {
+		if (SYCL_DEBUG) {
 			if (N == 1) std::cout << "buffer->access_1d( " << buffer.get_range().get(0) << " )\n";
 			else if (N == 2)
 				std::cout << "buffer->access_2d( " << buffer.get_range().get(0) << "," << buffer.get_range().get(1)
@@ -98,6 +98,12 @@ struct Range1d {
 		assert(from < to);
 		assert(size != 0);
 	}
+	friend std::ostream &operator<<(std::ostream &os, const Range1d &d) {
+		os << "Range1d{"
+		   << " X[" << d.from << "->" << d.to << " (" << d.size << ")]"
+		   << "}";
+		return os;
+	}
 };
 
 struct Range2d {
@@ -108,7 +114,7 @@ struct Range2d {
 	Range2d(A fromX, B fromY, C toX, D toY) :
 			fromX(fromX), toX(toX), fromY(fromY), toY(toY),
 			sizeX(toX - fromX), sizeY(toY - fromY) {
-		if (DEBUG)
+		if (SYCL_DEBUG)
 			std::cout << "Mk range 2d:x=(" << fromX << "->" << toX << ")"
 			          << ",y= (" << fromY << "->" << toY << ")" << std::endl;
 		assert(fromX < toX);
@@ -127,7 +133,7 @@ struct Range2d {
 
 template<typename nameT, typename functorT>
 static inline void par_ranged(cl::sycl::handler &cgh, const Range1d &range, const functorT &functor) {
-	if (DEBUG)
+	if (SYCL_DEBUG)
 		std::cout << "par_ranged 1d:x=" << range.from << "(" << range.size << ")" << std::endl;
 	cgh.parallel_for<nameT>(
 			cl::sycl::range<1>(range.size),
@@ -136,7 +142,7 @@ static inline void par_ranged(cl::sycl::handler &cgh, const Range1d &range, cons
 }
 template<typename nameT, typename functorT>
 static inline void par_ranged(cl::sycl::handler &cgh, const Range2d &range, const functorT &functor) {
-	if (DEBUG)
+	if (SYCL_DEBUG)
 		std::cout << "par_ranged 2d(x=" << range.fromX << "(" << range.sizeX << ")" << ", " << range.fromY << "("
 		          << range.sizeY << "))" << std::endl;
 	cgh.parallel_for<nameT>(
@@ -146,10 +152,10 @@ static inline void par_ranged(cl::sycl::handler &cgh, const Range2d &range, cons
 }
 template<typename T>
 static void execute(cl::sycl::queue &queue, T cgf) {
-	if (DEBUG) std::cout << "Execute" << std::endl;
+	if (SYCL_DEBUG) std::cout << "Execute" << std::endl;
 	try {
 		queue.submit(cgf);
-		if (DEBUG) queue.wait_and_throw();
+		if (SYCL_DEBUG) queue.wait_and_throw();
 	} catch (cl::sycl::device_error &e) {
 		std::cerr << "[SYCL] Device error: : `" << e.what() << "`" << std::endl;
 		throw e;

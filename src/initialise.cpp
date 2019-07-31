@@ -36,7 +36,7 @@
 extern std::ostream g_out;
 std::ofstream of;
 
-std::unique_ptr<global_variables> initialise(parallel_ &parallel) {
+std::unique_ptr<global_variables> initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 
 	global_config config;
 
@@ -67,9 +67,29 @@ std::unique_ptr<global_variables> initialise(parallel_ &parallel) {
 		g_out << "Clover will run from the following input:-" << std::endl
 		      << std::endl;
 
+		if (!args.empty()) {
+			std::cout << "Args:";
+			for (const auto &arg : args) std::cout << " " << arg;
+			std::cout << std::endl;
+		}
+
+
+		std::string file;
+		switch (args.size()) {
+			case 0: file = "clover.in";
+				break;
+			case 1 : file = args[0];
+				break;
+			default: std::cerr << "Expected: clover_leaf <clover.in>" << std::endl;
+				std::exit(EXIT_FAILURE);
+		}
+
 		// Try to open clover.in
-		g_in.open("clover.in");
+		g_in.open(file);
+		std::cerr << "Using input: `" << file << "`" << std::endl;
+
 		if (!g_in.good()) {
+			std::cerr << "Unable to open file: `" << file << "`, using defaults" << std::endl;
 			g_in.close();
 			std::ofstream out_unit("clover.in");
 			out_unit
@@ -92,6 +112,8 @@ std::unique_ptr<global_variables> initialise(parallel_ &parallel) {
 			out_unit.close();
 			g_in.open("clover.in");
 		}
+
+
 	}
 
 	clover_barrier();

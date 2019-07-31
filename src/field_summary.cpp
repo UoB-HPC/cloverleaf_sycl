@@ -102,7 +102,7 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 
 		Buffer<value_type, 1> result(range<1>(policy.size));
 
-		par_reduce_1d<class field_summary>(
+		par_reduce_1d<class field_summary, value_type>(
 				globals.queue, policy,
 				[=](handler &h, size_t &size) mutable {
 					return ctx(h, size,

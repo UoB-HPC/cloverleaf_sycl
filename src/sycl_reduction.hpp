@@ -27,16 +27,24 @@
 #include "sycl_utils.hpp"
 
 
-static inline size_t next_powerof2(size_t a) {
-	auto v = a;
-	v--;
-	v |= v >> 1;
-	v |= v >> 2;
-	v |= v >> 4;
-	v |= v >> 8;
-	v |= v >> 16;
-	v++;
-	return v;
+static inline size_t next_powerof2(size_t x) {
+	x--;
+	x |= x >> 1;
+	x |= x >> 2;
+	x |= x >> 4;
+	x |= x >> 8;
+	x |= x >> 16;
+	return x + 1;
+}
+
+
+static inline size_t prev_powerof2(size_t x) {
+	x |= x >> 1;
+	x |= x >> 2;
+	x |= x >> 4;
+	x |= x >> 8;
+	x |= x >> 16;
+	return x - (x >> 1);
 }
 
 
@@ -55,12 +63,15 @@ struct local_reducer {
 			actual(actual),
 			result(b.template get_access<cl::sycl::access::mode::read_write>(h)) {}
 
+	inline void drain(cl::sycl::id<1> lid, cl::sycl::id<1> gid) const { local[lid] = result[gid]; }
+
 };
 
 
 template<typename nameT,
 		size_t dimension,
 		class RangeTpe,
+		class LocalType,
 		class LocalAllocator = std::nullptr_t,
 		class Empty= std::nullptr_t,
 		class Functor= std::nullptr_t,
@@ -75,38 +86,42 @@ static inline void par_reduce_nd_impl(cl::sycl::queue &q,
                                       Functor functor,
                                       BinaryOp combiner,
                                       Finaliser finaliser) {
+
 	const size_t maxWgSize = q.get_device().get_info<cl::sycl::info::device::max_work_group_size>();
+	const size_t localMemSize = q.get_device().get_info<cl::sycl::info::device::local_mem_size>();
 
-	//range.sizeX * range.sizeY
+	size_t unpadded = lengthFn(range);
+	size_t length = next_powerof2(unpadded);
 
-	size_t length = lengthFn(range);
+	size_t local = std::min(length, maxWgSize);
+	if (local * sizeof(LocalType) > localMemSize)
+		local = prev_powerof2(localMemSize / sizeof(LocalType));
+
+	bool functorDone = false;
 	do {
-		size_t paddedN = next_powerof2(length);
-		const size_t wgN = std::min(paddedN, maxWgSize);
+
+		if (SYCL_DEBUG) std::cout << "RD: Local=" << local << " Len=" << length << " unpadded:" << unpadded << "\n";
 
 		q.submit([=](cl::sycl::handler &h) mutable {
-			auto scratch = allocator(h, paddedN);
+			auto scratch = allocator(h, local);
 			h.parallel_for<nameT>(
-					cl::sycl::nd_range<1>(cl::sycl::range<1>(paddedN),
-					                      cl::sycl::range<1>(wgN)),
+					cl::sycl::nd_range<1>(cl::sycl::range<1>(std::max(local, length)),
+					                      cl::sycl::range<1>(std::min(local, length))),
 					[=](cl::sycl::nd_item<1> id) {
 						cl::sycl::id<1> globalid = id.get_global_id();
 						cl::sycl::id<1> localid = id.get_local_id();
 
-						if (globalid[0] >= length) empty(scratch, localid);
+						if (globalid[0] >= unpadded) empty(scratch, localid);
 						else {
-
-
-//							const size_t x = globalid[0] % range.sizeX + range.fromX;
-//							const size_t y = globalid[0] / range.sizeY + range.fromY;
-//							cl::sycl::id<2>(x, y)
-
-							functor(scratch, localid, rangeIdFn(globalid[0], range));
+							if (functorDone) scratch.drain(localid, globalid[0]);
+							else functor(scratch, localid, rangeIdFn(globalid[0], range));
 						}
 
 						id.barrier(cl::sycl::access::fence_space::local_space);
-						if (globalid[0] < paddedN) {
-							for (size_t offset = paddedN / 2; offset > 0; offset >>= 1u) {
+
+						if (globalid[0] < length) {
+							int min = (length < local) ? length : local;
+							for (size_t offset = min / 2; offset > 0; offset /= 2) {
 								if (localid[0] < offset) combiner(scratch, localid, localid + offset);
 								id.barrier(cl::sycl::access::fence_space::local_space);
 							}
@@ -114,13 +129,18 @@ static inline void par_reduce_nd_impl(cl::sycl::queue &q,
 						}
 					});
 		});
-		length = length / wgN;
+		if (SYCL_DEBUG) q.wait_and_throw();
+		length = length / local;
+		functorDone = true;
 	} while (length > 1);
 	q.wait();
+	if (SYCL_DEBUG) std::cout << "RD: done= " << length << "\n";
+
 }
 
 
 template<typename nameT,
+		class LocalType,
 		class LocalAllocator = std::nullptr_t,
 		class Empty = std::nullptr_t,
 		class Functor = std::nullptr_t,
@@ -132,7 +152,9 @@ static inline void par_reduce_2d(cl::sycl::queue &q, const Range2d &range,
                                  Functor functor,
                                  BinaryOp combiner,
                                  Finaliser finaliser) {
+	if (SYCL_DEBUG) std::cout << "PR2d " << range << "\n";
 	par_reduce_nd_impl<nameT, 2, Range2d,
+			LocalType,
 			LocalAllocator,
 			Empty,
 			Functor,
@@ -149,6 +171,7 @@ static inline void par_reduce_2d(cl::sycl::queue &q, const Range2d &range,
 }
 
 template<typename nameT,
+		class LocalType,
 		class LocalAllocator = std::nullptr_t,
 		class Empty = std::nullptr_t,
 		class Functor = std::nullptr_t,
@@ -160,7 +183,9 @@ static inline void par_reduce_1d(cl::sycl::queue &q, const Range1d &range,
                                  Functor functor,
                                  BinaryOp combiner,
                                  Finaliser finaliser) {
+	if (SYCL_DEBUG) std::cout << "PR1d " << range << "\n";
 	par_reduce_nd_impl<nameT, 1, Range1d,
+			LocalType,
 			LocalAllocator,
 			Empty,
 			Functor,

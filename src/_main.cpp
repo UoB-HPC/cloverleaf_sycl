@@ -60,6 +60,29 @@ size_t next_p2(size_t a) {
 	return v;
 }
 
+//	std::cout << "Dt=" <<
+//	Buffer<double, 1> temp(range<1>(8000));
+//
+//
+//	typedef local_reducer<double, double, double> cctx;
+//
+//
+//	par_reduce_1d<class dt_kernel_reduce2, double>(
+//			q, {0, 123456},
+//			[=](handler &h, size_t &size) mutable {
+//				return cctx(h, size, 0.0, temp.buffer);
+//			},
+//			[](const cctx &ctx, id<1> lidx) { ctx.local[lidx] = 0; },
+//			[](const cctx &ctx, id<1> lidx, id<1> idx) { ctx.local[lidx] =    1.0; },
+//			[](const cctx &ctx, id<1> idx, id<1> idy) {
+//				ctx.local[idx] = ctx.local[idx] + ctx.local[idy];
+//			},
+//			[](const cctx &ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
+//
+//	{
+//		std::cout << "PRange=" << policy.sizeX * policy.sizeY << " actual=" << temp.access<R>()[0]   << "\n";
+//	}
+
 
 template<typename nameT,
 		class LocalAllocator, class Empty, class Functor, class BinaryOp, class Finaliser>

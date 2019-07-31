@@ -160,7 +160,7 @@ void generate_chunk(const int tile, global_variables &globals) {
 						}
 					}
 				} else if (state_geometry[state] == g_circ) {
-					double radius = sqrt((cellx[j] - x_cent) * (cellx[j] - x_cent) +
+					double radius = sycl::sqrt((cellx[j] - x_cent) * (cellx[j] - x_cent) +
 					                     (celly[k] - y_cent) * (celly[k] - y_cent));
 					if (radius <= state_radius[state]) {
 						energy0[idx] = state_energy[state];

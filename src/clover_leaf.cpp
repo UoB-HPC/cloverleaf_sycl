@@ -73,8 +73,10 @@ int main(int argc, char *argv[]) {
 	}
 
 
-	std::unique_ptr<global_variables> config = initialise(parallel);
+	std::unique_ptr<global_variables> config = initialise(parallel,
+			std::vector<std::string>(argv + 1, argv + argc));
 
+	std::cout << "Launching hydro" << std::endl;
 	hydro(*config, parallel);
 
 	// Finilise programming models

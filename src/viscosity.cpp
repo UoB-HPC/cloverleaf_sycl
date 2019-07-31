@@ -76,7 +76,7 @@ void viscosity_kernel(handler &h, int x_min, int x_max, int y_min, int y_max,
 			double diry = 1.0;
 			if (pgradx < 0.0) diry = -1.0;
 			pgrady = diry * sycl::fmax(1.0e-16, sycl::fabs(pgrady));
-			double pgrad = sqrt(pgradx * pgradx + pgrady * pgrady);
+			double pgrad = sycl::sqrt(pgradx * pgradx + pgrady * pgrady);
 			double xgrad = sycl::fabs(celldx[idx[0]] * pgrad / pgradx);
 			double ygrad = sycl::fabs(celldy[idx[1]] * pgrad / pgrady);
 			double grad = sycl::fmin(xgrad, ygrad);

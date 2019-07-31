@@ -249,3 +249,6 @@ $RECYCLE.BIN/
 *.lnk
 
 .vscode/
+
+clover.in
+clover.out

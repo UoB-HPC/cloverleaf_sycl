@@ -438,6 +438,8 @@ struct global_variables {
 
 	void dump(const std::string &name) {
 
+		std::cout << "Dumping globals to " << name  << std::endl;
+
 		record(name, [&](std::ostream &out) {
 			out << "Dump(tileCount = " << chunk.tiles.size() << ")" << std::endl;
 

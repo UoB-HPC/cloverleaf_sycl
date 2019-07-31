@@ -44,7 +44,7 @@ void ideal_gas_kernel(
 		double pressurebyenergy = (1.4 - 1.0) * density[idx];
 		double pressurebyvolume = -density[idx] * pressure[idx];
 		double sound_speed_squared = v * v * (pressure[idx] * pressurebyenergy - pressurebyvolume);
-		soundspeed[idx] = sqrt(sound_speed_squared);
+		soundspeed[idx] = sycl::sqrt(sound_speed_squared);
 	});
 
 }
