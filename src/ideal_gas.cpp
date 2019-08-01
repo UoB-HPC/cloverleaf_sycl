@@ -28,17 +28,17 @@
 void ideal_gas_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
-		Accessor<double, 2, R>::Type density,
-		Accessor<double, 2, R>::Type energy,
-		Accessor<double, 2, RW>::Type pressure,
-		Accessor<double, 2, RW>::Type soundspeed) {
+		clover::Accessor<double, 2, R>::Type density,
+		clover::Accessor<double, 2, R>::Type energy,
+		clover::Accessor<double, 2, RW>::Type pressure,
+		clover::Accessor<double, 2, RW>::Type soundspeed) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
 
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
-	par_ranged<class ideal_gas>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](id<2> idx) {
+	clover::par_ranged<class ideal_gas>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](id<2> idx) {
 		double v = 1.0 / density[idx];
 		pressure[idx] = (1.4 - 1.0) * density[idx] * energy[idx];
 		double pressurebyenergy = (1.4 - 1.0) * density[idx];
@@ -59,7 +59,7 @@ void ideal_gas(global_variables &globals, const int tile, bool predict) {
 
 	tile_type &t = globals.chunk.tiles[tile];
 
-	execute(globals.queue, [&](handler &h) {
+	clover::execute(globals.queue, [&](handler &h) {
 
 		if (!predict) {
 			ideal_gas_kernel(

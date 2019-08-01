@@ -28,17 +28,17 @@
 //  Only cells in compression will have a non-zero value.
 
 void viscosity_kernel(handler &h, int x_min, int x_max, int y_min, int y_max,
-                      Accessor<double, 1, R>::Type celldx,
-                      Accessor<double, 1, R>::Type celldy,
-                      Accessor<double, 2, R>::Type density0,
-                      Accessor<double, 2, R>::Type pressure,
-                      Accessor<double, 2, W>::Type viscosity,
-                      Accessor<double, 2, R>::Type xvel0,
-                      Accessor<double, 2, R>::Type yvel0) {
+                      clover::Accessor<double, 1, R>::Type celldx,
+                      clover::Accessor<double, 1, R>::Type celldy,
+                      clover::Accessor<double, 2, R>::Type density0,
+                      clover::Accessor<double, 2, R>::Type pressure,
+                      clover::Accessor<double, 2, W>::Type viscosity,
+                      clover::Accessor<double, 2, R>::Type xvel0,
+                      clover::Accessor<double, 2, R>::Type yvel0) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	par_ranged<class viscosity_>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
+	clover::par_ranged<class viscosity_>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
 			id<2> idx) {
 
 		double ugrad = (xvel0[offset(idx, 1, 0)] + xvel0[offset(idx, 1, 1)]) - (xvel0[idx] + xvel0[offset(idx, 0, 1)]);
@@ -97,7 +97,7 @@ void viscosity(global_variables &globals) {
 
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		tile_type &t = globals.chunk.tiles[tile];
-		execute(globals.queue, [&](handler &h) {
+		clover::execute(globals.queue, [&](handler &h) {
 			viscosity_kernel(h,
 			                 t.info.t_xmin,
 			                 t.info.t_xmax,

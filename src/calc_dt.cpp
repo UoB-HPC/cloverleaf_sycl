@@ -35,21 +35,21 @@ void calc_dt_kernel(
 		double dtu_safe,
 		double dtv_safe,
 		double dtdiv_safe,
-		Buffer<double, 2> xarea,
-		Buffer<double, 2> yarea,
-		Buffer<double, 1> cellx,
-		Buffer<double, 1> celly,
-		Buffer<double, 1> celldx,
-		Buffer<double, 1> celldy,
-		Buffer<double, 2> volume,
-		Buffer<double, 2> density0,
-		Buffer<double, 2> energy0,
-		Buffer<double, 2> pressure,
-		Buffer<double, 2> viscosity_a,
-		Buffer<double, 2> soundspeed,
-		Buffer<double, 2> xvel0,
-		Buffer<double, 2> yvel0,
-		Buffer<double, 2> dt_min,
+		clover::Buffer<double, 2> xarea,
+		clover::Buffer<double, 2> yarea,
+		clover::Buffer<double, 1> cellx,
+		clover::Buffer<double, 1> celly,
+		clover::Buffer<double, 1> celldx,
+		clover::Buffer<double, 1> celldy,
+		clover::Buffer<double, 2> volume,
+		clover::Buffer<double, 2> density0,
+		clover::Buffer<double, 2> energy0,
+		clover::Buffer<double, 2> pressure,
+		clover::Buffer<double, 2> viscosity_a,
+		clover::Buffer<double, 2> soundspeed,
+		clover::Buffer<double, 2> xvel0,
+		clover::Buffer<double, 2> yvel0,
+		clover::Buffer<double, 2> dt_min,
 		double &dt_min_val,
 		int &dtl_control,
 		double &xl_pos,
@@ -68,32 +68,32 @@ void calc_dt_kernel(
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
 	struct captures {
-		Accessor<double, 2, R>::Type xarea;
-		Accessor<double, 2, R>::Type yarea;
-		Accessor<double, 1, R>::Type cellx;
-		Accessor<double, 1, R>::Type celly;
-		Accessor<double, 1, R>::Type celldx;
-		Accessor<double, 1, R>::Type celldy;
-		Accessor<double, 2, R>::Type volume;
-		Accessor<double, 2, R>::Type density0;
-		Accessor<double, 2, R>::Type energy0;
-		Accessor<double, 2, R>::Type pressure;
-		Accessor<double, 2, R>::Type viscosity_a;
-		Accessor<double, 2, R>::Type soundspeed;
-		Accessor<double, 2, R>::Type xvel0;
-		Accessor<double, 2, R>::Type yvel0;
-		Accessor<double, 2, R>::Type dt_min;
+		clover::Accessor<double, 2, R>::Type xarea;
+		clover::Accessor<double, 2, R>::Type yarea;
+		clover::Accessor<double, 1, R>::Type cellx;
+		clover::Accessor<double, 1, R>::Type celly;
+		clover::Accessor<double, 1, R>::Type celldx;
+		clover::Accessor<double, 1, R>::Type celldy;
+		clover::Accessor<double, 2, R>::Type volume;
+		clover::Accessor<double, 2, R>::Type density0;
+		clover::Accessor<double, 2, R>::Type energy0;
+		clover::Accessor<double, 2, R>::Type pressure;
+		clover::Accessor<double, 2, R>::Type viscosity_a;
+		clover::Accessor<double, 2, R>::Type soundspeed;
+		clover::Accessor<double, 2, R>::Type xvel0;
+		clover::Accessor<double, 2, R>::Type yvel0;
+		clover::Accessor<double, 2, R>::Type dt_min;
 	};
 
 
-	typedef local_reducer<double, double, captures> ctx;
+	typedef clover::local_reducer<double, double, captures> ctx;
 
 
-	auto policy = Range2d(x_min + 1, y_min + 1, x_max + 2, y_max + 2);
-	Buffer<double, 1> result(range<1>(policy.sizeX * policy.sizeY));
+	auto policy = clover::Range2d(x_min + 1, y_min + 1, x_max + 2, y_max + 2);
+	clover::Buffer<double, 1> result(range<1>(policy.sizeX * policy.sizeY));
 
 
-	par_reduce_2d<class dt_kernel_reduce, double>(
+	clover::par_reduce_2d<class dt_kernel_reduce, double>(
 			q, policy,
 			[=](handler &h, size_t &size) mutable {
 				return ctx(h, size,

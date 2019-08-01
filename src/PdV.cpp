@@ -38,29 +38,29 @@ void PdV_kernel(
 		bool predict,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		Accessor<double, 2, RW>::Type xarea,
-		Accessor<double, 2, RW>::Type yarea,
-		Accessor<double, 2, RW>::Type volume,
-		Accessor<double, 2, RW>::Type density0,
-		Accessor<double, 2, RW>::Type density1,
-		Accessor<double, 2, RW>::Type energy0,
-		Accessor<double, 2, RW>::Type energy1,
-		Accessor<double, 2, RW>::Type pressure,
-		Accessor<double, 2, RW>::Type viscosity,
-		Accessor<double, 2, RW>::Type xvel0,
-		Accessor<double, 2, RW>::Type xvel1,
-		Accessor<double, 2, RW>::Type yvel0,
-		Accessor<double, 2, RW>::Type yvel1,
-		Accessor<double, 2, RW>::Type volume_change) {
+		clover::Accessor<double, 2, RW>::Type xarea,
+		clover::Accessor<double, 2, RW>::Type yarea,
+		clover::Accessor<double, 2, RW>::Type volume,
+		clover::Accessor<double, 2, RW>::Type density0,
+		clover::Accessor<double, 2, RW>::Type density1,
+		clover::Accessor<double, 2, RW>::Type energy0,
+		clover::Accessor<double, 2, RW>::Type energy1,
+		clover::Accessor<double, 2, RW>::Type pressure,
+		clover::Accessor<double, 2, RW>::Type viscosity,
+		clover::Accessor<double, 2, RW>::Type xvel0,
+		clover::Accessor<double, 2, RW>::Type xvel1,
+		clover::Accessor<double, 2, RW>::Type yvel0,
+		clover::Accessor<double, 2, RW>::Type yvel1,
+		clover::Accessor<double, 2, RW>::Type volume_change) {
 
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	Range2d policy(x_min + 1, y_min + 1, x_max + 2, y_max + 2);
+	clover::Range2d policy(x_min + 1, y_min + 1, x_max + 2, y_max + 2);
 
 	if (predict) {
 
-		par_ranged<class PdV_predict_true>(h, policy, [=](id<2> idx) {
+		clover::par_ranged<class PdV_predict_true>(h, policy, [=](id<2> idx) {
 
 
 			double left_flux = (xarea[idx] * (xvel0[idx] + xvel0[offset(idx, 0, 1)]
@@ -85,7 +85,7 @@ void PdV_kernel(
 
 			double min_cell_volume =
 					sycl::fmin(sycl::fmin(volume[idx] + right_flux - left_flux + top_flux - bottom_flux,
-					          volume[idx] + right_flux - left_flux), volume[idx] + top_flux - bottom_flux);
+					                      volume[idx] + right_flux - left_flux), volume[idx] + top_flux - bottom_flux);
 
 			double recip_volume = 1.0 / volume[idx];
 
@@ -101,7 +101,7 @@ void PdV_kernel(
 
 	} else {
 
-		par_ranged<class PdV_predict_false>(h, policy, [=](id<2> idx) {
+		clover::par_ranged<class PdV_predict_false>(h, policy, [=](id<2> idx) {
 
 			double left_flux = (xarea[idx] * (xvel0[idx] + xvel0[offset(idx, 0, 1)]
 			                                  + xvel1[idx] + xvel1[offset(idx, 0, 1)])) * 0.25 * dt;
@@ -124,7 +124,7 @@ void PdV_kernel(
 
 			double min_cell_volume =
 					sycl::fmin(sycl::fmin(volume[idx] + right_flux - left_flux + top_flux - bottom_flux,
-					          volume[idx] + right_flux - left_flux), volume[idx] + top_flux - bottom_flux);
+					                      volume[idx] + right_flux - left_flux), volume[idx] + top_flux - bottom_flux);
 
 			double recip_volume = 1.0 / volume[idx];
 
@@ -159,7 +159,7 @@ void PdV(global_variables &globals, bool predict) {
 		prdct = 1;
 	}
 
-	execute(globals.queue, [&](handler &h) {
+	clover::execute(globals.queue, [&](handler &h) {
 		for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 			tile_type &t = globals.chunk.tiles[tile];
 			PdV_kernel(

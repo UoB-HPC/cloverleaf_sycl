@@ -67,8 +67,8 @@ void clover_exchange(global_variables &globals, int fields[NUM_FIELDS], int dept
 void clover_pack_left(global_variables &globals, int tile, int fields[NUM_FIELDS], int depth,
                       int left_right_offset[NUM_FIELDS]);
 void
-clover_send_recv_message_left(global_variables &globals, Buffer<double, 1> &left_snd_buffer,
-                              Buffer<double, 1> &left_rcv_buffer, int total_size, int tag_send,
+clover_send_recv_message_left(global_variables &globals, clover::Buffer<double, 1> &left_snd_buffer,
+                              clover::Buffer<double, 1> &left_rcv_buffer, int total_size, int tag_send,
                               int tag_recv, MPI_Request &req_send, MPI_Request &req_recv);
 void clover_unpack_left(global_variables &globals, int fields[NUM_FIELDS], int tile, int depth,
                         int left_right_offset[NUM_FIELDS]);
@@ -76,8 +76,8 @@ void clover_unpack_left(global_variables &globals, int fields[NUM_FIELDS], int t
 void clover_pack_right(global_variables &globals, int tile, int fields[NUM_FIELDS], int depth,
                        int left_right_offset[NUM_FIELDS]);
 void
-clover_send_recv_message_right(global_variables &globals, Buffer<double, 1> &right_snd_buffer,
-                               Buffer<double, 1> &right_rcv_buffer, int total_size,
+clover_send_recv_message_right(global_variables &globals, clover::Buffer<double, 1> &right_snd_buffer,
+                               clover::Buffer<double, 1> &right_rcv_buffer, int total_size,
                                int tag_send, int tag_recv, MPI_Request &req_send,
                                MPI_Request &req_recv);
 void clover_unpack_right(global_variables &globals, int fields[NUM_FIELDS], int tile, int depth,
@@ -85,8 +85,8 @@ void clover_unpack_right(global_variables &globals, int fields[NUM_FIELDS], int 
 
 void clover_pack_top(global_variables &globals, int tile, int fields[NUM_FIELDS], int depth,
                      int bottom_top_offset[NUM_FIELDS]);
-void clover_send_recv_message_top(global_variables &globals, Buffer<double, 1> &top_snd_buffer,
-                                  Buffer<double, 1> &top_rcv_buffer, int total_size,
+void clover_send_recv_message_top(global_variables &globals, clover::Buffer<double, 1> &top_snd_buffer,
+                                  clover::Buffer<double, 1> &top_rcv_buffer, int total_size,
                                   int tag_send, int tag_recv, MPI_Request &req_send,
                                   MPI_Request &req_recv);
 void clover_unpack_top(global_variables &globals, int fields[NUM_FIELDS], int tile, int depth,
@@ -95,8 +95,8 @@ void clover_unpack_top(global_variables &globals, int fields[NUM_FIELDS], int ti
 void clover_pack_bottom(global_variables &globals, int tile, int fields[NUM_FIELDS], int depth,
                         int bottom_top_offset[NUM_FIELDS]);
 void clover_send_recv_message_bottom(global_variables &globals,
-                                     Buffer<double, 1> &bottom_snd_buffer,
-                                     Buffer<double, 1> &top_rcv_buffer, int total_size,
+                                     clover::Buffer<double, 1> &bottom_snd_buffer,
+                                     clover::Buffer<double, 1> &top_rcv_buffer, int total_size,
                                      int tag_send, int tag_recv, MPI_Request &req_send,
                                      MPI_Request &req_recv);
 void clover_unpack_bottom(global_variables &globals, int fields[NUM_FIELDS], int tile, int depth,

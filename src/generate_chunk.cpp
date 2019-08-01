@@ -60,16 +60,16 @@ void generate_chunk(const int tile, global_variables &globals) {
 
 
 	// Create host mirrors of this to copy on the host
-	Buffer<double, 1> hm_state_density(state_density_vec.begin(), state_density_vec.end());
-	Buffer<double, 1> hm_state_energy(state_energy_vec.begin(), state_energy_vec.end());
-	Buffer<double, 1> hm_state_xvel(state_xvel_vec.begin(), state_xvel_vec.end());
-	Buffer<double, 1> hm_state_yvel(state_yvel_vec.begin(), state_yvel_vec.end());
-	Buffer<double, 1> hm_state_xmin(state_xmin_vec.begin(), state_xmin_vec.end());
-	Buffer<double, 1> hm_state_xmax(state_xmax_vec.begin(), state_xmax_vec.end());
-	Buffer<double, 1> hm_state_ymin(state_ymin_vec.begin(), state_ymin_vec.end());
-	Buffer<double, 1> hm_state_ymax(state_ymax_vec.begin(), state_ymax_vec.end());
-	Buffer<double, 1> hm_state_radius(state_radius_vec.begin(), state_radius_vec.end());
-	Buffer<int, 1> hm_state_geometry(state_geometry_vec.begin(), state_geometry_vec.end());
+	clover::Buffer<double, 1> hm_state_density(state_density_vec.begin(), state_density_vec.end());
+	clover::Buffer<double, 1> hm_state_energy(state_energy_vec.begin(), state_energy_vec.end());
+	clover::Buffer<double, 1> hm_state_xvel(state_xvel_vec.begin(), state_xvel_vec.end());
+	clover::Buffer<double, 1> hm_state_yvel(state_yvel_vec.begin(), state_yvel_vec.end());
+	clover::Buffer<double, 1> hm_state_xmin(state_xmin_vec.begin(), state_xmin_vec.end());
+	clover::Buffer<double, 1> hm_state_xmax(state_xmax_vec.begin(), state_xmax_vec.end());
+	clover::Buffer<double, 1> hm_state_ymin(state_ymin_vec.begin(), state_ymin_vec.end());
+	clover::Buffer<double, 1> hm_state_ymax(state_ymax_vec.begin(), state_ymax_vec.end());
+	clover::Buffer<double, 1> hm_state_radius(state_radius_vec.begin(), state_radius_vec.end());
+	clover::Buffer<int, 1> hm_state_geometry(state_geometry_vec.begin(), state_geometry_vec.end());
 
 	// Kokkos::deep_copy (TO, FROM)
 
@@ -84,13 +84,13 @@ void generate_chunk(const int tile, global_variables &globals) {
 
 	// Take a reference to the lowest structure, as Kokkos device cannot necessarily chase through the structure.
 
-	Range2d xyrange_policy(0, 0, xrange, yrange);
+	clover::Range2d xyrange_policy(0, 0, xrange, yrange);
 
 
 	field_type &field = globals.chunk.tiles[tile].field;
 
 
-	execute(globals.queue, [&](handler &h) {
+	clover::execute(globals.queue, [&](handler &h) {
 		auto density0 = field.density0.access<RW>(h);
 		auto xvel0 = field.xvel0.access<RW>(h);
 		auto yvel0 = field.yvel0.access<RW>(h);
@@ -101,7 +101,7 @@ void generate_chunk(const int tile, global_variables &globals) {
 		auto state_xvel = hm_state_xvel.access<R>(h);
 		auto state_yvel = hm_state_yvel.access<R>(h);
 		// State 1 is always the background state
-		par_ranged<class generate_chunk_1>(h, xyrange_policy, [=](id<2> idx) {
+		clover::par_ranged<class generate_chunk_1>(h, xyrange_policy, [=](id<2> idx) {
 			energy0[idx] = state_energy[0];
 			density0[idx] = state_density[0];
 			xvel0[idx] = state_xvel[0];
@@ -110,7 +110,7 @@ void generate_chunk(const int tile, global_variables &globals) {
 	});
 
 	for (int state = 1; state < globals.config.number_of_states; ++state) {
-		execute(globals.queue, [&](handler &h) {
+		clover::execute(globals.queue, [&](handler &h) {
 
 			auto density0 = field.density0.access<RW>(h);
 			auto xvel0 = field.xvel0.access<RW>(h);
@@ -136,7 +136,7 @@ void generate_chunk(const int tile, global_variables &globals) {
 			auto vertexx = field.vertexx.access<RW>(h);
 			auto vertexy = field.vertexy.access<RW>(h);
 
-			par_ranged<class generate_chunk_2>(h, xyrange_policy, [=](id<2> idx) {
+			clover::par_ranged<class generate_chunk_2>(h, xyrange_policy, [=](id<2> idx) {
 
 				const int j = idx.get(0);
 				const int k = idx.get(1);
@@ -161,7 +161,7 @@ void generate_chunk(const int tile, global_variables &globals) {
 					}
 				} else if (state_geometry[state] == g_circ) {
 					double radius = sycl::sqrt((cellx[j] - x_cent) * (cellx[j] - x_cent) +
-					                     (celly[k] - y_cent) * (celly[k] - y_cent));
+					                           (celly[k] - y_cent) * (celly[k] - y_cent));
 					if (radius <= state_radius[state]) {
 						energy0[idx] = state_energy[state];
 						density0[idx] = state_density[state];

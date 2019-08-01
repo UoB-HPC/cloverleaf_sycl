@@ -30,20 +30,20 @@ void flux_calc_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		Accessor<double, 2, R>::Type xarea,
-		Accessor<double, 2, R>::Type yarea,
-		Accessor<double, 2, R>::Type xvel0,
-		Accessor<double, 2, R>::Type yvel0,
-		Accessor<double, 2, R>::Type xvel1,
-		Accessor<double, 2, R>::Type yvel1,
-		Accessor<double, 2, RW>::Type vol_flux_x,
-		Accessor<double, 2, RW>::Type vol_flux_y) {
+		clover::Accessor<double, 2, R>::Type xarea,
+		clover::Accessor<double, 2, R>::Type yarea,
+		clover::Accessor<double, 2, R>::Type xvel0,
+		clover::Accessor<double, 2, R>::Type yvel0,
+		clover::Accessor<double, 2, R>::Type xvel1,
+		clover::Accessor<double, 2, R>::Type yvel1,
+		clover::Accessor<double, 2, RW>::Type vol_flux_x,
+		clover::Accessor<double, 2, RW>::Type vol_flux_y) {
 
 	// DO k=y_min,y_max+1
 	//   DO j=x_min,x_max+1
 // Note that the loops calculate one extra flux than required, but this
 	// allows loop fusion that improves performance
-	par_ranged<class flux_calc>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
+	clover::par_ranged<class flux_calc>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
 			id<2> idx) {
 
 		vol_flux_x[idx] = 0.25 * dt * xarea[idx]
@@ -61,7 +61,7 @@ void flux_calc(global_variables &globals) {
 	double kernel_time;
 	if (globals.profiler_on) kernel_time = timer();
 
-	execute(globals.queue, [&](handler &h) {
+	clover::execute(globals.queue, [&](handler &h) {
 
 
 		for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {

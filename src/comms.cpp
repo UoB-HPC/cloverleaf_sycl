@@ -708,8 +708,8 @@ void clover_pack_left(global_variables &globals, int tile, int fields[NUM_FIELDS
 
 void clover_send_recv_message_left(
 		global_variables &globals,
-		Buffer<double, 1> &left_snd_buffer,
-		Buffer<double, 1> &left_rcv_buffer,
+		clover::Buffer<double, 1> &left_snd_buffer,
+		clover::Buffer<double, 1> &left_rcv_buffer,
 		int total_size, int tag_send, int tag_recv,
 		MPI_Request &req_send, MPI_Request &req_recv) {
 
@@ -1135,8 +1135,8 @@ void clover_pack_right(global_variables &globals, int tile, int fields[NUM_FIELD
 
 void clover_send_recv_message_right(
 		global_variables &globals,
-		Buffer<double, 1> &right_snd_buffer,
-		Buffer<double, 1> &right_rcv_buffer,
+		clover::Buffer<double, 1> &right_snd_buffer,
+		clover::Buffer<double, 1> &right_rcv_buffer,
 		int total_size, int tag_send, int tag_recv,
 		MPI_Request &req_send, MPI_Request &req_recv) {
 
@@ -1562,8 +1562,8 @@ void clover_pack_top(global_variables &globals, int tile, int fields[NUM_FIELDS]
 
 void clover_send_recv_message_top(
 		global_variables &globals,
-		Buffer<double, 1> &top_snd_buffer,
-		Buffer<double, 1> &top_rcv_buffer,
+		clover::Buffer<double, 1> &top_snd_buffer,
+		clover::Buffer<double, 1> &top_rcv_buffer,
 		int total_size, int tag_send, int tag_recv,
 		MPI_Request &req_send, MPI_Request &req_recv) {
 
@@ -1990,8 +1990,8 @@ void clover_pack_bottom(global_variables &globals, int tile, int fields[NUM_FIEL
 
 void clover_send_recv_message_bottom(
 		global_variables &globals,
-		Buffer<double, 1> &bottom_snd_buffer,
-		Buffer<double, 1> &bottom_rcv_buffer,
+		clover::Buffer<double, 1> &bottom_snd_buffer,
+		clover::Buffer<double, 1> &bottom_rcv_buffer,
 		int total_size, int tag_send, int tag_recv,
 		MPI_Request &req_send, MPI_Request &req_recv) {
 

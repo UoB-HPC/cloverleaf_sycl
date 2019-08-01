@@ -60,7 +60,6 @@ constexpr sycl::access::mode W = sycl::access::mode::write;
 constexpr sycl::access::mode RW = sycl::access::mode::read_write;
 
 
-
 static inline id<2> offset(const id<2> idx, const int j, const int k) {
 	int jj = static_cast<int>(idx[0]) + j;
 	int kk = static_cast<int>(idx[1]) + k;
@@ -77,7 +76,7 @@ static inline void record(const std::string &name, const std::function<void(std:
 	out.close();
 }
 
-static inline void show(std::ostream &out, const std::string &name, Buffer<double, 1> &buffer) {
+static inline void show(std::ostream &out, const std::string &name, clover::Buffer<double, 1> &buffer) {
 	auto view = buffer.template access<R>();
 	const range<1> &range = view.get_range();
 	out << name << "(" << 1 << ") [" << range[0] << "]" << std::endl;
@@ -88,7 +87,7 @@ static inline void show(std::ostream &out, const std::string &name, Buffer<doubl
 	out << std::endl;
 }
 
-static inline void show(std::ostream &out, const std::string &name, Buffer<double, 2> &buffer) {
+static inline void show(std::ostream &out, const std::string &name, clover::Buffer<double, 2> &buffer) {
 	auto view = buffer.access<R>();
 	const range<2> &range = view.get_range();
 	out << name << "(" << 2 << ") [" << range[0] << "x" << range[1] << "]" << std::endl;
@@ -196,38 +195,38 @@ struct profiler_type {
 
 struct field_type {
 
-	Buffer<double, 2> density0;
-	Buffer<double, 2> density1;
-	Buffer<double, 2> energy0;
-	Buffer<double, 2> energy1;
-	Buffer<double, 2> pressure;
-	Buffer<double, 2> viscosity;
-	Buffer<double, 2> soundspeed;
-	Buffer<double, 2> xvel0, xvel1;
-	Buffer<double, 2> yvel0, yvel1;
-	Buffer<double, 2> vol_flux_x, mass_flux_x;
-	Buffer<double, 2> vol_flux_y, mass_flux_y;
+	clover::Buffer<double, 2> density0;
+	clover::Buffer<double, 2> density1;
+	clover::Buffer<double, 2> energy0;
+	clover::Buffer<double, 2> energy1;
+	clover::Buffer<double, 2> pressure;
+	clover::Buffer<double, 2> viscosity;
+	clover::Buffer<double, 2> soundspeed;
+	clover::Buffer<double, 2> xvel0, xvel1;
+	clover::Buffer<double, 2> yvel0, yvel1;
+	clover::Buffer<double, 2> vol_flux_x, mass_flux_x;
+	clover::Buffer<double, 2> vol_flux_y, mass_flux_y;
 
-	Buffer<double, 2> work_array1; // node_flux, stepbymass, volume_change, pre_vol
-	Buffer<double, 2> work_array2; // node_mass_post, post_vol
-	Buffer<double, 2> work_array3; // node_mass_pre,pre_mass
-	Buffer<double, 2> work_array4; // advec_vel, post_mass
-	Buffer<double, 2> work_array5; // mom_flux, advec_vol
-	Buffer<double, 2> work_array6; // pre_vol, post_ener
-	Buffer<double, 2> work_array7; // post_vol, ener_flux
+	clover::Buffer<double, 2> work_array1; // node_flux, stepbymass, volume_change, pre_vol
+	clover::Buffer<double, 2> work_array2; // node_mass_post, post_vol
+	clover::Buffer<double, 2> work_array3; // node_mass_pre,pre_mass
+	clover::Buffer<double, 2> work_array4; // advec_vel, post_mass
+	clover::Buffer<double, 2> work_array5; // mom_flux, advec_vol
+	clover::Buffer<double, 2> work_array6; // pre_vol, post_ener
+	clover::Buffer<double, 2> work_array7; // post_vol, ener_flux
 
-	Buffer<double, 1> cellx;
-	Buffer<double, 1> celldx;
-	Buffer<double, 1> celly;
-	Buffer<double, 1> celldy;
-	Buffer<double, 1> vertexx;
-	Buffer<double, 1> vertexdx;
-	Buffer<double, 1> vertexy;
-	Buffer<double, 1> vertexdy;
+	clover::Buffer<double, 1> cellx;
+	clover::Buffer<double, 1> celldx;
+	clover::Buffer<double, 1> celly;
+	clover::Buffer<double, 1> celldy;
+	clover::Buffer<double, 1> vertexx;
+	clover::Buffer<double, 1> vertexdx;
+	clover::Buffer<double, 1> vertexy;
+	clover::Buffer<double, 1> vertexdy;
 
-	Buffer<double, 2> volume;
-	Buffer<double, 2> xarea;
-	Buffer<double, 2> yarea;
+	clover::Buffer<double, 2> volume;
+	clover::Buffer<double, 2> xarea;
+	clover::Buffer<double, 2> yarea;
 
 
 	explicit field_type(const size_t xrange, const size_t yrange) :
@@ -315,8 +314,8 @@ struct chunk_type {
 	const int left, right, bottom, top;
 	const int left_boundary, right_boundary, bottom_boundary, top_boundary;
 
-	Buffer<double, 1> left_rcv_buffer, right_rcv_buffer, bottom_rcv_buffer, top_rcv_buffer;
-	Buffer<double, 1> left_snd_buffer, right_snd_buffer, bottom_snd_buffer, top_snd_buffer;
+	clover::Buffer<double, 1> left_rcv_buffer, right_rcv_buffer, bottom_rcv_buffer, top_rcv_buffer;
+	clover::Buffer<double, 1> left_snd_buffer, right_snd_buffer, bottom_snd_buffer, top_snd_buffer;
 
 	std::vector<tile_type> tiles;
 
@@ -438,7 +437,7 @@ struct global_variables {
 
 	void dump(const std::string &name) {
 
-		std::cout << "Dumping globals to " << name  << std::endl;
+		std::cout << "Dumping globals to " << name << std::endl;
 
 		record(name, [&](std::ostream &out) {
 			out << "Dump(tileCount = " << chunk.tiles.size() << ")" << std::endl;

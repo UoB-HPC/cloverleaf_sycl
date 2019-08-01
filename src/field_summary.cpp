@@ -43,19 +43,19 @@ extern std::ostream g_out;
 
 
 struct captures {
-	Accessor<double, 2, R>::Type volume;
-	Accessor<double, 2, R>::Type density0;
-	Accessor<double, 2, R>::Type energy0;
-	Accessor<double, 2, R>::Type pressure;
-	Accessor<double, 2, R>::Type xvel0;
-	Accessor<double, 2, R>::Type yvel0;
+	clover::Accessor<double, 2, R>::Type volume;
+	clover::Accessor<double, 2, R>::Type density0;
+	clover::Accessor<double, 2, R>::Type energy0;
+	clover::Accessor<double, 2, R>::Type pressure;
+	clover::Accessor<double, 2, R>::Type xvel0;
+	clover::Accessor<double, 2, R>::Type yvel0;
 };
 
 struct value_type {
 	double vol = 0.0, mass = 0.0, ie = 0.0, ke = 0.0, press = 0.0;
 };
 
-typedef local_reducer<value_type, value_type, captures> ctx;
+typedef clover::local_reducer<value_type, value_type, captures> ctx;
 
 void field_summary(global_variables &globals, parallel_ &parallel) {
 
@@ -98,11 +98,11 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		int ymin = t.info.t_ymin;
 		int xmax = t.info.t_xmax;
 		int xmin = t.info.t_xmin;
-		Range1d policy(0, (ymax - ymin + 1) * (xmax - xmin + 1));
+		clover::Range1d policy(0, (ymax - ymin + 1) * (xmax - xmin + 1));
 
-		Buffer<value_type, 1> result(range<1>(policy.size));
+		clover::Buffer<value_type, 1> result(range<1>(policy.size));
 
-		par_reduce_1d<class field_summary, value_type>(
+		clover::par_reduce_1d<class field_summary, value_type>(
 				globals.queue, policy,
 				[=](handler &h, size_t &size) mutable {
 					return ctx(h, size,
@@ -114,7 +114,7 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 					            t.field.yvel0.access<R>(h)},
 					           result.buffer);
 				},
-				[](const ctx& ctx, id<1> lidx) { ctx.local[lidx] = {}; },
+				[](const ctx &ctx, id<1> lidx) { ctx.local[lidx] = {}; },
 				[ymax, ymin, xmax, xmin](ctx ctx, id<1> lidx, id<1> idx) {
 
 					const int j = xmin + 1 + idx[0] % (xmax - xmin + 1);
@@ -138,14 +138,14 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 					ctx.local[lidx].ke = cell_mass * 0.5 * vsqrd;
 					ctx.local[lidx].press = cell_vol * ctx.actual.pressure[j][k];
 				},
-				[](const ctx& ctx, id<1> idx, id<1> idy) {
+				[](const ctx &ctx, id<1> idx, id<1> idy) {
 					ctx.local[idx].vol += ctx.local[idy].vol;
 					ctx.local[idx].mass += ctx.local[idy].mass;
 					ctx.local[idx].ie += ctx.local[idy].ie;
 					ctx.local[idx].ke += ctx.local[idy].ke;
 					ctx.local[idx].press += ctx.local[idy].press;
 				},
-				[](const ctx& ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
+				[](const ctx &ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
 
 		{
 			vol = result.access<R>()[0].vol;

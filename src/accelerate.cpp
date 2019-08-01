@@ -30,16 +30,16 @@ void accelerate_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		Accessor<double, 2, R>::Type xarea,
-		Accessor<double, 2, R>::Type yarea,
-		Accessor<double, 2, R>::Type volume,
-		Accessor<double, 2, R>::Type density0,
-		Accessor<double, 2, R>::Type pressure,
-		Accessor<double, 2, R>::Type viscosity,
-		Accessor<double, 2, RW>::Type xvel0,
-		Accessor<double, 2, RW>::Type yvel0,
-		Accessor<double, 2, RW>::Type xvel1,
-		Accessor<double, 2, RW>::Type yvel1) {
+		clover::Accessor<double, 2, R>::Type xarea,
+		clover::Accessor<double, 2, R>::Type yarea,
+		clover::Accessor<double, 2, R>::Type volume,
+		clover::Accessor<double, 2, R>::Type density0,
+		clover::Accessor<double, 2, R>::Type pressure,
+		clover::Accessor<double, 2, R>::Type viscosity,
+		clover::Accessor<double, 2, RW>::Type xvel0,
+		clover::Accessor<double, 2, RW>::Type yvel0,
+		clover::Accessor<double, 2, RW>::Type xvel1,
+		clover::Accessor<double, 2, RW>::Type yvel1) {
 
 	double halfdt = 0.5 * dt;
 
@@ -49,7 +49,7 @@ void accelerate_kernel(
 //	                                               {x_max + 1 + 2, y_max + 1 + 2});
 
 
-	par_ranged<class accelerate>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
+	clover::par_ranged<class accelerate>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
 			id<2> idx) {
 
 		double stepbymass_s = halfdt / ((density0[offset(idx, -1, -1)] * volume[offset(idx, -1, -1)]
@@ -95,7 +95,7 @@ void accelerate(global_variables &globals) {
 		tile_type &t = globals.chunk.tiles[tile];
 
 
-		execute(globals.queue, [&](handler &h) {
+		clover::execute(globals.queue, [&](handler &h) {
 			accelerate_kernel(
 					h,
 					t.info.t_xmin,

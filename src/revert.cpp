@@ -30,14 +30,14 @@
 void revert_kernel(
 		handler &h,
 		int x_min, int x_max, int y_min, int y_max,
-		Accessor<double, 2, R>::Type density0,
-		Accessor<double, 2, W>::Type density1,
-		Accessor<double, 2, R>::Type energy0,
-		Accessor<double, 2, W>::Type energy1) {
+		clover::Accessor<double, 2, R>::Type density0,
+		clover::Accessor<double, 2, W>::Type density1,
+		clover::Accessor<double, 2, R>::Type energy0,
+		clover::Accessor<double, 2, W>::Type energy1) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	par_ranged<class revert>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
+	clover::par_ranged<class revert>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
 			id<2> idx) {
 		density1[idx] = density0[idx];
 		energy1[idx] = energy0[idx];
@@ -54,7 +54,7 @@ void revert(global_variables &globals) {
 
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 
-		execute(globals.queue, [&](handler &h) {
+		clover::execute(globals.queue, [&](handler &h) {
 			tile_type &t = globals.chunk.tiles[tile];
 			revert_kernel(
 					h,

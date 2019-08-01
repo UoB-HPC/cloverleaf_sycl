@@ -29,23 +29,23 @@
 void reset_field_kernel(
 		queue &q,
 		int x_min, int x_max, int y_min, int y_max,
-		Buffer<double, 2> &density0_buffer,
-		Buffer<double, 2> &density1_buffer,
-		Buffer<double, 2> &energy0_buffer,
-		Buffer<double, 2> &energy1_buffer,
-		Buffer<double, 2> &xvel0_buffer,
-		Buffer<double, 2> &xvel1_buffer,
-		Buffer<double, 2> &yvel0_buffer,
-		Buffer<double, 2> &yvel1_buffer) {
+		clover::Buffer<double, 2> &density0_buffer,
+		clover::Buffer<double, 2> &density1_buffer,
+		clover::Buffer<double, 2> &energy0_buffer,
+		clover::Buffer<double, 2> &energy1_buffer,
+		clover::Buffer<double, 2> &xvel0_buffer,
+		clover::Buffer<double, 2> &xvel1_buffer,
+		clover::Buffer<double, 2> &yvel0_buffer,
+		clover::Buffer<double, 2> &yvel1_buffer) {
 
-	execute(q, [&](handler &h) {
+	clover::execute(q, [&](handler &h) {
 		auto density0 = density0_buffer.access<W>(h);
 		auto density1 = density1_buffer.access<R>(h);
 		auto energy0 = energy0_buffer.access<W>(h);
 		auto energy1 = energy1_buffer.access<R>(h);
 		// DO k=y_min,y_max
 		//   DO j=x_min,x_max
-		par_ranged<class reset_field_1>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
+		clover::par_ranged<class reset_field_1>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
 				id<2> idx) {
 			density0[idx] = density1[idx];
 			energy0[idx] = energy1[idx];
@@ -53,14 +53,14 @@ void reset_field_kernel(
 		});
 	});
 
-	execute(q, [&](handler &h) {
+	clover::execute(q, [&](handler &h) {
 		auto xvel1 = xvel1_buffer.access<R>(h);
 		auto yvel0 = yvel0_buffer.access<W>(h);
 		auto yvel1 = yvel1_buffer.access<R>(h);
 		auto xvel0 = xvel0_buffer.access<W>(h);
 		// DO k=y_min,y_max+1
 		//   DO j=x_min,x_max+1
-		par_ranged<class reset_field_2>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
+		clover::par_ranged<class reset_field_2>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
 				id<2> idx) {
 			xvel0[idx] = xvel1[idx];
 			yvel0[idx] = yvel1[idx];
