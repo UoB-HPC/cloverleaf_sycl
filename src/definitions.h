@@ -63,6 +63,8 @@ constexpr sycl::access::mode RW = sycl::access::mode::read_write;
 static inline id<2> offset(const id<2> idx, const int j, const int k) {
 	int jj = static_cast<int>(idx[0]) + j;
 	int kk = static_cast<int>(idx[1]) + k;
+	assert(jj >= 0);
+	assert(kk >= 0);
 	return id<2>(jj, kk);
 }
 
