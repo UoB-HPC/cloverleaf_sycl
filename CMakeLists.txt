@@ -5,6 +5,9 @@ project(cloverleaf_sycl)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 
+get_filename_component(OpenCL_INCLUDE "include" ABSOLUTE)
+set(OpenCL_INCLUDE_DIR ${OpenCL_INCLUDE})
+
 find_package(ComputeCpp REQUIRED)
 find_package(MPI REQUIRED)
 
