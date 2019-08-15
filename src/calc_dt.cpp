@@ -121,15 +121,15 @@ void calc_dt_kernel(
 				double dsx = ctx.actual.celldx[idx[0]];
 				double dsy = ctx.actual.celldy[idx[1]];
 
-				double cc = ctx.actual.soundspeed[idx] * ctx.actual.soundspeed[idx];
-				cc = cc + 2.0 * ctx.actual.viscosity_a[idx] / ctx.actual.density0[idx];
+				double cc = ctx.actual.soundspeed[idx[0]][idx[1]] * ctx.actual.soundspeed[idx[0]][idx[1]];
+				cc = cc + 2.0 * ctx.actual.viscosity_a[idx[0]][idx[1]] / ctx.actual.density0[idx[0]][idx[1]];
 				cc = sycl::fmax(sycl::sqrt(cc), g_small);
 
 				double dtct = dtc_safe * sycl::fmin(dsx, dsy) / cc;
 
 				double div = 0.0;
 
-				double dv1 = (ctx.actual.xvel0[idx] + ctx.actual.xvel0[offset(idx, 0, 1)]) * ctx.actual.xarea[idx];
+				double dv1 = (ctx.actual.xvel0[idx[0]][idx[1]] + ctx.actual.xvel0[offset(idx, 0, 1)]) * ctx.actual.xarea[idx[0]][idx[1]];
 				double dv2 =
 						(ctx.actual.xvel0[offset(idx, 1, 0)] + ctx.actual.xvel0[offset(idx, 1, 1)]) *
 						ctx.actual.xarea[offset(
@@ -137,22 +137,22 @@ void calc_dt_kernel(
 
 				div = div + dv2 - dv1;
 
-				double dtut = dtu_safe * 2.0 * ctx.actual.volume[idx] /
+				double dtut = dtu_safe * 2.0 * ctx.actual.volume[idx[0]][idx[1]] /
 				              sycl::fmax(sycl::fmax(
-						              sycl::fabs(dv1), sycl::fabs(dv2)), g_small * ctx.actual.volume[idx]);
+						              sycl::fabs(dv1), sycl::fabs(dv2)), g_small * ctx.actual.volume[idx[0]][idx[1]]);
 
-				dv1 = (ctx.actual.yvel0[idx] + ctx.actual.yvel0[offset(idx, 1, 0)]) * ctx.actual.yarea[idx];
+				dv1 = (ctx.actual.yvel0[idx[0]][idx[1]] + ctx.actual.yvel0[offset(idx, 1, 0)]) * ctx.actual.yarea[idx[0]][idx[1]];
 				dv2 = (ctx.actual.yvel0[offset(idx, 0, 1)] + ctx.actual.yvel0[offset(idx, 1, 1)]) *
 				      ctx.actual.yarea[offset(
 						      idx, 0, 1)];
 
 				div = div + dv2 - dv1;
 
-				double dtvt = dtv_safe * 2.0 * ctx.actual.volume[idx] /
+				double dtvt = dtv_safe * 2.0 * ctx.actual.volume[idx[0]][idx[1]] /
 				              sycl::fmax(sycl::fmax(
-						              sycl::fabs(dv1), sycl::fabs(dv2)), g_small * ctx.actual.volume[idx]);
+						              sycl::fabs(dv1), sycl::fabs(dv2)), g_small * ctx.actual.volume[idx[0]][idx[1]]);
 
-				div = div / (2.0 * ctx.actual.volume[idx]);
+				div = div / (2.0 * ctx.actual.volume[idx[0]][idx[1]]);
 
 				double dtdivt;
 				if (div < -g_small) {

@@ -47,8 +47,8 @@ void reset_field_kernel(
 		//   DO j=x_min,x_max
 		clover::par_ranged<class reset_field_1>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
 				id<2> idx) {
-			density0[idx] = density1[idx];
-			energy0[idx] = energy1[idx];
+			density0[idx[0]][idx[1]] = density1[idx[0]][idx[1]];
+			energy0[idx[0]][idx[1]] = energy1[idx[0]][idx[1]];
 
 		});
 	});
@@ -62,8 +62,8 @@ void reset_field_kernel(
 		//   DO j=x_min,x_max+1
 		clover::par_ranged<class reset_field_2>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
 				id<2> idx) {
-			xvel0[idx] = xvel1[idx];
-			yvel0[idx] = yvel1[idx];
+			xvel0[idx[0]][idx[1]] = xvel1[idx[0]][idx[1]];
+			yvel0[idx[0]][idx[1]] = yvel1[idx[0]][idx[1]];
 		});
 	});
 

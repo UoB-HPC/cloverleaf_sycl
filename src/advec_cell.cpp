@@ -71,10 +71,10 @@ void advec_cell_kernel(
 				auto advec_vol = advec_vol_buffer.access<R>(h);
 				clover::par_ranged<class advec_cell_xdir_seq1>(h, policy, [=](id<2> idx) {
 
-					pre_vol[idx] = volume[idx] +
-					               (vol_flux_x[offset(idx, 1, 0)] - vol_flux_x[idx] + vol_flux_y[offset(idx, 0, 1)] -
-					                vol_flux_y[idx]);
-					post_vol[idx] = pre_vol[idx] - (vol_flux_x[offset(idx, 1, 0)] - vol_flux_x[idx]);
+					pre_vol[idx[0]][idx[1]] = volume[idx[0]][idx[1]] +
+					               (vol_flux_x[offset(idx, 1, 0)] - vol_flux_x[idx[0]][idx[1]] + vol_flux_y[offset(idx, 0, 1)] -
+					                vol_flux_y[idx[0]][idx[1]]);
+					post_vol[idx[0]][idx[1]] = pre_vol[idx[0]][idx[1]] - (vol_flux_x[offset(idx, 1, 0)] - vol_flux_x[idx[0]][idx[1]]);
 				});
 			});
 
@@ -87,8 +87,8 @@ void advec_cell_kernel(
 				auto post_vol = post_vol_buffer.access<RW>(h);
 				auto advec_vol = advec_vol_buffer.access<R>(h);
 				clover::par_ranged<class advec_cell_xdir_sne1>(h, policy, [=](id<2> idx) {
-					pre_vol[idx] = volume[idx] + vol_flux_x[offset(idx, 1, 0)] - vol_flux_x[idx];
-					post_vol[idx] = volume[idx];
+					pre_vol[idx[0]][idx[1]] = volume[idx[0]][idx[1]] + vol_flux_x[offset(idx, 1, 0)] - vol_flux_x[idx[0]][idx[1]];
+					post_vol[idx[0]][idx[1]] = volume[idx[0]][idx[1]];
 				});
 			});
 		}
@@ -112,7 +112,7 @@ void advec_cell_kernel(
 						const int j = idx.get(0);
 						const int k = idx.get(1);
 
-						if (vol_flux_x[idx] > 0.0) {
+						if (vol_flux_x[idx[0]][idx[1]] > 0.0) {
 							upwind = j - 2;
 							donor = j - 1;
 							downwind = j;
@@ -125,7 +125,7 @@ void advec_cell_kernel(
 						}
 
 
-						sigmat = sycl::fabs(vol_flux_x[idx]) / pre_vol[donor][k];
+						sigmat = sycl::fabs(vol_flux_x[idx[0]][idx[1]]) / pre_vol[donor][k];
 						sigma3 = (1.0 + sigmat) * (vertexdx[j] / vertexdx[dif]);
 						sigma4 = 2.0 - sigmat;
 
@@ -145,9 +145,9 @@ void advec_cell_kernel(
 						} else {
 							limiter = 0.0;
 						}
-						mass_flux_x[idx] = vol_flux_x[idx] * (density1[donor][k] + limiter);
+						mass_flux_x[idx[0]][idx[1]] = vol_flux_x[idx[0]][idx[1]] * (density1[donor][k] + limiter);
 
-						sigmam = sycl::fabs(mass_flux_x[idx]) / (density1[donor][k] * pre_vol[donor][k]);
+						sigmam = sycl::fabs(mass_flux_x[idx[0]][idx[1]]) / (density1[donor][k] * pre_vol[donor][k]);
 						diffuw = energy1[donor][k] - energy1[upwind][k];
 						diffdw = energy1[downwind][k] - energy1[donor][k];
 						wind = 1.0;
@@ -161,7 +161,7 @@ void advec_cell_kernel(
 							limiter = 0.0;
 						}
 
-						ener_flux[idx] = mass_flux_x[idx] * (energy1[donor][k] + limiter);
+						ener_flux[idx[0]][idx[1]] = mass_flux_x[idx[0]][idx[1]] * (energy1[donor][k] + limiter);
 
 					});
 
@@ -180,14 +180,14 @@ void advec_cell_kernel(
 
 			clover::par_ranged<class advec_cell_xdir_d1e1>(
 					h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](id<2> idx) {
-						double pre_mass_s = density1[idx] * pre_vol[idx];
-						double post_mass_s = pre_mass_s + mass_flux_x[idx] - mass_flux_x[offset(idx, 1, 0)];
+						double pre_mass_s = density1[idx[0]][idx[1]] * pre_vol[idx[0]][idx[1]];
+						double post_mass_s = pre_mass_s + mass_flux_x[idx[0]][idx[1]] - mass_flux_x[offset(idx, 1, 0)];
 						double post_ener_s =
-								(energy1[idx] * pre_mass_s + ener_flux[idx] - ener_flux[offset(idx, 1, 0)]) /
+								(energy1[idx[0]][idx[1]] * pre_mass_s + ener_flux[idx[0]][idx[1]] - ener_flux[offset(idx, 1, 0)]) /
 								post_mass_s;
-						double advec_vol_s = pre_vol[idx] + vol_flux_x[idx] - vol_flux_x[offset(idx, 1, 0)];
-						density1[idx] = post_mass_s / advec_vol_s;
-						energy1[idx] = post_ener_s;
+						double advec_vol_s = pre_vol[idx[0]][idx[1]] + vol_flux_x[idx[0]][idx[1]] - vol_flux_x[offset(idx, 1, 0)];
+						density1[idx[0]][idx[1]] = post_mass_s / advec_vol_s;
+						energy1[idx[0]][idx[1]] = post_ener_s;
 					});
 
 		});
@@ -206,10 +206,10 @@ void advec_cell_kernel(
 				auto post_vol = post_vol_buffer.access<RW>(h);
 				auto advec_vol = advec_vol_buffer.access<R>(h);
 				clover::par_ranged<class APPEND_LN(advec_cell_ydir_s1)>(h, policy, [=](id<2> idx) {
-					pre_vol[idx] = volume[idx] +
-					               (vol_flux_y[offset(idx, 0, 1)] - vol_flux_y[idx] + vol_flux_x[offset(idx, 1, 0)] -
-					                vol_flux_x[idx]);
-					post_vol[idx] = pre_vol[idx] - (vol_flux_y[offset(idx, 0, 1)] - vol_flux_y[idx]);
+					pre_vol[idx[0]][idx[1]] = volume[idx[0]][idx[1]] +
+					               (vol_flux_y[offset(idx, 0, 1)] - vol_flux_y[idx[0]][idx[1]] + vol_flux_x[offset(idx, 1, 0)] -
+					                vol_flux_x[idx[0]][idx[1]]);
+					post_vol[idx[0]][idx[1]] = pre_vol[idx[0]][idx[1]] - (vol_flux_y[offset(idx, 0, 1)] - vol_flux_y[idx[0]][idx[1]]);
 				});
 			});
 		} else {
@@ -221,8 +221,8 @@ void advec_cell_kernel(
 				auto post_vol = post_vol_buffer.access<RW>(h);
 				auto advec_vol = advec_vol_buffer.access<R>(h);
 				clover::par_ranged<class APPEND_LN(advec_cell_ydir_s1)>(h, policy, [=](id<2> idx) {
-					pre_vol[idx] = volume[idx] + vol_flux_y[offset(idx, 0, 1)] - vol_flux_y[idx];
-					post_vol[idx] = volume[idx];
+					pre_vol[idx[0]][idx[1]] = volume[idx[0]][idx[1]] + vol_flux_y[offset(idx, 0, 1)] - vol_flux_y[idx[0]][idx[1]];
+					post_vol[idx[0]][idx[1]] = volume[idx[0]][idx[1]];
 				});
 			});
 		}
@@ -246,7 +246,7 @@ void advec_cell_kernel(
 						const int j = idx.get(0);
 						const int k = idx.get(1);
 
-						if (vol_flux_y[idx] > 0.0) {
+						if (vol_flux_y[idx[0]][idx[1]] > 0.0) {
 							upwind = k - 2;
 							donor = k - 1;
 							downwind = k;
@@ -258,7 +258,7 @@ void advec_cell_kernel(
 							dif = upwind;
 						}
 
-						sigmat = sycl::fabs(vol_flux_y[idx]) / pre_vol[j][donor];
+						sigmat = sycl::fabs(vol_flux_y[idx[0]][idx[1]]) / pre_vol[j][donor];
 						sigma3 = (1.0 + sigmat) * (vertexdy[k] / vertexdy[dif]);
 						sigma4 = 2.0 - sigmat;
 
@@ -277,9 +277,9 @@ void advec_cell_kernel(
 						} else {
 							limiter = 0.0;
 						}
-						mass_flux_y[idx] = vol_flux_y[idx] * (density1[j][donor] + limiter);
+						mass_flux_y[idx[0]][idx[1]] = vol_flux_y[idx[0]][idx[1]] * (density1[j][donor] + limiter);
 
-						sigmam = sycl::fabs(mass_flux_y[idx]) / (density1[j][donor] * pre_vol[j][donor]);
+						sigmam = sycl::fabs(mass_flux_y[idx[0]][idx[1]]) / (density1[j][donor] * pre_vol[j][donor]);
 						diffuw = energy1[j][donor] - energy1[j][upwind];
 						diffdw = energy1[j][downwind] - energy1[j][donor];
 						wind = 1.0;
@@ -292,7 +292,7 @@ void advec_cell_kernel(
 						} else {
 							limiter = 0.0;
 						}
-						ener_flux[idx] = mass_flux_y[idx] * (energy1[j][donor] + limiter);
+						ener_flux[idx[0]][idx[1]] = mass_flux_y[idx[0]][idx[1]] * (energy1[j][donor] + limiter);
 					});
 
 		});
@@ -310,14 +310,14 @@ void advec_cell_kernel(
 			clover::par_ranged<class advec_cell_ydir_e1d1>(
 					h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](id<2> idx) {
 
-						double pre_mass_s = density1[idx] * pre_vol[idx];
-						double post_mass_s = pre_mass_s + mass_flux_y[idx] - mass_flux_y[offset(idx, 0, 1)];
+						double pre_mass_s = density1[idx[0]][idx[1]] * pre_vol[idx[0]][idx[1]];
+						double post_mass_s = pre_mass_s + mass_flux_y[idx[0]][idx[1]] - mass_flux_y[offset(idx, 0, 1)];
 						double post_ener_s =
-								(energy1[idx] * pre_mass_s + ener_flux[idx] - ener_flux[offset(idx, 0, 1)]) /
+								(energy1[idx[0]][idx[1]] * pre_mass_s + ener_flux[idx[0]][idx[1]] - ener_flux[offset(idx, 0, 1)]) /
 								post_mass_s;
-						double advec_vol_s = pre_vol[idx] + vol_flux_y[idx] - vol_flux_y[offset(idx, 0, 1)];
-						density1[idx] = post_mass_s / advec_vol_s;
-						energy1[idx] = post_ener_s;
+						double advec_vol_s = pre_vol[idx[0]][idx[1]] + vol_flux_y[idx[0]][idx[1]] - vol_flux_y[offset(idx, 0, 1)];
+						density1[idx[0]][idx[1]] = post_mass_s / advec_vol_s;
+						energy1[idx[0]][idx[1]] = post_ener_s;
 					});
 		});
 

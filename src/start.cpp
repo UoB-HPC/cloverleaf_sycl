@@ -40,6 +40,35 @@
 
 extern std::ostream g_out;
 
+void print_device(const cl::sycl::device &device) {
+	auto exts = device.get_info<cl::sycl::info::device::extensions>();
+	std::ostringstream extensions;
+	std::copy(exts.begin(), exts.end(), std::ostream_iterator<std::string>(extensions, ","));
+
+	auto type = device.get_info<cl::sycl::info::device::device_type>();
+	auto typeName = "(unknown)";
+	//@formatter:off
+	switch (type){
+		case sycl::info::device_type::cpu: typeName = "CPU"; break;
+		case sycl::info::device_type::gpu: typeName = "GPU"; break;
+		case sycl::info::device_type::accelerator: typeName = "ACCELERATOR"; break;
+		case sycl::info::device_type::custom: typeName = "CUSTOM"; break;
+		case sycl::info::device_type::automatic: typeName = "AUTOMATIC"; break;
+		case sycl::info::device_type::host: typeName = "HOST"; break;
+		case sycl::info::device_type::all: typeName = "ALL"; break;
+	}
+	//@formatter:on
+	cl::sycl::platform platform = device.get_platform();
+	std::cout << "[SYCL] Device        : " << device.get_info<cl::sycl::info::device::name>() << "\n";
+	std::cout << "[SYCL]  - Type       : " << typeName << "\n";
+	std::cout << "[SYCL]  - Vendor     : " << device.get_info<cl::sycl::info::device::vendor>() << "\n";
+	std::cout << "[SYCL]  - Extensions : " << extensions.str() << "\n";
+	std::cout << "[SYCL]  - Platform   : " << platform.get_info<cl::sycl::info::platform::name>() << "\n";
+	std::cout << "[SYCL]     - Vendor  : " << platform.get_info<cl::sycl::info::platform::vendor>() << "\n";
+	std::cout << "[SYCL]     - Version : " << platform.get_info<cl::sycl::info::platform::version>() << "\n";
+	std::cout << "[SYCL]     - Profile : " << platform.get_info<cl::sycl::info::platform::profile>() << "\n";
+}
+
 std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config &config) {
 
 	if (parallel.boss) {
@@ -80,7 +109,7 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 	};
 
 	global_variables globals(config,
-	                         cl::sycl::queue(cl::sycl::default_selector{}, handler),
+	                         cl::sycl::queue(cl::sycl::cpu_selector{}, handler),
 	                         chunk_type(
 			                         chunkNeighbours,
 			                         parallel.task, 1, 1, x_cells, y_cells,
@@ -90,16 +119,12 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 			                         config.tiles_per_chunk));
 
 
-	const cl::sycl::device &device = globals.queue.get_device();
+	auto devices = cl::sycl::device::get_devices();
+	for(const auto& dev : devices) print_device(dev);
 
-	auto exts = device.get_info<cl::sycl::info::device::extensions>();
-	std::ostringstream extensions;
-	std::copy(exts.begin(), exts.end(), std::ostream_iterator<std::string>(extensions, ","));
+	std::cout << "[SYCL] Selected device:" << std::endl;
+	print_device(globals.queue.get_device());
 
-
-	std::cout << "[SYCL] Device        : " << device.get_info<cl::sycl::info::device::name>() << "\n";
-	std::cout << "[SYCL]  - Vendor     : " << device.get_info<cl::sycl::info::device::vendor>() << "\n";
-	std::cout << "[SYCL]  - Extensions : " << extensions.str() << "\n";
 
 //	globals.chunk.left = left;
 //	globals.chunk.bottom = bottom;

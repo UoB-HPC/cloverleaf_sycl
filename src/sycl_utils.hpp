@@ -155,7 +155,8 @@ namespace clover {
 		if (SYCL_DEBUG) std::cout << "Execute" << std::endl;
 		try {
 			queue.submit(cgf);
-			if (SYCL_DEBUG) queue.wait_and_throw();
+// 			if (SYCL_DEBUG) 
+                queue.wait_and_throw();
 		} catch (cl::sycl::device_error &e) {
 			std::cerr << "[SYCL] Device error: : `" << e.what() << "`" << std::endl;
 			throw e;

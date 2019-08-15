@@ -21,6 +21,9 @@
 #include "ideal_gas.h"
 #include "sycl_utils.hpp"
 
+
+int N = 0;
+
 //  @brief Fortran ideal gas kernel.
 //  @author Wayne Gaudin
 //  @details Calculates the pressure and sound speed for the mesh chunk using
@@ -33,18 +36,19 @@ void ideal_gas_kernel(
 		clover::Accessor<double, 2, RW>::Type pressure,
 		clover::Accessor<double, 2, RW>::Type soundspeed) {
 
+	//std::cout <<" ideal_gas(" << x_min+1 << ","<< y_min+1<< ","<< x_max+2<< ","<< y_max +2  << ")" << std::endl;
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
 
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
 	clover::par_ranged<class ideal_gas>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](id<2> idx) {
-		double v = 1.0 / density[idx];
-		pressure[idx] = (1.4 - 1.0) * density[idx] * energy[idx];
-		double pressurebyenergy = (1.4 - 1.0) * density[idx];
-		double pressurebyvolume = -density[idx] * pressure[idx];
-		double sound_speed_squared = v * v * (pressure[idx] * pressurebyenergy - pressurebyvolume);
-		soundspeed[idx] = sycl::sqrt(sound_speed_squared);
+		double v = 1.0 / density[idx[0]][idx[1]];
+		pressure[idx[0]][idx[1]] = (1.4 - 1.0) * density[idx[0]][idx[1]] * energy[idx[0]][idx[1]];
+		double pressurebyenergy = (1.4 - 1.0) * density[idx[0]][idx[1]];
+		double pressurebyvolume = -density[idx[0]][idx[1]] * pressure[idx[0]][idx[1]];
+		double sound_speed_squared = v * v * (pressure[idx[0]][idx[1]] * pressurebyenergy - pressurebyvolume);
+		soundspeed[idx[0]][idx[1]] = sycl::sqrt(sound_speed_squared);
 	});
 
 }

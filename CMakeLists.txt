@@ -8,10 +8,16 @@ add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 get_filename_component(OpenCL_INCLUDE "include" ABSOLUTE)
 set(OpenCL_INCLUDE_DIR ${OpenCL_INCLUDE})
 
+#list(APPEND COMPUTECPP_USER_FLAGS "-O3" "-fsycl-split-modules=20" "-mllvm" "-inline-threshold=10000" "-no-serial-memop")
+
+set(COMPUTECPP_USER_FLAGS -O3 -fsycl-split-modules=20 -mllvm -inline-threshold=10000 -no-serial-memop)
+
+
 find_package(ComputeCpp REQUIRED)
 find_package(MPI REQUIRED)
 
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 #set(OpenCL_INCLUDE_DIR include)
@@ -77,7 +83,8 @@ target_compile_options(clover_leaf
 # -fsanitize=address
 #set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer -fsanitize=address -march=native -g)
 set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer -march=native -g)
-set(RELEASE_OPTIONS -O3 -march=native -g)
+set(RELEASE_OPTIONS -O3 -march=native)
+
 
 #target_link_libraries(clover_leaf PUBLIC $<$<CONFIG:DEBUG>:-Wl,-lasan>) # must come before any other libraries
 target_link_libraries(clover_leaf PRIVATE ${MPI_CXX_LIBRARIES})
