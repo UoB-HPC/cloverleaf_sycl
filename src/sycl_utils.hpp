@@ -25,6 +25,7 @@
 #include <utility>
 
 #define SYCL_DEBUG false
+#define SYCL_FLIP_2D
 
 namespace clover {
 
@@ -140,23 +141,34 @@ namespace clover {
 				cl::sycl::id<1>(range.from),
 				functor);
 	}
-	template<typename nameT, typename functorT>
-	static inline void par_ranged(cl::sycl::handler &cgh, const Range2d &range, const functorT &functor) {
+	template<typename nameT, class functorT>
+	static inline void par_ranged(cl::sycl::handler &cgh, const Range2d &range, functorT functor) {
+
 		if (SYCL_DEBUG)
 			std::cout << "par_ranged 2d(x=" << range.fromX << "(" << range.sizeX << ")" << ", " << range.fromY << "("
 			          << range.sizeY << "))" << std::endl;
+#ifdef SYCL_FLIP_2D
+		cgh.parallel_for<nameT>(
+				cl::sycl::range<2>(range.sizeY, range.sizeX),
+				cl::sycl::id<2>(range.fromY, range.fromX),
+				[=](cl::sycl::id<2> idx) {
+					functor(cl::sycl::id<2>(idx[1], idx[0]));
+				});
+#else
 		cgh.parallel_for<nameT>(
 				cl::sycl::range<2>(range.sizeX, range.sizeY),
 				cl::sycl::id<2>(range.fromX, range.fromY),
 				functor);
+#endif
 	}
+
 	template<typename T>
 	static void execute(cl::sycl::queue &queue, T cgf) {
 		if (SYCL_DEBUG) std::cout << "Execute" << std::endl;
 		try {
 			queue.submit(cgf);
-// 			if (SYCL_DEBUG) 
-                queue.wait_and_throw();
+			if (SYCL_DEBUG)
+				queue.wait_and_throw();
 		} catch (cl::sycl::device_error &e) {
 			std::cerr << "[SYCL] Device error: : `" << e.what() << "`" << std::endl;
 			throw e;

@@ -39,8 +39,8 @@ void revert_kernel(
 	//   DO j=x_min,x_max
 	clover::par_ranged<class revert>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
 			id<2> idx) {
-		density1[idx[0]][idx[1]] = density0[idx[0]][idx[1]];
-		energy1[idx[0]][idx[1]] = energy0[idx[0]][idx[1]];
+		density1[idx] = density0[idx];
+		energy1[idx] = energy0[idx];
 	});
 
 }

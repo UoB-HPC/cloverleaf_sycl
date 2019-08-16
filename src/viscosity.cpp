@@ -41,16 +41,16 @@ void viscosity_kernel(handler &h, int x_min, int x_max, int y_min, int y_max,
 	clover::par_ranged<class viscosity_>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](
 			id<2> idx) {
 
-		double ugrad = (xvel0[offset(idx, 1, 0)] + xvel0[offset(idx, 1, 1)]) - (xvel0[idx[0]][idx[1]] + xvel0[offset(idx, 0, 1)]);
+		double ugrad = (xvel0[offset(idx, 1, 0)] + xvel0[offset(idx, 1, 1)]) - (xvel0[idx] + xvel0[offset(idx, 0, 1)]);
 
-		double vgrad = (yvel0[offset(idx, 0, 1)] + yvel0[offset(idx, 1, 1)]) - (yvel0[idx[0]][idx[1]] + yvel0[offset(idx, 1, 0)]);
+		double vgrad = (yvel0[offset(idx, 0, 1)] + yvel0[offset(idx, 1, 1)]) - (yvel0[idx] + yvel0[offset(idx, 1, 0)]);
 
 		double div = (celldx[idx[0]] * (ugrad) + celldy[idx[1]] * (vgrad));
 
 		double strain2 =
-				0.5 * (xvel0[offset(idx, 0, 1)] + xvel0[offset(idx, 1, 1)] - xvel0[idx[0]][idx[1]] - xvel0[offset(idx, 1, 0)]) /
+				0.5 * (xvel0[offset(idx, 0, 1)] + xvel0[offset(idx, 1, 1)] - xvel0[idx] - xvel0[offset(idx, 1, 0)]) /
 				celldy[idx[1]]
-				+ 0.5 * (yvel0[offset(idx, 1, 0)] + yvel0[offset(idx, 1, 1)] - yvel0[idx[0]][idx[1]] - yvel0[offset(idx, 0, 1)]) /
+				+ 0.5 * (yvel0[offset(idx, 1, 0)] + yvel0[offset(idx, 1, 1)] - yvel0[idx] - yvel0[offset(idx, 0, 1)]) /
 				  celldx[idx[0]];
 
 		double pgradx = (pressure[offset(idx, 1, 0)] - pressure[offset(idx, -1, 0)]) /
@@ -68,7 +68,7 @@ void viscosity_kernel(handler &h, int x_min, int x_max, int y_min, int y_max,
 				/ sycl::fmax(pgradx2 + pgrady2, 1.0e-16);
 
 		if ((limiter > 0.0) || (div >= 0.0)) {
-			viscosity[idx[0]][idx[1]] = 0.0;
+			viscosity[idx] = 0.0;
 		} else {
 			double dirx = 1.0;
 			if (pgradx < 0.0) dirx = -1.0;
@@ -82,7 +82,7 @@ void viscosity_kernel(handler &h, int x_min, int x_max, int y_min, int y_max,
 			double grad = sycl::fmin(xgrad, ygrad);
 			double grad2 = grad * grad;
 
-			viscosity[idx[0]][idx[1]] = 2.0 * density0[idx[0]][idx[1]] * grad2 * limiter * limiter;
+			viscosity[idx] = 2.0 * density0[idx] * grad2 * limiter * limiter;
 		}
 	});
 }

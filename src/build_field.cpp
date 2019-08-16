@@ -138,14 +138,14 @@ void build_field(global_variables &globals) {
 			auto volume = field.volume.access<W>(h);
 			// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+2) inclusive
 			clover::par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange, yrange}, [=](id<2> idx) {
-				density0[idx[0]][idx[1]] = 0.0;
-				density1[idx[0]][idx[1]] = 0.0;
-				energy0[idx[0]][idx[1]] = 0.0;
-				energy1[idx[0]][idx[1]] = 0.0;
-				pressure[idx[0]][idx[1]] = 0.0;
-				viscosity[idx[0]][idx[1]] = 0.0;
-				soundspeed[idx[0]][idx[1]] = 0.0;
-				volume[idx[0]][idx[1]] = 0.0;
+				density0[idx] = 0.0;
+				density1[idx] = 0.0;
+				energy0[idx] = 0.0;
+				energy1[idx] = 0.0;
+				pressure[idx] = 0.0;
+				viscosity[idx] = 0.0;
+				soundspeed[idx] = 0.0;
+				volume[idx] = 0.0;
 			});
 		});
 
@@ -155,9 +155,9 @@ void build_field(global_variables &globals) {
 			auto xarea = field.xarea.access<W>(h);
 			// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+3) inclusive
 			clover::par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange, yrange}, [=](id<2> idx) {
-				vol_flux_x[idx[0]][idx[1]] = 0.0;
-				mass_flux_x[idx[0]][idx[1]] = 0.0;
-				xarea[idx[0]][idx[1]] = 0.0;
+				vol_flux_x[idx] = 0.0;
+				mass_flux_x[idx] = 0.0;
+				xarea[idx] = 0.0;
 			});
 		});
 
@@ -167,9 +167,9 @@ void build_field(global_variables &globals) {
 			auto yarea = field.yarea.access<W>(h);
 			// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+2) inclusive
 			clover::par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange, yrange + 1}, [=](id<2> idx) {
-				vol_flux_y[idx[0]][idx[1]] = 0.0;
-				mass_flux_y[idx[0]][idx[1]] = 0.0;
-				yarea[idx[0]][idx[1]] = 0.0;
+				vol_flux_y[idx] = 0.0;
+				mass_flux_y[idx] = 0.0;
+				yarea[idx] = 0.0;
 			});
 		});
 
