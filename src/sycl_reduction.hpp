@@ -104,12 +104,13 @@ namespace clover {
 
 			q.submit([=](cl::sycl::handler &h) mutable {
 				auto scratch = allocator(h, local);
+				size_t min = (length < local) ? length : local;
 				h.parallel_for<nameT>(
 						cl::sycl::nd_range<1>(cl::sycl::range<1>(std::max(local, length)),
 						                      cl::sycl::range<1>(std::min(local, length))),
 						[=](cl::sycl::nd_item<1> id) {
-							cl::sycl::id<1> globalid = id.get_global_id();
-							cl::sycl::id<1> localid = id.get_local_id();
+							const cl::sycl::id<1> globalid = id.get_global_id();
+							const cl::sycl::id<1> localid = id.get_local_id();
 
 							if (globalid[0] >= unpadded) empty(scratch, localid);
 							else {
@@ -120,8 +121,7 @@ namespace clover {
 							id.barrier(cl::sycl::access::fence_space::local_space);
 
 							if (globalid[0] < length) {
-								int min = (length < local) ? length : local;
-								for (size_t offset = min / 2; offset > 0; offset /= 2) {
+								for (size_t offset = min / 2; offset > 0; offset >>= 1) {
 									if (localid[0] < offset) combiner(scratch, localid, localid + offset);
 									id.barrier(cl::sycl::access::fence_space::local_space);
 								}
@@ -133,9 +133,10 @@ namespace clover {
 			length = length / local;
 			functorDone = true;
 		} while (length > 1);
-		q.wait();
-		if (SYCL_DEBUG) std::cout << "RD: done= " << length << "\n";
-
+		if (SYCL_DEBUG){
+			q.wait_and_throw();
+			if (SYCL_DEBUG) std::cout << "RD: done= " << length << "\n";
+		}
 	}
 
 
@@ -165,7 +166,11 @@ namespace clover {
 		  [](cl::sycl::id<1> gid, clover::Range2d r) {
 			  const size_t x = r.fromX + (gid[0] % (r.sizeX));
 			  const size_t y = r.fromY + (gid[0] / (r.sizeX));
+#ifdef SYCL_FLIP_2D
+			  return cl::sycl::id<2>(y, x);
+#else
 			  return cl::sycl::id<2>(x, y);
+#endif
 		  },
 		  allocator, empty, functor, combiner, finaliser);
 	}
