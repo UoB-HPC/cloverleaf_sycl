@@ -132,11 +132,11 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 					double cell_vol = ctx.actual.volume[j][k];
 					double cell_mass = cell_vol * ctx.actual.density0[j][k];
 
-					ctx.local[lidx].vol = cell_vol;
-					ctx.local[lidx].mass = cell_mass;
-					ctx.local[lidx].ie = cell_mass * ctx.actual.energy0[j][k];
-					ctx.local[lidx].ke = cell_mass * 0.5 * vsqrd;
-					ctx.local[lidx].press = cell_vol * ctx.actual.pressure[j][k];
+					ctx.local[lidx].vol += cell_vol;
+					ctx.local[lidx].mass += cell_mass;
+					ctx.local[lidx].ie += cell_mass * ctx.actual.energy0[j][k];
+					ctx.local[lidx].ke += cell_mass * 0.5 * vsqrd;
+					ctx.local[lidx].press += cell_vol * ctx.actual.pressure[j][k];
 				},
 				[](const ctx &ctx, id<1> idx, id<1> idy) {
 					ctx.local[idx].vol += ctx.local[idy].vol;
