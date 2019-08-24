@@ -47,9 +47,9 @@ void flux_calc_kernel(
 			id<2> idx) {
 
 		vol_flux_x[idx] = 0.25 * dt * xarea[idx]
-		                  * (xvel0[idx] + xvel0[offset(idx, 0, 1)] + xvel1[idx] + xvel1[offset(idx, 0, 1)]);
+		                  * (xvel0[idx] + xvel0[clover::offset(idx, 0, 1)] + xvel1[idx] + xvel1[clover::offset(idx, 0, 1)]);
 		vol_flux_y[idx] = 0.25 * dt * yarea[idx]
-		                  * (yvel0[idx] + yvel0[offset(idx, 1, 0)] + yvel1[idx] + yvel1[offset(idx, 1, 0)]);
+		                  * (yvel0[idx] + yvel0[clover::offset(idx, 1, 0)] + yvel1[idx] + yvel1[clover::offset(idx, 1, 0)]);
 	});
 }
 

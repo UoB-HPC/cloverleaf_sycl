@@ -65,8 +65,8 @@ void advec_mom_kernel(
 			auto pre_vol = pre_vol_buffer.access<W>(h);
 			auto post_vol = post_vol_buffer.access<RW>(h);
 			clover::par_ranged<class APPEND_LN(advec_mom_x1)>(h, policy, [=](id<2> idx) {
-				post_vol[idx] = volume[idx] + vol_flux_y[offset(idx, 0, 1)] - vol_flux_y[idx];
-				pre_vol[idx] = post_vol[idx] + vol_flux_x[offset(idx, 1, 0)] - vol_flux_x[idx];
+				post_vol[idx] = volume[idx] + vol_flux_y[clover::offset(idx, 0, 1)] - vol_flux_y[idx];
+				pre_vol[idx] = post_vol[idx] + vol_flux_x[clover::offset(idx, 1, 0)] - vol_flux_x[idx];
 			});
 		});
 	} else if (mom_sweep == 2) { // y 1
@@ -77,8 +77,8 @@ void advec_mom_kernel(
 			auto pre_vol = pre_vol_buffer.access<W>(h);
 			auto post_vol = post_vol_buffer.access<RW>(h);
 			clover::par_ranged<class APPEND_LN(advec_mom_y1)>(h, policy, [=](id<2> idx) {
-				post_vol[idx] = volume[idx] + vol_flux_x[offset(idx, 1, 0)] - vol_flux_x[idx];
-				pre_vol[idx] = post_vol[idx] + vol_flux_y[offset(idx, 0, 1)] - vol_flux_y[idx];
+				post_vol[idx] = volume[idx] + vol_flux_x[clover::offset(idx, 1, 0)] - vol_flux_x[idx];
+				pre_vol[idx] = post_vol[idx] + vol_flux_y[clover::offset(idx, 0, 1)] - vol_flux_y[idx];
 			});
 		});
 	} else if (mom_sweep == 3) { // x 2
@@ -90,7 +90,7 @@ void advec_mom_kernel(
 			auto post_vol = post_vol_buffer.access<RW>(h);
 			clover::par_ranged<class APPEND_LN(advec_mom_x1)>(h, policy, [=](id<2> idx) {
 				post_vol[idx] = volume[idx];
-				pre_vol[idx] = post_vol[idx] + vol_flux_y[offset(idx, 0, 1)] - vol_flux_y[idx];
+				pre_vol[idx] = post_vol[idx] + vol_flux_y[clover::offset(idx, 0, 1)] - vol_flux_y[idx];
 			});
 		});
 	} else if (mom_sweep == 4) { // y 2
@@ -102,7 +102,7 @@ void advec_mom_kernel(
 			auto post_vol = post_vol_buffer.access<RW>(h);
 			clover::par_ranged<class APPEND_LN(advec_mom_y1)>(h, policy, [=](id<2> idx) {
 				post_vol[idx] = volume[idx];
-				pre_vol[idx] = post_vol[idx] + vol_flux_x[offset(idx, 1, 0)] - vol_flux_x[idx];
+				pre_vol[idx] = post_vol[idx] + vol_flux_x[clover::offset(idx, 1, 0)] - vol_flux_x[idx];
 			});
 		});
 	}
@@ -118,9 +118,9 @@ void advec_mom_kernel(
 				clover::par_ranged<class advec_mom_dir1_vel1_node_flux>(
 						h, {x_min - 2 + 1, y_min + 1, x_max + 2 + 2, y_max + 1 + 2}, [=](id<2> idx) {
 							// Find staggered mesh mass fluxes, nodal masses and volumes.
-							node_flux[idx] = 0.25 * (mass_flux_x[offset(idx, 0, -1)] + mass_flux_x[idx]
-							                         + mass_flux_x[offset(idx, 1, -1)] +
-							                         mass_flux_x[offset(idx, 1, 0)]);
+							node_flux[idx] = 0.25 * (mass_flux_x[clover::offset(idx, 0, -1)] + mass_flux_x[idx]
+							                         + mass_flux_x[clover::offset(idx, 1, -1)] +
+							                         mass_flux_x[clover::offset(idx, 1, 0)]);
 						});
 			});
 
@@ -136,14 +136,14 @@ void advec_mom_kernel(
 				clover::par_ranged<class advec_mom_dir1_vel1_node_mass_pre>(
 						h, {x_min - 1 + 1, y_min + 1, x_max + 2 + 2, y_max + 1 + 2}, [=](id<2> idx) {
 							// Staggered cell mass post advection
-							node_mass_post[idx] = 0.25 * (density1[offset(idx, 0, -1)] * post_vol[offset(idx, 0, -1)]
+							node_mass_post[idx] = 0.25 * (density1[clover::offset(idx, 0, -1)] * post_vol[clover::offset(idx, 0, -1)]
 							                              + density1[idx] * post_vol[idx]
-							                              + density1[offset(idx, -1, -1)] *
-							                                post_vol[offset(idx, -1, -1)]
+							                              + density1[clover::offset(idx, -1, -1)] *
+							                                post_vol[clover::offset(idx, -1, -1)]
 							                              +
-							                              density1[offset(idx, -1, 0)] * post_vol[offset(idx, -1, 0)]);
+							                              density1[clover::offset(idx, -1, 0)] * post_vol[clover::offset(idx, -1, 0)]);
 							node_mass_pre[idx] =
-									node_mass_post[idx] - node_flux[offset(idx, -1, 0)] + node_flux[idx];
+									node_mass_post[idx] - node_flux[clover::offset(idx, -1, 0)] + node_flux[idx];
 						});
 			});
 		}
@@ -208,7 +208,7 @@ void advec_mom_kernel(
 			auto mom_flux = mom_flux_buffer.access<R>(h);
 			clover::par_ranged<class advec_mom_dir1_vel1>(
 					h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](id<2> idx) {
-						vel1[idx] = (vel1[idx] * node_mass_pre[idx] + mom_flux[offset(idx, -1, 0)] -
+						vel1[idx] = (vel1[idx] * node_mass_pre[idx] + mom_flux[clover::offset(idx, -1, 0)] -
 						             mom_flux[idx]) /
 						            node_mass_post[idx];
 					});
@@ -228,9 +228,9 @@ void advec_mom_kernel(
 				clover::par_ranged<class advec_mom_dir2_vel1_node_flux>(
 						h, {x_min + 1, y_min - 2 + 1, x_max + 1 + 2, y_max + 2 + 2}, [=](id<2> idx) {
 							// Find staggered mesh mass fluxes and nodal masses and volumes.
-							node_flux[idx] = 0.25 * (mass_flux_y[offset(idx, -1, 0)] + mass_flux_y[idx]
-							                         + mass_flux_y[offset(idx, -1, 1)] +
-							                         mass_flux_y[offset(idx, 0, 1)]);
+							node_flux[idx] = 0.25 * (mass_flux_y[clover::offset(idx, -1, 0)] + mass_flux_y[idx]
+							                         + mass_flux_y[clover::offset(idx, -1, 1)] +
+							                         mass_flux_y[clover::offset(idx, 0, 1)]);
 						});
 			});
 
@@ -247,14 +247,14 @@ void advec_mom_kernel(
 				auto post_vol = post_vol_buffer.access<R>(h);
 				clover::par_ranged<class advec_mom_dir2_vel1_node_mass_pre>(
 						h, {x_min + 1, y_min - 1 + 1, x_max + 1 + 2, y_max + 2 + 2}, [=](id<2> idx) {
-							node_mass_post[idx] = 0.25 * (density1[offset(idx, 0, -1)] * post_vol[offset(idx, 0, -1)]
+							node_mass_post[idx] = 0.25 * (density1[clover::offset(idx, 0, -1)] * post_vol[clover::offset(idx, 0, -1)]
 							                              + density1[idx] * post_vol[idx]
-							                              + density1[offset(idx, -1, -1)] *
-							                                post_vol[offset(idx, -1, -1)]
+							                              + density1[clover::offset(idx, -1, -1)] *
+							                                post_vol[clover::offset(idx, -1, -1)]
 							                              +
-							                              density1[offset(idx, -1, 0)] * post_vol[offset(idx, -1, 0)]);
+							                              density1[clover::offset(idx, -1, 0)] * post_vol[clover::offset(idx, -1, 0)]);
 							node_mass_pre[idx] =
-									node_mass_post[idx] - node_flux[offset(idx, 0, -1)] + node_flux[idx];
+									node_mass_post[idx] - node_flux[clover::offset(idx, 0, -1)] + node_flux[idx];
 						});
 			});
 		}
@@ -321,7 +321,7 @@ void advec_mom_kernel(
 			auto mom_flux = mom_flux_buffer.access<R>(h);
 			clover::par_ranged<class advec_mom_dir2_vel1>(
 					h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](id<2> idx) {
-						vel1[idx] = (vel1[idx] * node_mass_pre[idx] + mom_flux[offset(idx, 0, -1)] - mom_flux[idx]) /
+						vel1[idx] = (vel1[idx] * node_mass_pre[idx] + mom_flux[clover::offset(idx, 0, -1)] - mom_flux[idx]) /
 						            node_mass_post[idx];
 					});
 		});

@@ -24,7 +24,9 @@
 #include <iostream>
 #include <utility>
 
-#define SYCL_DEBUG false
+//#define SYCL_DEBUG
+#define SYNC_KERNELS
+
 #define SYCL_FLIP_2D
 
 namespace clover {
@@ -54,12 +56,12 @@ namespace clover {
 		//	Buffer() {};
 
 		static cl::sycl::range<N> show(cl::sycl::range<N> range) {
-			if (SYCL_DEBUG) {
-				if (N == 1)
-					std::cout << "Buffer<" << N << ">(range1d=" << range.get(0) << ")\n";
-				else if (N == 2)
-					std::cout << "Buffer<" << N << ">(range2d=" << range.get(0) << "," << range.get(1) << ")\n";
-			}
+#ifdef SYCL_DEBUG
+			if (N == 1)
+				std::cout << "Buffer<" << N << ">(range1d=" << range.get(0) << ")\n";
+			else if (N == 2)
+				std::cout << "Buffer<" << N << ">(range2d=" << range.get(0) << "," << range.get(1) << ")\n";
+#endif
 			return range;
 		}
 
@@ -75,12 +77,12 @@ namespace clover {
 		template<cl::sycl::access::mode mode>
 		inline typename Accessor<T, N, mode>::Type
 		access(cl::sycl::handler &cgh) {
-			if (SYCL_DEBUG) {
-				if (N == 1) std::cout << "buffer->access_1d( " << buffer.get_range().get(0) << " )\n";
-				else if (N == 2)
-					std::cout << "buffer->access_2d( " << buffer.get_range().get(0) << "," << buffer.get_range().get(1)
-					          << " )\n";
-			}
+#ifdef SYCL_DEBUG
+			if (N == 1) std::cout << "buffer->access_1d( " << buffer.get_range().get(0) << " )\n";
+			else if (N == 2)
+				std::cout << "buffer->access_2d( " << buffer.get_range().get(0) << "," << buffer.get_range().get(1)
+				          << " )\n";
+#endif
 			return Accessor<T, N, mode>::from(buffer, cgh);
 		}
 
@@ -115,9 +117,10 @@ namespace clover {
 		Range2d(A fromX, B fromY, C toX, D toY) :
 				fromX(fromX), toX(toX), fromY(fromY), toY(toY),
 				sizeX(toX - fromX), sizeY(toY - fromY) {
-			if (SYCL_DEBUG)
-				std::cout << "Mk range 2d:x=(" << fromX << "->" << toX << ")"
-				          << ",y= (" << fromY << "->" << toY << ")" << std::endl;
+#ifdef SYCL_DEBUG
+			std::cout << "Mk range 2d:x=(" << fromX << "->" << toX << ")"
+			          << ",y= (" << fromY << "->" << toY << ")" << std::endl;
+#endif
 			assert(fromX < toX);
 			assert(fromY < toY);
 			assert(sizeX != 0);
@@ -132,10 +135,25 @@ namespace clover {
 		}
 	};
 
+
+	static inline cl::sycl::id<2> offset(const cl::sycl::id<2> idx, const int j, const int k) {
+		int jj = static_cast<int>(idx[0]) + j;
+		int kk = static_cast<int>(idx[1]) + k;
+#ifdef SYCL_DEBUG
+		// XXX only use on runtime that provides assertions, eg: CPU
+		assert(jj >= 0);
+		assert(kk >= 0);
+#endif
+		return cl::sycl::id<2>(jj, kk);
+	}
+
+
 	template<typename nameT, typename functorT>
 	static inline void par_ranged(cl::sycl::handler &cgh, const Range1d &range, const functorT &functor) {
-		if (SYCL_DEBUG)
+#ifdef SYCL_DEBUG
 			std::cout << "par_ranged 1d:x=" << range.from << "(" << range.size << ")" << std::endl;
+#endif
+
 		cgh.parallel_for<nameT>(
 				cl::sycl::range<1>(range.size),
 				cl::sycl::id<1>(range.from),
@@ -144,9 +162,11 @@ namespace clover {
 	template<typename nameT, class functorT>
 	static inline void par_ranged(cl::sycl::handler &cgh, const Range2d &range, functorT functor) {
 
-		if (SYCL_DEBUG)
-			std::cout << "par_ranged 2d(x=" << range.fromX << "(" << range.sizeX << ")" << ", " << range.fromY << "("
-			          << range.sizeY << "))" << std::endl;
+#ifdef SYCL_DEBUG
+		std::cout << "par_ranged 2d(x=" << range.fromX << "(" << range.sizeX << ")" << ", " << range.fromY << "("
+		          << range.sizeY << "))" << std::endl;
+#endif
+
 #ifdef SYCL_FLIP_2D
 		cgh.parallel_for<nameT>(
 				cl::sycl::range<2>(range.sizeY, range.sizeX),
@@ -164,11 +184,15 @@ namespace clover {
 
 	template<typename T>
 	static void execute(cl::sycl::queue &queue, T cgf) {
-		if (SYCL_DEBUG) std::cout << "Execute" << std::endl;
+
+#ifdef SYCL_DEBUG
+		std::cout << "Execute" << std::endl;
+#endif
 		try {
 			queue.submit(cgf);
-			if (SYCL_DEBUG)
-				queue.wait_and_throw();
+#if defined(SYCL_DEBUG) || defined(SYNC_KERNELS)
+			queue.wait_and_throw();
+#endif
 		} catch (cl::sycl::device_error &e) {
 			std::cerr << "[SYCL] Device error: : `" << e.what() << "`" << std::endl;
 			throw e;

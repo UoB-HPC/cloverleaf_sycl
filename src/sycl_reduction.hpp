@@ -100,13 +100,12 @@ namespace clover {
 			dot_wgsize = dev.get_info<cl::sycl::info::device::max_work_group_size>();
 		}
 
-
 		size_t N = lengthFn(range);
 		dot_num_groups = std::min(N, dot_num_groups);
-//		dot_wgsize = std::ceil((static_cast<double>(N) / dot_num_groups));
 
-		if (SYCL_DEBUG)
-			std::cout << "RD: dot_wgsize=" << dot_wgsize << " dot_num_groups:" << dot_num_groups << " N=" << N << "\n";
+#ifdef SYCL_DEBUG
+		std::cout << "RD: dot_wgsize=" << dot_wgsize << " dot_num_groups:" << dot_num_groups << " N=" << N << "\n";
+#endif
 
 		q.submit([=](cl::sycl::handler &h) mutable {
 			auto ctx = allocator(h, dot_wgsize);
@@ -154,12 +153,12 @@ namespace clover {
 						finaliser(ctx, 0, zero); // xs[0] = local[0]
 					});
 		});
-
-//		q.wait_and_throw();
-		if (SYCL_DEBUG) {
-//			q.wait_and_throw();
-			std::cout << "RD: done= " << N << "\n";
-		}
+#ifdef SYNC_KERNELS
+		q.wait_and_throw();
+#endif
+#ifdef SYCL_DEBUG
+		std::cout << "RD: done= " << N << "\n";
+#endif
 	}
 
 
@@ -177,7 +176,9 @@ namespace clover {
 	                                 Functor functor,
 	                                 BinaryOp combiner,
 	                                 Finaliser finaliser) {
-		if (SYCL_DEBUG) std::cout << "PR2d " << range << "\n";
+#ifdef SYCL_DEBUG
+		std::cout << "PR2d " << range << "\n";
+#endif
 		par_reduce_nd_impl<nameT, 2, clover::Range2d,
 				LocalType,
 				LocalAllocator,
@@ -215,7 +216,9 @@ namespace clover {
 	                                 Functor functor,
 	                                 BinaryOp combiner,
 	                                 Finaliser finaliser) {
-		if (SYCL_DEBUG) std::cout << "PR1d " << range << "\n";
+#ifdef SYCL_DEBUG
+		std::cout << "PR1d " << range << "\n";
+#endif
 		par_reduce_nd_impl<nameT, 1, clover::Range1d,
 				LocalType,
 				LocalAllocator,

@@ -52,29 +52,29 @@ void accelerate_kernel(
 	clover::par_ranged<class accelerate>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
 			id<2> idx) {
 
-		double stepbymass_s = halfdt / ((density0[offset(idx, -1, -1)] * volume[offset(idx, -1, -1)]
-		                                 + density0[offset(idx, -1, 0)] * volume[offset(idx, -1, 0)]
+		double stepbymass_s = halfdt / ((density0[clover::offset(idx, -1, -1)] * volume[clover::offset(idx, -1, -1)]
+		                                 + density0[clover::offset(idx, -1, 0)] * volume[clover::offset(idx, -1, 0)]
 		                                 + density0[idx] * volume[idx]
-		                                 + density0[offset(idx, 0, -1)] * volume[offset(idx, 0, -1)])
+		                                 + density0[clover::offset(idx, 0, -1)] * volume[clover::offset(idx, 0, -1)])
 		                                * 0.25);
 
 		xvel1[idx] = xvel0[idx] - stepbymass_s *
-		                          (xarea[idx] * (pressure[idx] - pressure[offset(idx, -1, 0)]) +
-		                           xarea[offset(idx, 0, -1)] *
-		                           (pressure[offset(idx, 0, -1)] - pressure[offset(idx, -1, -1)]));
+		                          (xarea[idx] * (pressure[idx] - pressure[clover::offset(idx, -1, 0)]) +
+		                           xarea[clover::offset(idx, 0, -1)] *
+		                           (pressure[clover::offset(idx, 0, -1)] - pressure[clover::offset(idx, -1, -1)]));
 		yvel1[idx] = yvel0[idx] - stepbymass_s *
-		                          (yarea[idx] * (pressure[idx] - pressure[offset(idx, 0, -1)]) +
-		                           yarea[offset(idx, -1, 0)] *
-		                           (pressure[offset(idx, -1, 0)] - pressure[offset(idx, -1, -1)]));
+		                          (yarea[idx] * (pressure[idx] - pressure[clover::offset(idx, 0, -1)]) +
+		                           yarea[clover::offset(idx, -1, 0)] *
+		                           (pressure[clover::offset(idx, -1, 0)] - pressure[clover::offset(idx, -1, -1)]));
 		xvel1[idx] = xvel1[idx] - stepbymass_s *
-		                          (xarea[idx] * (viscosity[idx] - viscosity[offset(idx, -1, 0)]) +
-		                           xarea[offset(idx, 0, -1)] *
-		                           (viscosity[offset(idx, 0, -1)] - viscosity[offset(idx, -1,
+		                          (xarea[idx] * (viscosity[idx] - viscosity[clover::offset(idx, -1, 0)]) +
+		                           xarea[clover::offset(idx, 0, -1)] *
+		                           (viscosity[clover::offset(idx, 0, -1)] - viscosity[clover::offset(idx, -1,
 		                                                                             -1)]));
 		yvel1[idx] = yvel1[idx] - stepbymass_s *
-		                          (yarea[idx] * (viscosity[idx] - viscosity[offset(idx, 0, -1)]) +
-		                           yarea[offset(idx, -1, 0)] *
-		                           (viscosity[offset(idx, -1, 0)] - viscosity[offset(idx, -1,
+		                          (yarea[idx] * (viscosity[idx] - viscosity[clover::offset(idx, 0, -1)]) +
+		                           yarea[clover::offset(idx, -1, 0)] *
+		                           (viscosity[clover::offset(idx, -1, 0)] - viscosity[clover::offset(idx, -1,
 		                                                                             -1)]));
 
 

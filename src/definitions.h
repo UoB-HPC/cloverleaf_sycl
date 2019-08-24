@@ -60,16 +60,21 @@ constexpr sycl::access::mode W = sycl::access::mode::write;
 constexpr sycl::access::mode RW = sycl::access::mode::read_write;
 
 
-static inline id<2> offset(const id<2> idx, const int j, const int k) {
-	int jj = static_cast<int>(idx[0]) + j;
-	int kk = static_cast<int>(idx[1]) + k;
-	assert(jj >= 0);
-	assert(kk >= 0);
-	return id<2>(jj, kk);
-}
-
 #include <fstream>
 #include <iostream>
+#include <chrono>
+
+typedef std::chrono::time_point<std::chrono::system_clock> timepoint;
+
+static inline timepoint mark() {
+	return std::chrono::system_clock::now();
+}
+
+static inline double elapsedMs(timepoint start) {
+	timepoint end = mark();
+	return std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000.0;
+}
+
 
 static inline void record(const std::string &name, const std::function<void(std::ofstream &)> &f) {
 	std::ofstream out;

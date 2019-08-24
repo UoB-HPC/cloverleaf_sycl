@@ -63,19 +63,19 @@ void PdV_kernel(
 		clover::par_ranged<class PdV_predict_true>(h, policy, [=](id<2> idx) {
 
 
-			double left_flux = (xarea[idx] * (xvel0[idx] + xvel0[offset(idx, 0, 1)]
-			                                  + xvel0[idx] + xvel0[offset(idx, 0, 1)])) * 0.25 * dt * 0.5;
+			double left_flux = (xarea[idx] * (xvel0[idx] + xvel0[clover::offset(idx, 0, 1)]
+			                                  + xvel0[idx] + xvel0[clover::offset(idx, 0, 1)])) * 0.25 * dt * 0.5;
 
-			double right_flux = (xarea[offset(idx, 1, 0)] * (xvel0[offset(idx, 1, 0)] + xvel0[offset(idx, 1, 1)]
-			                                                 + xvel0[offset(idx, 1, 0)] + xvel0[offset(idx, 1, 1)])) *
+			double right_flux = (xarea[clover::offset(idx, 1, 0)] * (xvel0[clover::offset(idx, 1, 0)] + xvel0[clover::offset(idx, 1, 1)]
+			                                                 + xvel0[clover::offset(idx, 1, 0)] + xvel0[clover::offset(idx, 1, 1)])) *
 			                    0.25 * dt * 0.5;
 
-			double bottom_flux = (yarea[idx] * (yvel0[idx] + yvel0[offset(idx, 1, 0)]
-			                                    + yvel0[idx] + yvel0[offset(idx, 1, 0)])) * 0.25 * dt *
+			double bottom_flux = (yarea[idx] * (yvel0[idx] + yvel0[clover::offset(idx, 1, 0)]
+			                                    + yvel0[idx] + yvel0[clover::offset(idx, 1, 0)])) * 0.25 * dt *
 			                     0.5;
 
-			double top_flux = (yarea[offset(idx, 0, 1)] * (yvel0[offset(idx, 0, 1)] + yvel0[offset(idx, 1, 1)]
-			                                               + yvel0[offset(idx, 0, 1)] + yvel0[offset(idx, 1, 1)])) *
+			double top_flux = (yarea[clover::offset(idx, 0, 1)] * (yvel0[clover::offset(idx, 0, 1)] + yvel0[clover::offset(idx, 1, 1)]
+			                                               + yvel0[clover::offset(idx, 0, 1)] + yvel0[clover::offset(idx, 1, 1)])) *
 			                  0.25 *
 			                  dt * 0.5;
 
@@ -103,18 +103,18 @@ void PdV_kernel(
 
 		clover::par_ranged<class PdV_predict_false>(h, policy, [=](id<2> idx) {
 
-			double left_flux = (xarea[idx] * (xvel0[idx] + xvel0[offset(idx, 0, 1)]
-			                                  + xvel1[idx] + xvel1[offset(idx, 0, 1)])) * 0.25 * dt;
+			double left_flux = (xarea[idx] * (xvel0[idx] + xvel0[clover::offset(idx, 0, 1)]
+			                                  + xvel1[idx] + xvel1[clover::offset(idx, 0, 1)])) * 0.25 * dt;
 
-			double right_flux = (xarea[offset(idx, 1, 0)] * (xvel0[offset(idx, 1, 0)] + xvel0[offset(idx, 1, 1)]
-			                                                 + xvel1[offset(idx, 1, 0)] + xvel1[offset(idx, 1, 1)])) *
+			double right_flux = (xarea[clover::offset(idx, 1, 0)] * (xvel0[clover::offset(idx, 1, 0)] + xvel0[clover::offset(idx, 1, 1)]
+			                                                 + xvel1[clover::offset(idx, 1, 0)] + xvel1[clover::offset(idx, 1, 1)])) *
 			                    0.25 * dt;
 
-			double bottom_flux = (yarea[idx] * (yvel0[idx] + yvel0[offset(idx, 1, 0)]
-			                                    + yvel1[idx] + yvel1[offset(idx, 1, 0)])) * 0.25 * dt;
+			double bottom_flux = (yarea[idx] * (yvel0[idx] + yvel0[clover::offset(idx, 1, 0)]
+			                                    + yvel1[idx] + yvel1[clover::offset(idx, 1, 0)])) * 0.25 * dt;
 
-			double top_flux = (yarea[offset(idx, 0, 1)] * (yvel0[offset(idx, 0, 1)] + yvel0[offset(idx, 1, 1)]
-			                                               + yvel1[offset(idx, 0, 1)] + yvel1[offset(idx, 1, 1)])) *
+			double top_flux = (yarea[clover::offset(idx, 0, 1)] * (yvel0[clover::offset(idx, 0, 1)] + yvel0[clover::offset(idx, 1, 1)]
+			                                               + yvel1[clover::offset(idx, 0, 1)] + yvel1[clover::offset(idx, 1, 1)])) *
 			                  0.25 *
 			                  dt;
 
