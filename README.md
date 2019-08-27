@@ -1,13 +1,6 @@
-
-#A SYCL port of CloverLeaf
+# A SYCL port of CloverLeaf
 
 This is a port of [CloverLeaf](https://github.com/UoB-HPC/cloverleaf_kokkos) from MPI+Kokkos to MPI+SYCL.
-
-## Known issues
-
- * Due to ComputeCpp's limitation where built-ins are missing when targeting ptx, NVidia based GPUs are not supported yet.
-
- * Selecting non-default devices requires recompiling. 
 
 ## Tested configurations
 
@@ -61,7 +54,7 @@ Proceed with compiling, adjust `<thread_count>` accordingly:
     cmake3 --build build --target clover_leaf --config Release -j <thread_count>
    
 
-# Running
+## Running
 
 The main `clover_leaf` executable takes a `clover.in` file as parameter and outputs `clover.out` at working directory.
 
@@ -88,3 +81,8 @@ For a quick build, use:
     e.g
     ./dev.sh /home/tom/ComputeCpp-CE-1.1.3-CentOS-x86_64
 
+## Known issues
+
+ * Due to ComputeCpp's limitation where built-ins are missing when targeting ptx, NVidia based GPUs are not supported yet.
+
+ * Selecting non-default devices requires recompiling. 
