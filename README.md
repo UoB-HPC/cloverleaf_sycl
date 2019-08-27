@@ -62,6 +62,8 @@ For example, after successful compilation, at **project root**:
 
     ./build/clover_leaf InputDecks/clover_bm16_short.in
 
+See [Tested configurations](#tested-configurations) for tested platforms and drivers. Also see ComputeCpp's [platform support page](https://developer.codeplay.com/products/computecpp/ce/guides/platform-support) for supported configurations.
+
 To run on a specific device, unload all other drivers or modify the device selector in `start.cpp:107` and recompile.
 
 ## Development
@@ -85,4 +87,4 @@ For a quick build, use:
 
  * Due to ComputeCpp's limitation where built-ins are missing when targeting ptx, NVidia based GPUs are not supported yet.
 
- * Selecting non-default devices requires recompiling. 
+ * Selecting non-default devices requires recompiling.
