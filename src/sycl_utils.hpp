@@ -81,7 +81,7 @@ namespace clover {
 			if (N == 1) std::cout << "buffer->access_1d( " << buffer.get_range().get(0) << " )\n";
 			else if (N == 2)
 				std::cout << "buffer->access_2d( " << buffer.get_range().get(0) << "," << buffer.get_range().get(1)
-				          << " )\n";
+						  << " )\n";
 #endif
 			return Accessor<T, N, mode>::from(buffer, cgh);
 		}
@@ -119,7 +119,7 @@ namespace clover {
 				sizeX(toX - fromX), sizeY(toY - fromY) {
 #ifdef SYCL_DEBUG
 			std::cout << "Mk range 2d:x=(" << fromX << "->" << toX << ")"
-			          << ",y= (" << fromY << "->" << toY << ")" << std::endl;
+					  << ",y= (" << fromY << "->" << toY << ")" << std::endl;
 #endif
 			assert(fromX < toX);
 			assert(fromY < toY);
@@ -148,10 +148,10 @@ namespace clover {
 	}
 
 
-	template<typename nameT, typename functorT>
-	static inline void par_ranged(cl::sycl::handler &cgh, const Range1d &range, const functorT &functor) {
+	template<typename nameT, class functorT>
+	static inline void par_ranged(cl::sycl::handler &cgh, const Range1d &range, functorT functor) {
 #ifdef SYCL_DEBUG
-			std::cout << "par_ranged 1d:x=" << range.from << "(" << range.size << ")" << std::endl;
+		std::cout << "par_ranged 1d:x=" << range.from << "(" << range.size << ")" << std::endl;
 #endif
 
 		cgh.parallel_for<nameT>(
@@ -164,7 +164,7 @@ namespace clover {
 
 #ifdef SYCL_DEBUG
 		std::cout << "par_ranged 2d(x=" << range.fromX << "(" << range.sizeX << ")" << ", " << range.fromY << "("
-		          << range.sizeY << "))" << std::endl;
+				  << range.sizeY << "))" << std::endl;
 #endif
 
 #ifdef SYCL_FLIP_2D
