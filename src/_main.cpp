@@ -5,7 +5,6 @@
 #include <sstream>
 
 
-class foo;
 
 void print_device(const cl::sycl::device &device) {
 	auto exts = device.get_info<cl::sycl::info::device::extensions>();

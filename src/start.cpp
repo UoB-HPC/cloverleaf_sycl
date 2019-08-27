@@ -40,6 +40,7 @@
 
 extern std::ostream g_out;
 
+// dumps device info to stdout
 void print_device(const cl::sycl::device &device) {
 	auto exts = device.get_info<cl::sycl::info::device::extensions>();
 	std::ostringstream extensions;
@@ -76,14 +77,9 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 		      << std::endl;
 	}
 
-//	globals.time = 0.0;
-//	globals.step = 0.0;
-//	globals.dtold = globals.dtinit;
-//	globals.dt = globals.dtinit;
 
 	clover_barrier();
 
-	// clover_get_num_chunks()
 
 	int left, right, bottom, top;
 	auto chunkNeighbours = clover_decompose(config, parallel,
@@ -91,7 +87,6 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 	                                        bottom, top);
 
 	// Create the chunks
-//	globals.chunk.task = parallel.task;
 
 	int x_cells = right - left + 1;
 	int y_cells = top - bottom + 1;
@@ -120,24 +115,11 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 
 
 	auto devices = cl::sycl::device::get_devices();
-	for(const auto& dev : devices) print_device(dev);
+	for (const auto &dev : devices) print_device(dev);
 
 	std::cout << "[SYCL] Selected device:" << std::endl;
 	print_device(globals.queue.get_device());
 
-
-//	globals.chunk.left = left;
-//	globals.chunk.bottom = bottom;
-//	globals.chunk.right = right;
-//	globals.chunk.top = top;
-//	globals.chunk.left_boundary = 1;
-//	globals.chunk.bottom_boundary = 1;
-//	globals.chunk.right_boundary = globals.grid.x_cells;
-//	globals.chunk.top_boundary = globals.grid.y_cells;
-//	globals.chunk.x_min = 1;
-//	globals.chunk.y_min = 1;
-//	globals.chunk.x_max = x_cells;
-//	globals.chunk.y_max = y_cells;
 
 	if (DEBUG) std::cout << "Globals configured" << std::endl;
 
@@ -145,13 +127,6 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 
 	std::transform(infos.begin(), infos.end(), std::back_inserter(globals.chunk.tiles),
 	               [](const tile_info &ti) { return tile_type(ti); });
-
-
-
-//	for(tile_type &tt : globals.chunk.tiles){
-//		std::cout << tt.info.
-//
-//	}
 
 
 
@@ -171,7 +146,6 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 		generate_chunk(tile, globals);
 	}
 
-//	globals.advect_x = true;
 
 	clover_barrier(globals);
 

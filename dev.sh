@@ -2,7 +2,7 @@
 
 set -e
 
-#rm -rf ./build
+rm -rf ./build
 
 
 echo using ComputeCpp_DIR=$1

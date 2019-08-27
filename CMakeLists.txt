@@ -8,8 +8,6 @@ add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 get_filename_component(OpenCL_INCLUDE "include" ABSOLUTE)
 set(OpenCL_INCLUDE_DIR ${OpenCL_INCLUDE})
 
-#list(APPEND COMPUTECPP_USER_FLAGS "-O3" "-fsycl-split-modules=20" "-mllvm" "-inline-threshold=10000" "-no-serial-memop")
-
 set(COMPUTECPP_USER_FLAGS -O3 -fsycl-split-modules=20 -mllvm -inline-threshold=10000 -no-serial-memop)
 
 
@@ -20,8 +18,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
-#set(OpenCL_INCLUDE_DIR include)
-#include_directories(src)
 
 SET(SOURCES
         src/cxx14_compat.hpp
@@ -60,12 +56,10 @@ SET(SOURCES
         src/visit.cpp
 
 #                src/_main.cpp
-        #        src/_main_nosycl.cpp
         )
 
 
 add_executable(clover_leaf ${SOURCES})
-
 
 target_compile_options(clover_leaf
         PUBLIC
@@ -80,17 +74,12 @@ target_compile_options(clover_leaf
         -Wno-ignored-attributes
         )
 
-# -fsanitize=address
-#set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer -fsanitize=address -march=native -g)
 set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer -march=native -g)
 set(RELEASE_OPTIONS -O3 -march=native)
 
-
-#target_link_libraries(clover_leaf PUBLIC $<$<CONFIG:DEBUG>:-Wl,-lasan>) # must come before any other libraries
 target_link_libraries(clover_leaf PRIVATE ${MPI_CXX_LIBRARIES})
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_OPTIONS}>")
 
-#set_property(SOURCE ${SOURCES} PROPERTY COMPUTECPP_SOURCE_FLAGS -Rno-sycl-kernel-naming)
 
 add_sycl_to_target(
         TARGET clover_leaf

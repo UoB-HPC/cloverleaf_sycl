@@ -177,7 +177,7 @@ namespace clover {
 	                                 BinaryOp combiner,
 	                                 Finaliser finaliser) {
 #ifdef SYCL_DEBUG
-		std::cout << "PR2d " << range << "\n";
+		std::cout << "par_reduce_2d " << range << "\n";
 #endif
 		par_reduce_nd_impl<nameT, 2, clover::Range2d,
 				LocalType,
@@ -203,6 +203,7 @@ namespace clover {
 	}
 #pragma clang diagnostic pop
 
+// applies a 1d reduction
 	template<typename nameT,
 			class LocalType,
 			class LocalAllocator = std::nullptr_t,
@@ -217,7 +218,7 @@ namespace clover {
 	                                 BinaryOp combiner,
 	                                 Finaliser finaliser) {
 #ifdef SYCL_DEBUG
-		std::cout << "PR1d " << range << "\n";
+		std::cout << "par_reduce_1d " << range << "\n";
 #endif
 		par_reduce_nd_impl<nameT, 1, clover::Range1d,
 				LocalType,

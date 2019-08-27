@@ -27,23 +27,23 @@
 #include <CL/sycl.hpp>
 #include <iostream>
 #include <utility>
+#include <fstream>
+#include <iostream>
+#include <chrono>
 #include "sycl_utils.hpp"
 
-//#include <Kokkos_Core.hpp>
 
 #define g_ibig 640000
 #define g_small (1.0e-16)
 #define g_big   (1.0e+21)
 #define NUM_FIELDS 15
 
-// Cannot call std::min or std::max from a CUDA kernel, so use these macros instead.
-
 
 #define PP_CAT(a, b) PP_CAT_I(a, b)
 #define PP_CAT_I(a, b) PP_CAT_II(~, a ## b)
 #define PP_CAT_II(p, res) res
 
-#define APPEND_LN(base) PP_CAT(base, __LINE__)
+#define APPEND_LN(base) PP_CAT(base, __LINE__) // appends line number to the given base name
 
 using namespace cl;
 
@@ -54,28 +54,24 @@ using sycl::range;
 using sycl::handler;
 using sycl::id;
 
-
 constexpr sycl::access::mode R = sycl::access::mode::read;
 constexpr sycl::access::mode W = sycl::access::mode::write;
 constexpr sycl::access::mode RW = sycl::access::mode::read_write;
 
-
-#include <fstream>
-#include <iostream>
-#include <chrono>
-
 typedef std::chrono::time_point<std::chrono::system_clock> timepoint;
 
+// current time
 static inline timepoint mark() {
 	return std::chrono::system_clock::now();
 }
 
+// elapsed time since start in milliseconds
 static inline double elapsedMs(timepoint start) {
 	timepoint end = mark();
 	return std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1000000.0;
 }
 
-
+// writes content of the provided stream to file with name
 static inline void record(const std::string &name, const std::function<void(std::ofstream &)> &f) {
 	std::ofstream out;
 	out.open(name, std::ofstream::out | std::ofstream::trunc);
@@ -83,6 +79,7 @@ static inline void record(const std::string &name, const std::function<void(std:
 	out.close();
 }
 
+// formats and then dumps content of 1d double buffer to stream
 static inline void show(std::ostream &out, const std::string &name, clover::Buffer<double, 1> &buffer) {
 	auto view = buffer.template access<R>();
 	const range<1> &range = view.get_range();
@@ -93,7 +90,7 @@ static inline void show(std::ostream &out, const std::string &name, clover::Buff
 	}
 	out << std::endl;
 }
-
+// formats and then dumps content of 2d double buffer to stream
 static inline void show(std::ostream &out, const std::string &name, clover::Buffer<double, 2> &buffer) {
 	auto view = buffer.access<R>();
 	const range<2> &range = view.get_range();
@@ -276,24 +273,18 @@ struct field_type {
 
 
 struct tile_info {
+
 	std::array<int, 4> tile_neighbours;
 	std::array<int, 4> external_tile_mask;
 	int t_xmin, t_xmax, t_ymin, t_ymax;
 	int t_left, t_right, t_bottom, t_top;
+
 };
 
 struct tile_type {
 
-//	tile_type(const size_t xrange, const size_t yrange) : field(xrange, yrange) {}
-
 	tile_info info;
-//	std::array<int, 4> tile_neighbours;
-//	std::array<int, 4> external_tile_mask;
-//	int t_xmin, t_xmax, t_ymin, t_ymax;
-//	int t_left, t_right, t_bottom, t_top;
-
 	field_type field;
-
 
 	explicit tile_type(const tile_info &info) :
 			info(info),
@@ -349,35 +340,21 @@ struct chunk_type {
 			  top_snd_buffer(range<1>(10 * 2 * (xMax + 5))) {}
 
 
-//	left_snd_buffer(range<1>(10 * 2 * (yMax + 5))),
-//	left_rcv_buffer(range<1>(10 * 2 * (yMax + 5))),
-//	right_snd_buffer(range<1>(10 * 2 * (yMax + 5))),
-//	right_rcv_buffer(range<1>(10 * 2 * (yMax + 5))),
-//	bottom_snd_buffer(range<1>(10 * 2 * (xMax + 5))),
-//	bottom_rcv_buffer(range<1>(10 * 2 * (xMax + 5))),
-//	top_snd_buffer(range<1>(10 * 2 * (xMax + 5))),
-//	top_rcv_buffer(range<1>(10 * 2 * (xMax + 5)))
-
 };
 
 
 // Collection of globally defined variables
 struct global_config {
 
-
 	std::vector<state_type> states;
-
 
 	int number_of_states;
 
-
 	int tiles_per_chunk;
-
 
 	int test_problem;
 
 	bool profiler_on;
-
 
 	double end_time;
 
@@ -398,7 +375,6 @@ struct global_config {
 
 	int visit_frequency;
 	int summary_frequency;
-
 
 	int number_of_chunks;
 
@@ -441,12 +417,12 @@ struct global_variables {
 			dtold(config.dtinit),
 			profiler_on(config.profiler_on) {}
 
+	// dumps all content to file; for debugging only
+	void dump(const std::string &filename) {
 
-	void dump(const std::string &name) {
+		std::cout << "Dumping globals to " << filename << std::endl;
 
-		std::cout << "Dumping globals to " << name << std::endl;
-
-		record(name, [&](std::ostream &out) {
+		record(filename, [&](std::ostream &out) {
 			out << "Dump(tileCount = " << chunk.tiles.size() << ")" << std::endl;
 
 

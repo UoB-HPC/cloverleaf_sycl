@@ -24,13 +24,14 @@
 #include <iostream>
 #include <utility>
 
-//#define SYCL_DEBUG
-#define SYNC_KERNELS
+//#define SYCL_DEBUG // enable for debugging SYCL related things, also syncs kernel calls
+#define SYNC_KERNELS // enable for fully synchronous (e.g queue.wait_and_throw()) kernel calls
+#define SYCL_FLIP_2D // enable for flipped id<2> indices from SYCL default
 
-#define SYCL_FLIP_2D
-
+// this namespace houses all SYCL related abstractions
 namespace clover {
 
+	// abstracts away cl::sycl::accessor
 	template<typename T,
 			int N,
 			cl::sycl::access::mode mode>
@@ -48,45 +49,27 @@ namespace clover {
 
 	};
 
+	// abstracts away cl::sycl::buffer
 	template<typename T, int N>
 	struct Buffer {
 
 		cl::sycl::buffer<T, N> buffer;
 
-		//	Buffer() {};
+		// delegates to the corresponding buffer constructor
+		explicit Buffer(cl::sycl::range<N> range) : buffer(range) {}
 
-		static cl::sycl::range<N> show(cl::sycl::range<N> range) {
-#ifdef SYCL_DEBUG
-			if (N == 1)
-				std::cout << "Buffer<" << N << ">(range1d=" << range.get(0) << ")\n";
-			else if (N == 2)
-				std::cout << "Buffer<" << N << ">(range2d=" << range.get(0) << "," << range.get(1) << ")\n";
-#endif
-			return range;
-		}
-
-		// XXX remove
-		explicit Buffer(cl::sycl::buffer<T, N> &buffer) : buffer(buffer) {}
-
-		explicit Buffer(cl::sycl::range<N> range) : buffer(show(range)) {}
-
+		// delegates to the corresponding buffer constructor
 		template<typename Iterator>
 		explicit Buffer(Iterator begin, Iterator end) : buffer(begin, end) {}
 
-
+		// delegates to accessor.get_access<mode>(handler)
 		template<cl::sycl::access::mode mode>
 		inline typename Accessor<T, N, mode>::Type
-		access(cl::sycl::handler &cgh) {
-#ifdef SYCL_DEBUG
-			if (N == 1) std::cout << "buffer->access_1d( " << buffer.get_range().get(0) << " )\n";
-			else if (N == 2)
-				std::cout << "buffer->access_2d( " << buffer.get_range().get(0) << "," << buffer.get_range().get(1)
-						  << " )\n";
-#endif
-			return Accessor<T, N, mode>::from(buffer, cgh);
-		}
+		access(cl::sycl::handler &cgh) { return Accessor<T, N, mode>::from(buffer, cgh); }
 
 
+		// delegates to accessor.get_access<mode>()
+		// **for host buffers only**
 		template<cl::sycl::access::mode mode>
 		inline typename Accessor<T, N, mode>::HostType
 		access() { return Accessor<T, N, mode>::access_host(buffer); }
@@ -117,10 +100,6 @@ namespace clover {
 		Range2d(A fromX, B fromY, C toX, D toY) :
 				fromX(fromX), toX(toX), fromY(fromY), toY(toY),
 				sizeX(toX - fromX), sizeY(toY - fromY) {
-#ifdef SYCL_DEBUG
-			std::cout << "Mk range 2d:x=(" << fromX << "->" << toX << ")"
-					  << ",y= (" << fromY << "->" << toY << ")" << std::endl;
-#endif
 			assert(fromX < toX);
 			assert(fromY < toY);
 			assert(sizeX != 0);
@@ -135,7 +114,7 @@ namespace clover {
 		}
 	};
 
-
+	// safely offset an id<2> by j and k
 	static inline cl::sycl::id<2> offset(const cl::sycl::id<2> idx, const int j, const int k) {
 		int jj = static_cast<int>(idx[0]) + j;
 		int kk = static_cast<int>(idx[1]) + k;
@@ -148,25 +127,18 @@ namespace clover {
 	}
 
 
+	// delegates to parallel_for, handles flipping if enabled
 	template<typename nameT, class functorT>
 	static inline void par_ranged(cl::sycl::handler &cgh, const Range1d &range, functorT functor) {
-#ifdef SYCL_DEBUG
-		std::cout << "par_ranged 1d:x=" << range.from << "(" << range.size << ")" << std::endl;
-#endif
-
 		cgh.parallel_for<nameT>(
 				cl::sycl::range<1>(range.size),
 				cl::sycl::id<1>(range.from),
 				functor);
 	}
+
+	// delegates to parallel_for, handles flipping if enabled
 	template<typename nameT, class functorT>
 	static inline void par_ranged(cl::sycl::handler &cgh, const Range2d &range, functorT functor) {
-
-#ifdef SYCL_DEBUG
-		std::cout << "par_ranged 2d(x=" << range.fromX << "(" << range.sizeX << ")" << ", " << range.fromY << "("
-				  << range.sizeY << "))" << std::endl;
-#endif
-
 #ifdef SYCL_FLIP_2D
 		cgh.parallel_for<nameT>(
 				cl::sycl::range<2>(range.sizeY, range.sizeX),
@@ -182,12 +154,9 @@ namespace clover {
 #endif
 	}
 
+	// delegates to queue.submit(cgf), handles blocking submission if enable
 	template<typename T>
 	static void execute(cl::sycl::queue &queue, T cgf) {
-
-#ifdef SYCL_DEBUG
-		std::cout << "Execute" << std::endl;
-#endif
 		try {
 			queue.submit(cgf);
 #if defined(SYCL_DEBUG) || defined(SYNC_KERNELS)
