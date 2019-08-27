@@ -5,20 +5,28 @@ This is a port of [CloverLeaf](https://github.com/UoB-HPC/cloverleaf_kokkos) fro
 
 ## Known issues
 
-Due to ComputeCpp's limitation where built-ins are missing when targeting ptx, NVidia based GPUs are not supported yet.
+ * Due to ComputeCpp's limitation where built-ins are missing when targeting ptx, NVidia based GPUs are not supported yet.
+
+ * Selecting non-default devices requires recompiling. 
 
 ## Tested configurations
 
-The program was tested on the following hardware.
+The program was compiled and tested on the following configurations.
 
- * Intel CPU
+ * CC -  GCC 9.1.0
+ * SYCL - ComputeCpp 1.1.3
+ 
+
+ * Intel CPU - [Intel OpenCL runtime 18.1](https://software.intel.com/en-us/articles/opencl-drivers)
    * 1 x i7-8850H
    * 1 x i7-6700K
    * 1 x i7-6770HQ
    * 1 x Xeon Gold 6126
- * Intel GPU
+   * 1 x Xeon E5-2630L v0
+ * Intel GPU - [Intel compute-runtime 19.32.13826](https://github.com/intel/compute-runtime/releases/tag/19.32.13826)
    * 1 x UHD Graphics 630
    * 1 x Iris Pro Graphics 580
+   
 
 ## Building
 
@@ -27,6 +35,7 @@ Prerequisites:
  * CentOS 7
  * cmake3
  * openmpi, opemmpi-devel
+ * [ComputeCpp community edition](https://www.codeplay.com/products/computesuite/computecpp)
  * [devtoolset-7](https://www.softwarecollections.org/en/scls/rhscl/devtoolset-7/)
  
 First, generate a build:
@@ -59,6 +68,8 @@ The main `clover_leaf` executable takes a `clover.in` file as parameter and outp
 For example, after successful compilation, at **project root**:
 
     ./build/clover_leaf InputDecks/clover_bm16_short.in
+
+To run on a specific device, unload all other drivers or modify the device selector in `start.cpp:107` and recompile.
 
 ## Development
 
