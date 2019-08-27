@@ -6,8 +6,8 @@ This is a port of [CloverLeaf](https://github.com/UoB-HPC/cloverleaf_kokkos) fro
 
 The program was compiled and tested on the following configurations.
 
- * CC -  GCC 9.1.0
- * SYCL - ComputeCpp 1.1.3
+CC -  GCC 9.1.0  
+SYCL - ComputeCpp 1.1.3
  
 
  * Intel CPU - [Intel OpenCL runtime 18.1](https://software.intel.com/en-us/articles/opencl-drivers)
