@@ -2,6 +2,8 @@
 
 This is a port of [CloverLeaf](https://github.com/UoB-HPC/cloverleaf_kokkos) from MPI+Kokkos to MPI+SYCL.
 
+The code structure closely follows the original implementation; filenames are kept the same and new abstractions are contained in the `clover` namespace.
+
 ## Tested configurations
 
 The program was compiled and tested on the following configurations.
@@ -53,6 +55,14 @@ Proceed with compiling, adjust `<thread_count>` accordingly:
     
     cmake3 --build build --target clover_leaf --config Release -j <thread_count>
    
+If building/running on Bristol's [Zoo](http://uob-hpc.github.io/zoo/), load the following modules:
+
+ * intel/opencl/18.1
+ * gcc/9.1.0
+ * computecpp/1.1.3
+ * cmake/3.14.5
+ * openmpi/4.0.1/gcc-8.3
+
 
 ## Running
 
@@ -63,6 +73,18 @@ For example, after successful compilation, at **project root**:
     ./build/clover_leaf InputDecks/clover_bm16_short.in
 
 To run on a specific device, unload all other drivers or modify the device selector in `start.cpp:107` and recompile.
+
+The following `#defines` are available for toggling
+
+In `sycl_utils.hpp`:
+
+ * `SYCL_DEBUG` -  enable for debugging SYCL related things, also syncs kernel calls
+ * `SYNC_KERNELS` -  enable for fully synchronous (e.g queue.wait_and_throw()) kernel calls
+ * `SYCL_FLIP_2D` -  enable for flipped id<2> indices from SYCL default
+
+In `calc_dt.cpp`:
+
+ * `SPLIT` - enable to run dt computation and reduction as different kernels with an intermediate buffer 
 
 ## Development
 
@@ -83,6 +105,6 @@ For a quick build, use:
 
 ## Known issues
 
+ * Very few testing was done on non-square sizes when the indices are flipped via `SYCL_FLIP_2D`.
  * Due to ComputeCpp's limitation where built-ins are missing when targeting ptx, NVidia based GPUs are not supported yet.
-
  * Selecting non-default devices requires recompiling. 
