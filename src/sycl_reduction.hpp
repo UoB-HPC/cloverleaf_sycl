@@ -87,72 +87,50 @@ namespace clover {
 	                                      BinaryOp combiner,
 	                                      Finaliser finaliser) {
 
-		auto dev = q.get_device();
+		const size_t maxWgSize = q.get_device().get_info<cl::sycl::info::device::max_work_group_size>();
+		const size_t localMemSize = q.get_device().get_info<cl::sycl::info::device::local_mem_size>();
 
-		size_t dot_num_groups;
-		size_t dot_wgsize;
-		if (dev.is_cpu()) {
-			dot_num_groups = dev.get_info<cl::sycl::info::device::max_compute_units>();
-			dot_wgsize = dev.get_info<cl::sycl::info::device::native_vector_width_double>() * 2;
+		size_t unpadded = lengthFn(range);
+		size_t length = next_powerof2(unpadded);
 
-		} else {
-			dot_num_groups = dev.get_info<cl::sycl::info::device::max_compute_units>() * 4;
-			dot_wgsize = dev.get_info<cl::sycl::info::device::max_work_group_size>();
-		}
+		size_t local = std::min(length, maxWgSize);
+		if (local * sizeof(LocalType) > localMemSize)
+			local = prev_powerof2(localMemSize / sizeof(LocalType));
 
-		size_t N = lengthFn(range);
-		dot_num_groups = std::min(N, dot_num_groups);
+		bool functorDone = false;
+		do {
 
-#ifdef SYCL_DEBUG
-		std::cout << "RD: dot_wgsize=" << dot_wgsize << " dot_num_groups:" << dot_num_groups << " N=" << N << "\n";
-#endif
 
-		q.submit([=](cl::sycl::handler &h) mutable {
-			auto ctx = allocator(h, dot_wgsize);
-			h.parallel_for<nameT>(
-					cl::sycl::nd_range<1>(dot_num_groups * dot_wgsize, dot_wgsize),
-					[=](cl::sycl::nd_item<1> item) {
+			q.submit([=](cl::sycl::handler &h) mutable {
+				auto scratch = allocator(h, local);
+				size_t min = (length < local) ? length : local;
+				h.parallel_for<nameT>(
+						cl::sycl::nd_range<1>(cl::sycl::range<1>(std::max(local, length)),
+						                      cl::sycl::range<1>(std::min(local, length))),
+						[=](cl::sycl::nd_item<1> id) {
+							const cl::sycl::id<1> globalid = id.get_global_id();
+							const cl::sycl::id<1> localid = id.get_local_id();
 
-						size_t i = item.get_global_id(0);
-						size_t li = item.get_local_id(0);
-						size_t global_size = item.get_global_range()[0];
-
-						empty(ctx, li);
-						for (; i < N; i += global_size) {
-							functor(ctx, li, rangeIdFn(cl::sycl::id<1>(i), range));
-						}
-
-						size_t local_size = item.get_local_range()[0]; // 8
-						for (int offset = local_size / 2; offset > 0; offset /= 2) {
-							item.barrier(cl::sycl::access::fence_space::local_space);
-							if (li < offset) {
-								combiner(ctx, li, li + offset);
+							if (globalid[0] >= unpadded) empty(scratch, localid);
+							else {
+								if (functorDone) scratch.drain(localid, globalid[0]);
+								else functor(scratch, localid, rangeIdFn(globalid[0], range));
 							}
-						}
 
-						if (li == 0) {
-							finaliser(ctx, item.get_group(0), cl::sycl::id<1>(0));
-						}
+							id.barrier(cl::sycl::access::fence_space::local_space);
 
-					});
-		});
-
-		q.submit([=](cl::sycl::handler &h) mutable {
-			auto ctx = allocator(h, dot_num_groups);
-			h.parallel_for<class foobar>(
-					cl::sycl::range<1>(1),
-					[=](cl::sycl::id<1>) {
-						cl::sycl::id<1> zero = cl::sycl::id<1>(0);
-						empty(ctx, zero); // local[0] = empty
-						for (size_t i = 0; i < dot_num_groups; ++i) {
-							ctx.drain(cl::sycl::id<1>(i), cl::sycl::id<1>(i));
-						}
-						for (size_t i = 1; i < dot_num_groups; ++i) {
-							combiner(ctx, zero, cl::sycl::id<1>(i)); // local[0] = local[0] |+| xs[i]
-						}
-						finaliser(ctx, 0, zero); // xs[0] = local[0]
-					});
-		});
+							if (globalid[0] < length) {
+								for (size_t offset = min / 2; offset > 0; offset >>= 1) {
+									if (localid[0] < offset) combiner(scratch, localid, localid + offset);
+									id.barrier(cl::sycl::access::fence_space::local_space);
+								}
+								if (localid[0] == 0) finaliser(scratch, id.get_group(0), localid);
+							}
+						});
+			});
+			length = length / local;
+			functorDone = true;
+		} while (length > 1);
 #ifdef SYNC_KERNELS
 		q.wait_and_throw();
 #endif
@@ -189,7 +167,7 @@ namespace clover {
 		>(q, range,
 		  [](clover::Range2d r) { return r.sizeX * r.sizeY; },
 		  [](cl::sycl::id<1> gid, clover::Range2d r) {
-#ifdef SYCL_FLIP_2D
+#ifndef SYCL_FLIP_2D
 			  const size_t x = r.fromX + (gid[0] % (r.sizeY));
 			  const size_t y = r.fromY + (gid[0] / (r.sizeY));
 			  return cl::sycl::id<2>(y, x);

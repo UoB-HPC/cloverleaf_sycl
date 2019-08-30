@@ -163,7 +163,9 @@ void calc_dt_kernel(
 			},
 			[](const ctx &ctx, id<1> lidx) { ctx.local[lidx] = g_big; },
 			[](ctx ctx, id<1> lidx, id<1> idx) {
-				ctx.local[lidx] = sycl::fmin(ctx.local[lidx], ctx.actual.data[idx]);
+//				ctx.local[lidx] = sycl::fmin(ctx.local[lidx], ctx.actual.data[idx]);
+				ctx.local[lidx] = ctx.actual.data[idx];
+
 			},
 			[](const ctx &ctx, id<1> idx, id<1> idy) { ctx.local[idx] = sycl::fmin(ctx.local[idx], ctx.local[idy]); },
 			[](const ctx &ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
@@ -257,7 +259,9 @@ void calc_dt_kernel(
 				}
 
 				double mins = sycl::fmin(dtct, sycl::fmin(dtut, sycl::fmin(dtvt, sycl::fmin(dtdivt, g_big))));
-				ctx.local[lidx] = sycl::fmin(ctx.local[lidx], mins);
+//				ctx.local[lidx] = sycl::fmin(ctx.local[lidx], mins);
+				ctx.local[lidx] = mins;
+
 			},
 			[](const ctx &ctx, id<1> idx, id<1> idy) { ctx.local[idx] = sycl::fmin(ctx.local[idx], ctx.local[idy]); },
 			[](const ctx &ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
