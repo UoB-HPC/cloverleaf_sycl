@@ -76,7 +76,7 @@ void update_tile_halo_l_kernel(
 			clover::par_ranged<class upd_halo_l_density0>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					density0[x_min - j][k[0]] = left_density0[left_xmax + 1 - j][k[0]];
+					density0[cl::sycl::id<2>{static_cast<size_t>(x_min - j),k[0]}] = left_density0[cl::sycl::id<2>{static_cast<size_t>(left_xmax + 1 - j),k[0]}];
 				}
 			});
 		});
@@ -91,7 +91,7 @@ void update_tile_halo_l_kernel(
 			clover::par_ranged<class upd_halo_l_density1>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					density1[x_min - j][k[0]] = left_density1[left_xmax + 1 - j][k[0]];
+					density1[cl::sycl::id<2>{static_cast<size_t>(x_min - j),k[0]}] = left_density1[cl::sycl::id<2>{static_cast<size_t>(left_xmax + 1 - j),k[0]}];
 				}
 			});
 		});
@@ -106,7 +106,7 @@ void update_tile_halo_l_kernel(
 			clover::par_ranged<class upd_halo_l_energy0>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					energy0[x_min - j][k[0]] = left_energy0[left_xmax + 1 - j][k[0]];
+					energy0[cl::sycl::id<2>{static_cast<size_t>(x_min - j),k[0]}] = left_energy0[cl::sycl::id<2>{static_cast<size_t>(left_xmax + 1 - j),k[0]}];
 				}
 			});
 		});
@@ -121,7 +121,7 @@ void update_tile_halo_l_kernel(
 			clover::par_ranged<class upd_halo_l_energy1>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					energy1[x_min - j][k[0]] = left_energy1[left_xmax + 1 - j][k[0]];
+					energy1[cl::sycl::id<2>{static_cast<size_t>(x_min - j),k[0]}] = left_energy1[cl::sycl::id<2>{static_cast<size_t>(left_xmax + 1 - j),k[0]}];
 				}
 			});
 		});
@@ -137,7 +137,7 @@ void update_tile_halo_l_kernel(
 			clover::par_ranged<class upd_halo_l_pressure>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					pressure[x_min - j][k[0]] = left_pressure[left_xmax + 1 - j][k[0]];
+					pressure[cl::sycl::id<2>{static_cast<size_t>(x_min - j),k[0]}] = left_pressure[cl::sycl::id<2>{static_cast<size_t>(left_xmax + 1 - j),k[0]}];
 				}
 			});
 		});
@@ -152,7 +152,7 @@ void update_tile_halo_l_kernel(
 			clover::par_ranged<class upd_halo_l_viscosity>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					viscosity[x_min - j][k[0]] = left_viscosity[left_xmax + 1 - j][k[0]];
+					viscosity[cl::sycl::id<2>{static_cast<size_t>(x_min - j),k[0]}] = left_viscosity[cl::sycl::id<2>{static_cast<size_t>(left_xmax + 1 - j),k[0]}];
 				}
 			});
 		});
@@ -167,7 +167,7 @@ void update_tile_halo_l_kernel(
 			clover::par_ranged<class upd_halo_l_soundspeed>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					soundspeed[x_min - j][k[0]] = left_soundspeed[left_xmax + 1 - j][k[0]];
+					soundspeed[cl::sycl::id<2>{static_cast<size_t>(x_min - j),k[0]}] = left_soundspeed[cl::sycl::id<2>{static_cast<size_t>(left_xmax + 1 - j),k[0]}];
 				}
 			});
 		});
@@ -183,7 +183,7 @@ void update_tile_halo_l_kernel(
 			clover::par_ranged<class upd_halo_l_xvel0>(h, {y_min - depth + 1, y_max + 1 + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					xvel0[x_min - j][k[0]] = left_xvel0[left_xmax + 1 - j][k[0]];
+					xvel0[cl::sycl::id<2>{static_cast<size_t>(x_min - j),k[0]}] = left_xvel0[cl::sycl::id<2>{static_cast<size_t>(left_xmax + 1 - j),k[0]}];
 				}
 			});
 		});
@@ -198,7 +198,7 @@ void update_tile_halo_l_kernel(
 			clover::par_ranged<class upd_halo_l_xvel1>(h, {y_min - depth + 1, y_max + 1 + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					xvel1[x_min - j][k[0]] = left_xvel1[left_xmax + 1 - j][k[0]];
+					xvel1[cl::sycl::id<2>{static_cast<size_t>(x_min - j),k[0]}] = left_xvel1[cl::sycl::id<2>{static_cast<size_t>(left_xmax + 1 - j),k[0]}];
 				}
 			});
 		});
@@ -213,7 +213,7 @@ void update_tile_halo_l_kernel(
 			clover::par_ranged<class upd_halo_l_yvel0>(h, {y_min - depth + 1, y_max + 1 + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					yvel0[x_min - j][k[0]] = left_yvel0[left_xmax + 1 - j][k[0]];
+					yvel0[cl::sycl::id<2>{static_cast<size_t>(x_min - j),k[0]}] = left_yvel0[cl::sycl::id<2>{static_cast<size_t>(left_xmax + 1 - j),k[0]}];
 				}
 			});
 		});
@@ -228,7 +228,7 @@ void update_tile_halo_l_kernel(
 			clover::par_ranged<class upd_halo_l_yvel1>(h, {y_min - depth + 1, y_max + 1 + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					yvel1[x_min - j][k[0]] = left_yvel1[left_xmax + 1 - j][k[0]];
+					yvel1[cl::sycl::id<2>{static_cast<size_t>(x_min - j),k[0]}] = left_yvel1[cl::sycl::id<2>{static_cast<size_t>(left_xmax + 1 - j),k[0]}];
 				}
 			});
 		});
@@ -244,7 +244,7 @@ void update_tile_halo_l_kernel(
 			clover::par_ranged<class upd_halo_l_vol_flux_x>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					vol_flux_x[x_min - j][k[0]] = left_vol_flux_x[left_xmax + 1 - j][k[0]];
+					vol_flux_x[cl::sycl::id<2>{static_cast<size_t>(x_min - j),k[0]}] = left_vol_flux_x[cl::sycl::id<2>{static_cast<size_t>(left_xmax + 1 - j),k[0]}];
 				}
 			});
 		});
@@ -259,7 +259,7 @@ void update_tile_halo_l_kernel(
 			clover::par_ranged<class upd_halo_l_mass_flux_x>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					mass_flux_x[x_min - j][k[0]] = left_mass_flux_x[left_xmax + 1 - j][k[0]];
+					mass_flux_x[cl::sycl::id<2>{static_cast<size_t>(x_min - j),k[0]}] = left_mass_flux_x[cl::sycl::id<2>{static_cast<size_t>(left_xmax + 1 - j),k[0]}];
 				}
 			});
 		});
@@ -274,7 +274,7 @@ void update_tile_halo_l_kernel(
 			clover::par_ranged<class upd_halo_l_vol_flux_y>(h, {y_min - depth + 1, y_max + 1 + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					vol_flux_y[x_min - j][k[0]] = left_vol_flux_y[left_xmax + 1 - j][k[0]];
+					vol_flux_y[cl::sycl::id<2>{static_cast<size_t>(x_min - j),k[0]}] = left_vol_flux_y[cl::sycl::id<2>{static_cast<size_t>(left_xmax + 1 - j),k[0]}];
 				}
 			});
 		});
@@ -289,7 +289,7 @@ void update_tile_halo_l_kernel(
 			clover::par_ranged<class upd_halo_l_mass_flux_y>(h, {y_min - depth + 1, y_max + 1 + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					mass_flux_y[x_min - j][k[0]] = left_mass_flux_y[left_xmax + 1 - j][k[0]];
+					mass_flux_y[cl::sycl::id<2>{static_cast<size_t>(x_min - j),k[0]}] = left_mass_flux_y[cl::sycl::id<2>{static_cast<size_t>(left_xmax + 1 - j),k[0]}];
 				}
 			});
 		});
@@ -343,8 +343,8 @@ void update_tile_halo_r_kernel(
 			clover::par_ranged<class upd_halo_r_density0>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					density0[x_max + 2 + j][k[0]] = right_density0[right_xmin - 1 + 2 +
-					                                               j][k[0]];
+					density0[cl::sycl::id<2>{static_cast<size_t>(x_max + 2 + j),k[0]}] = right_density0[cl::sycl::id<2>{static_cast<size_t>(right_xmin - 1 + 2 +
+					                                               j),k[0]}];
 				}
 			});
 		});
@@ -359,7 +359,7 @@ void update_tile_halo_r_kernel(
 			clover::par_ranged<class upd_halo_r_density1>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					density1[x_max + 2 + j][k[0]] = right_density1[right_xmin - 1 + 2 + j][k[0]];
+					density1[cl::sycl::id<2>{static_cast<size_t>(x_max + 2 + j),k[0]}] = right_density1[cl::sycl::id<2>{static_cast<size_t>(right_xmin - 1 + 2 + j),k[0]}];
 				}
 			});
 		});
@@ -374,7 +374,7 @@ void update_tile_halo_r_kernel(
 			clover::par_ranged<class upd_halo_r_energy0>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					energy0[x_max + 2 + j][k[0]] = right_energy0[right_xmin - 1 + 2 + j][k[0]];
+					energy0[cl::sycl::id<2>{static_cast<size_t>(x_max + 2 + j),k[0]}] = right_energy0[cl::sycl::id<2>{static_cast<size_t>(right_xmin - 1 + 2 + j),k[0]}];
 				}
 			});
 		});
@@ -389,7 +389,7 @@ void update_tile_halo_r_kernel(
 			clover::par_ranged<class upd_halo_r_energy1>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					energy1[x_max + 2 + j][k[0]] = right_energy1[right_xmin - 1 + 2 + j][k[0]];
+					energy1[cl::sycl::id<2>{static_cast<size_t>(x_max + 2 + j),k[0]}] = right_energy1[cl::sycl::id<2>{static_cast<size_t>(right_xmin - 1 + 2 + j),k[0]}];
 				}
 			});
 		});
@@ -405,7 +405,7 @@ void update_tile_halo_r_kernel(
 			clover::par_ranged<class upd_halo_r_pressure>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					pressure[x_max + 2 + j][k[0]] = right_pressure[right_xmin - 1 + 2 + j][k[0]];
+					pressure[cl::sycl::id<2>{static_cast<size_t>(x_max + 2 + j),k[0]}] = right_pressure[cl::sycl::id<2>{static_cast<size_t>(right_xmin - 1 + 2 + j),k[0]}];
 				}
 			});
 		});
@@ -420,7 +420,7 @@ void update_tile_halo_r_kernel(
 			clover::par_ranged<class upd_halo_r_viscosity>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					viscosity[x_max + 2 + j][k[0]] = right_viscosity[right_xmin - 1 + 2 + j][k[0]];
+					viscosity[cl::sycl::id<2>{static_cast<size_t>(x_max + 2 + j),k[0]}] = right_viscosity[cl::sycl::id<2>{static_cast<size_t>(right_xmin - 1 + 2 + j),k[0]}];
 				}
 			});
 		});
@@ -435,7 +435,7 @@ void update_tile_halo_r_kernel(
 			clover::par_ranged<class upd_halo_r_soundspeed>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					soundspeed[x_max + 2 + j][k[0]] = right_soundspeed[right_xmin - 1 + 2 + j][k[0]];
+					soundspeed[cl::sycl::id<2>{static_cast<size_t>(x_max + 2 + j),k[0]}] = right_soundspeed[cl::sycl::id<2>{static_cast<size_t>(right_xmin - 1 + 2 + j),k[0]}];
 				}
 			});
 		});
@@ -451,7 +451,7 @@ void update_tile_halo_r_kernel(
 			clover::par_ranged<class upd_halo_r_xvel0>(h, {y_min - depth + 1, y_max + 1 + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					xvel0[x_max + 1 + 2 + j][k[0]] = right_xvel0[right_xmin + 1 - 1 + 2 + j][k[0]];
+					xvel0[cl::sycl::id<2>{static_cast<size_t>(x_max + 1 + 2 + j),k[0]}] = right_xvel0[cl::sycl::id<2>{static_cast<size_t>(right_xmin + 1 - 1 + 2 + j),k[0]}];
 				}
 			});
 		});
@@ -466,7 +466,7 @@ void update_tile_halo_r_kernel(
 			clover::par_ranged<class upd_halo_r_xvel1>(h, {y_min - depth + 1, y_max + 1 + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					xvel1[x_max + 1 + 2 + j][k[0]] = right_xvel1[right_xmin + 1 - 1 + 2 + j][k[0]];
+					xvel1[cl::sycl::id<2>{static_cast<size_t>(x_max + 1 + 2 + j),k[0]}] = right_xvel1[cl::sycl::id<2>{static_cast<size_t>(right_xmin + 1 - 1 + 2 + j),k[0]}];
 				}
 			});
 		});
@@ -481,7 +481,7 @@ void update_tile_halo_r_kernel(
 			clover::par_ranged<class upd_halo_r_yvel0>(h, {y_min - depth + 1, y_max + 1 + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					yvel0[x_max + 1 + 2 + j][k[0]] = right_yvel0[right_xmin + 1 - 1 + 2 + j][k[0]];
+					yvel0[cl::sycl::id<2>{static_cast<size_t>(x_max + 1 + 2 + j),k[0]}] = right_yvel0[cl::sycl::id<2>{static_cast<size_t>(right_xmin + 1 - 1 + 2 + j),k[0]}];
 				}
 			});
 		});
@@ -496,7 +496,7 @@ void update_tile_halo_r_kernel(
 			clover::par_ranged<class upd_halo_r_yvel1>(h, {y_min - depth + 1, y_max + 1 + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					yvel1[x_max + 1 + 2 + j][k[0]] = right_yvel1[right_xmin + 1 - 1 + 2 + j][k[0]];
+					yvel1[cl::sycl::id<2>{static_cast<size_t>(x_max + 1 + 2 + j),k[0]}] = right_yvel1[cl::sycl::id<2>{static_cast<size_t>(right_xmin + 1 - 1 + 2 + j),k[0]}];
 				}
 			});
 		});
@@ -512,7 +512,7 @@ void update_tile_halo_r_kernel(
 			clover::par_ranged<class upd_halo_r_vol_flux_x>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					vol_flux_x[x_max + 1 + 2 + j][k[0]] = right_vol_flux_x[right_xmin + 1 - 1 + 2 + j][k[0]];
+					vol_flux_x[cl::sycl::id<2>{static_cast<size_t>(x_max + 1 + 2 + j),k[0]}] = right_vol_flux_x[cl::sycl::id<2>{static_cast<size_t>(right_xmin + 1 - 1 + 2 + j),k[0]}];
 				}
 			});
 		});
@@ -527,7 +527,7 @@ void update_tile_halo_r_kernel(
 			clover::par_ranged<class upd_halo_r_mass_flux_x>(h, {y_min - depth + 1, y_max + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					mass_flux_x[x_max + 1 + 2 + j][k[0]] = right_mass_flux_x[right_xmin + 1 - 1 + 2 + j][k[0]];
+					mass_flux_x[cl::sycl::id<2>{static_cast<size_t>(x_max + 1 + 2 + j),k[0]}] = right_mass_flux_x[cl::sycl::id<2>{static_cast<size_t>(right_xmin + 1 - 1 + 2 + j),k[0]}];
 				}
 			});
 		});
@@ -542,7 +542,7 @@ void update_tile_halo_r_kernel(
 			clover::par_ranged<class upd_halo_r_vol_flux_y>(h, {y_min - depth + 1, y_max + 1 + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					vol_flux_y[x_max + 2 + j][k[0]] = right_vol_flux_y[right_xmin - 1 + 2 + j][k[0]];
+					vol_flux_y[cl::sycl::id<2>{static_cast<size_t>(x_max + 2 + j),k[0]}] = right_vol_flux_y[cl::sycl::id<2>{static_cast<size_t>(right_xmin - 1 + 2 + j),k[0]}];
 				}
 			});
 		});
@@ -557,7 +557,7 @@ void update_tile_halo_r_kernel(
 			clover::par_ranged<class upd_halo_r_mass_flux_y>(h, {y_min - depth + 1, y_max + 1 + depth + 2}, [=](
 					id<1> k) {
 				for (int j = 0; j < depth; ++j) {
-					mass_flux_y[x_max + 2 + j][k[0]] = right_mass_flux_y[right_xmin - 1 + 2 + j][k[0]];
+					mass_flux_y[cl::sycl::id<2>{static_cast<size_t>(x_max + 2 + j),k[0]}] = right_mass_flux_y[cl::sycl::id<2>{static_cast<size_t>(right_xmin - 1 + 2 + j),k[0]}];
 				}
 			});
 		});
@@ -614,7 +614,7 @@ void update_tile_halo_t_kernel(
 				auto density0 = density0_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_t_density0>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					density0[j[0]][y_max + 2 + k] = top_density0[j[0]][top_ymin - 1 + 2 + k];
+					density0[cl::sycl::id<2>{j[0],static_cast<size_t>(y_max + 2 + k)}] = top_density0[cl::sycl::id<2>{j[0],static_cast<size_t>(top_ymin - 1 + 2 + k)}];
 				});
 			});
 		}
@@ -629,7 +629,7 @@ void update_tile_halo_t_kernel(
 				auto density1 = density1_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_t_density1>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					density1[j[0]][y_max + 2 + k] = top_density1[j[0]][top_ymin - 1 + 2 + k];
+					density1[cl::sycl::id<2>{j[0],static_cast<size_t>(y_max + 2 + k)}] = top_density1[cl::sycl::id<2>{j[0],static_cast<size_t>(top_ymin - 1 + 2 + k)}];
 				});
 			});
 		}
@@ -644,7 +644,7 @@ void update_tile_halo_t_kernel(
 				auto energy0 = energy0_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_t_energy0>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					energy0[j[0]][y_max + 2 + k] = top_energy0[j[0]][top_ymin - 1 + 2 + k];
+					energy0[cl::sycl::id<2>{j[0],static_cast<size_t>(y_max + 2 + k)}] = top_energy0[cl::sycl::id<2>{j[0],static_cast<size_t>(top_ymin - 1 + 2 + k)}];
 				});
 			});
 		}
@@ -659,7 +659,7 @@ void update_tile_halo_t_kernel(
 				auto energy1 = energy1_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_t_energy1>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					energy1[j[0]][y_max + 2 + k] = top_energy1[j[0]][top_ymin - 1 + 2 + k];
+					energy1[cl::sycl::id<2>{j[0],static_cast<size_t>(y_max + 2 + k)}] = top_energy1[cl::sycl::id<2>{j[0],static_cast<size_t>(top_ymin - 1 + 2 + k)}];
 				});
 			});
 		}
@@ -675,7 +675,7 @@ void update_tile_halo_t_kernel(
 				auto pressure = pressure_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_t_pressure>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					pressure[j[0]][y_max + 2 + k] = top_pressure[j[0]][top_ymin - 1 + 2 + k];
+					pressure[cl::sycl::id<2>{j[0],static_cast<size_t>(y_max + 2 + k)}] = top_pressure[cl::sycl::id<2>{j[0],static_cast<size_t>(top_ymin - 1 + 2 + k)}];
 				});
 			});
 		}
@@ -690,7 +690,7 @@ void update_tile_halo_t_kernel(
 				auto viscosity = viscosity_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_t_viscosity>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					viscosity[j[0]][y_max + 2 + k] = top_viscosity[j[0]][top_ymin - 1 + 2 + k];
+					viscosity[cl::sycl::id<2>{j[0],static_cast<size_t>(y_max + 2 + k)}] = top_viscosity[cl::sycl::id<2>{j[0],static_cast<size_t>(top_ymin - 1 + 2 + k)}];
 				});
 			});
 		}
@@ -705,7 +705,7 @@ void update_tile_halo_t_kernel(
 				auto soundspeed = soundspeed_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_t_soundspeed>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					soundspeed[j[0]][y_max + 2 + k] = top_soundspeed[j[0]][top_ymin - 1 + 2 + k];
+					soundspeed[cl::sycl::id<2>{j[0],static_cast<size_t>(y_max + 2 + k)}] = top_soundspeed[cl::sycl::id<2>{j[0],static_cast<size_t>(top_ymin - 1 + 2 + k)}];
 				});
 			});
 		}
@@ -721,7 +721,7 @@ void update_tile_halo_t_kernel(
 				auto xvel0 = xvel0_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_t_xvel0>(h, {x_min - depth + 1, x_max + 1 + depth + 2}, [=](
 						id<1> j) {
-					xvel0[j[0]][y_max + 1 + 2 + k] = top_xvel0[j[0]][top_ymin + 1 - 1 + 2 + k];
+					xvel0[cl::sycl::id<2>{j[0],static_cast<size_t>(y_max + 1 + 2 + k)}] = top_xvel0[cl::sycl::id<2>{j[0],static_cast<size_t>(top_ymin + 1 - 1 + 2 + k)}];
 				});
 			});
 		}
@@ -736,7 +736,7 @@ void update_tile_halo_t_kernel(
 				auto xvel1 = xvel1_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_t_xvel1>(h, {x_min - depth + 1, x_max + 1 + depth + 2}, [=](
 						id<1> j) {
-					xvel1[j[0]][y_max + 1 + 2 + k] = top_xvel1[j[0]][top_ymin + 1 - 1 + 2 + k];
+					xvel1[cl::sycl::id<2>{j[0],static_cast<size_t>(y_max + 1 + 2 + k)}] = top_xvel1[cl::sycl::id<2>{j[0],static_cast<size_t>(top_ymin + 1 - 1 + 2 + k)}];
 				});
 			});
 		}
@@ -751,7 +751,7 @@ void update_tile_halo_t_kernel(
 				auto yvel0 = yvel0_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_t_yvel0>(h, {x_min - depth + 1, x_max + 1 + depth + 2}, [=](
 						id<1> j) {
-					yvel0[j[0]][y_max + 1 + 2 + k] = top_yvel0[j[0]][top_ymin + 1 - 1 + 2 + k];
+					yvel0[cl::sycl::id<2>{j[0],static_cast<size_t>(y_max + 1 + 2 + k)}] = top_yvel0[cl::sycl::id<2>{j[0],static_cast<size_t>(top_ymin + 1 - 1 + 2 + k)}];
 				});
 			});
 		}
@@ -766,7 +766,7 @@ void update_tile_halo_t_kernel(
 				auto yvel1 = yvel1_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_t_yvel1>(h, {x_min - depth + 1, x_max + 1 + depth + 2}, [=](
 						id<1> j) {
-					yvel1[j[0]][y_max + 1 + 2 + k] = top_yvel1[j[0]][top_ymin + 1 - 1 + 2 + k];
+					yvel1[cl::sycl::id<2>{j[0],static_cast<size_t>(y_max + 1 + 2 + k)}] = top_yvel1[cl::sycl::id<2>{j[0],static_cast<size_t>(top_ymin + 1 - 1 + 2 + k)}];
 				});
 			});
 		}
@@ -781,7 +781,7 @@ void update_tile_halo_t_kernel(
 				auto vol_flux_x = vol_flux_x_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_t_vol_flux_x>(h, {x_min - depth + 1, x_max + 1 + depth + 2}, [=](
 						id<1> j) {
-					vol_flux_x[j[0]][y_max + 2 + k] = top_vol_flux_x[j[0]][top_ymin - 1 + 2 + k];
+					vol_flux_x[cl::sycl::id<2>{j[0],static_cast<size_t>(y_max + 2 + k)}] = top_vol_flux_x[cl::sycl::id<2>{j[0],static_cast<size_t>(top_ymin - 1 + 2 + k)}];
 				});
 			});
 		}
@@ -796,7 +796,7 @@ void update_tile_halo_t_kernel(
 				auto mass_flux_x = mass_flux_x_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_t_mass_flux_x>(h, {x_min - depth + 1, x_max + 1 + depth + 2}, [=](
 						id<1> j) {
-					mass_flux_x[j[0]][y_max + 2 + k] = top_mass_flux_x[j[0]][top_ymin - 1 + 2 + k];
+					mass_flux_x[cl::sycl::id<2>{j[0],static_cast<size_t>(y_max + 2 + k)}] = top_mass_flux_x[cl::sycl::id<2>{j[0],static_cast<size_t>(top_ymin - 1 + 2 + k)}];
 				});
 			});
 		}
@@ -811,7 +811,7 @@ void update_tile_halo_t_kernel(
 				auto vol_flux_y = vol_flux_y_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_t_vol_flux_y>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					vol_flux_y[j[0]][y_max + 1 + 2 + k] = top_vol_flux_y[j[0]][top_ymin + 1 - 1 + 2 + k];
+					vol_flux_y[cl::sycl::id<2>{j[0],static_cast<size_t>(y_max + 1 + 2 + k)}] = top_vol_flux_y[cl::sycl::id<2>{j[0],static_cast<size_t>(top_ymin + 1 - 1 + 2 + k)}];
 				});
 			});
 		}
@@ -826,7 +826,7 @@ void update_tile_halo_t_kernel(
 				auto mass_flux_y = mass_flux_y_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_t_mass_flux_y>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					mass_flux_y[j[0]][y_max + 1 + 2 + k] = top_mass_flux_y[j[0]][top_ymin + 1 - 1 + 2 + k];
+					mass_flux_y[cl::sycl::id<2>{j[0],static_cast<size_t>(y_max + 1 + 2 + k)}] = top_mass_flux_y[cl::sycl::id<2>{j[0],static_cast<size_t>(top_ymin + 1 - 1 + 2 + k)}];
 				});
 			});
 		}
@@ -880,7 +880,7 @@ void update_tile_halo_b_kernel(
 				auto density0 = density0_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_b_density0>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					density0[j[0]][y_min - k] = bottom_density0[j[0]][bottom_ymax + 1 - k];
+					density0[cl::sycl::id<2>{j[0],static_cast<size_t>(y_min - k)}] = bottom_density0[cl::sycl::id<2>{j[0],static_cast<size_t>(bottom_ymax + 1 - k)}];
 				});
 			});
 		}
@@ -895,7 +895,7 @@ void update_tile_halo_b_kernel(
 				auto density1 = density1_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_b_density1>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					density1[j[0]][y_min - k] = bottom_density1[j[0]][bottom_ymax + 1 - k];
+					density1[cl::sycl::id<2>{j[0],static_cast<size_t>(y_min - k)}] = bottom_density1[cl::sycl::id<2>{j[0],static_cast<size_t>(bottom_ymax + 1 - k)}];
 				});
 			});
 		}
@@ -910,7 +910,7 @@ void update_tile_halo_b_kernel(
 				auto energy0 = energy0_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_b_energy0>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					energy0[j[0]][y_min - k] = bottom_energy0[j[0]][bottom_ymax + 1 - k];
+					energy0[cl::sycl::id<2>{j[0],static_cast<size_t>(y_min - k)}] = bottom_energy0[cl::sycl::id<2>{j[0],static_cast<size_t>(bottom_ymax + 1 - k)}];
 				});
 			});
 		}
@@ -925,7 +925,7 @@ void update_tile_halo_b_kernel(
 				auto energy1 = energy1_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_b_energy1>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					energy1[j[0]][y_min - k] = bottom_energy1[j[0]][bottom_ymax + 1 - k];
+					energy1[cl::sycl::id<2>{j[0],static_cast<size_t>(y_min - k)}] = bottom_energy1[cl::sycl::id<2>{j[0],static_cast<size_t>(bottom_ymax + 1 - k)}];
 				});
 			});
 		}
@@ -941,7 +941,7 @@ void update_tile_halo_b_kernel(
 				auto pressure = pressure_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_b_pressure>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					pressure[j[0]][y_min - k] = bottom_pressure[j[0]][bottom_ymax + 1 - k];
+					pressure[cl::sycl::id<2>{j[0],static_cast<size_t>(y_min - k)}] = bottom_pressure[cl::sycl::id<2>{j[0],static_cast<size_t>(bottom_ymax + 1 - k)}];
 				});
 			});
 		}
@@ -956,7 +956,7 @@ void update_tile_halo_b_kernel(
 				auto viscosity = viscosity_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_b_viscosity>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					viscosity[j[0]][y_min - k] = bottom_viscosity[j[0]][bottom_ymax + 1 - k];
+					viscosity[cl::sycl::id<2>{j[0],static_cast<size_t>(y_min - k)}] = bottom_viscosity[cl::sycl::id<2>{j[0],static_cast<size_t>(bottom_ymax + 1 - k)}];
 				});
 			});
 		}
@@ -971,7 +971,7 @@ void update_tile_halo_b_kernel(
 				auto soundspeed = soundspeed_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_b_soundspeed>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					soundspeed[j[0]][y_min - k] = bottom_soundspeed[j[0]][bottom_ymax + 1 - k];
+					soundspeed[cl::sycl::id<2>{j[0],static_cast<size_t>(y_min - k)}] = bottom_soundspeed[cl::sycl::id<2>{j[0],static_cast<size_t>(bottom_ymax + 1 - k)}];
 				});
 			});
 		}
@@ -987,7 +987,7 @@ void update_tile_halo_b_kernel(
 				auto xvel0 = xvel0_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_b_xvel0>(h, {x_min - depth + 1, x_max + 1 + depth + 2}, [=](
 						id<1> j) {
-					xvel0[j[0]][y_min - k] = bottom_xvel0[j[0]][bottom_ymax + 1 - k];
+					xvel0[cl::sycl::id<2>{j[0],static_cast<size_t>(y_min - k)}] = bottom_xvel0[cl::sycl::id<2>{j[0],static_cast<size_t>(bottom_ymax + 1 - k)}];
 				});
 			});
 		}
@@ -1002,7 +1002,7 @@ void update_tile_halo_b_kernel(
 				auto xvel1 = xvel1_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_b_xvel1>(h, {x_min - depth + 1, x_max + 1 + depth + 2}, [=](
 						id<1> j) {
-					xvel1[j[0]][y_min - k] = bottom_xvel1[j[0]][bottom_ymax + 1 - k];
+					xvel1[cl::sycl::id<2>{j[0],static_cast<size_t>(y_min - k)}] = bottom_xvel1[cl::sycl::id<2>{j[0],static_cast<size_t>(bottom_ymax + 1 - k)}];
 				});
 			});
 		}
@@ -1017,7 +1017,7 @@ void update_tile_halo_b_kernel(
 				auto yvel0 = yvel0_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_b_yvel0>(h, {x_min - depth + 1, x_max + 1 + depth + 2}, [=](
 						id<1> j) {
-					yvel0[j[0]][y_min - k] = bottom_yvel0[j[0]][bottom_ymax + 1 - k];
+					yvel0[cl::sycl::id<2>{j[0],static_cast<size_t>(y_min - k)}] = bottom_yvel0[cl::sycl::id<2>{j[0],static_cast<size_t>(bottom_ymax + 1 - k)}];
 				});
 			});
 		}
@@ -1032,7 +1032,7 @@ void update_tile_halo_b_kernel(
 				auto yvel1 = yvel1_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_b_yvel1>(h, {x_min - depth + 1, x_max + 1 + depth + 2}, [=](
 						id<1> j) {
-					yvel1[j[0]][y_min - k] = bottom_yvel1[j[0]][bottom_ymax + 1 - k];
+					yvel1[cl::sycl::id<2>{j[0],static_cast<size_t>(y_min - k)}] = bottom_yvel1[cl::sycl::id<2>{j[0],static_cast<size_t>(bottom_ymax + 1 - k)}];
 				});
 			});
 		}
@@ -1047,7 +1047,7 @@ void update_tile_halo_b_kernel(
 				auto vol_flux_x = vol_flux_x_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_b_vol_flux_x>(h, {x_min - depth + 1, x_max + 1 + depth + 2}, [=](
 						id<1> j) {
-					vol_flux_x[j[0]][y_min - k] = bottom_vol_flux_x[j[0]][bottom_ymax + 1 - k];
+					vol_flux_x[cl::sycl::id<2>{j[0],static_cast<size_t>(y_min - k)}] = bottom_vol_flux_x[cl::sycl::id<2>{j[0],static_cast<size_t>(bottom_ymax + 1 - k)}];
 				});
 			});
 		}
@@ -1062,7 +1062,7 @@ void update_tile_halo_b_kernel(
 				auto mass_flux_x = mass_flux_x_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_b_mass_flux_x>(h, {x_min - depth + 1, x_max + 1 + depth + 2}, [=](
 						id<1> j) {
-					mass_flux_x[j[0]][y_min - k] = bottom_mass_flux_x[j[0]][bottom_ymax + 1 - k];
+					mass_flux_x[cl::sycl::id<2>{j[0],static_cast<size_t>(y_min - k)}] = bottom_mass_flux_x[cl::sycl::id<2>{j[0],static_cast<size_t>(bottom_ymax + 1 - k)}];
 				});
 			});
 		}
@@ -1077,7 +1077,7 @@ void update_tile_halo_b_kernel(
 				auto vol_flux_y = vol_flux_y_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_b_vol_flux_y>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					vol_flux_y[j[0]][y_min - k] = bottom_vol_flux_y[j[0]][bottom_ymax + 1 - k];
+					vol_flux_y[cl::sycl::id<2>{j[0],static_cast<size_t>(y_min - k)}] = bottom_vol_flux_y[cl::sycl::id<2>{j[0],static_cast<size_t>(bottom_ymax + 1 - k)}];
 				});
 			});
 		}
@@ -1092,7 +1092,7 @@ void update_tile_halo_b_kernel(
 				auto mass_flux_y = mass_flux_y_buffer.access<W>(h);
 				clover::par_ranged<class upd_halo_b_mass_flux_y>(h, {x_min - depth + 1, x_max + depth + 2}, [=](
 						id<1> j) {
-					mass_flux_y[j[0]][y_min - k] = bottom_mass_flux_y[j[0]][bottom_ymax + 1 - k];
+					mass_flux_y[cl::sycl::id<2>{j[0],static_cast<size_t>(y_min - k)}] = bottom_mass_flux_y[cl::sycl::id<2>{j[0],static_cast<size_t>(bottom_ymax + 1 - k)}];
 				});
 			});
 		}

@@ -179,10 +179,10 @@ void advec_mom_kernel(
 							dif = upwind;
 						}
 
-						sigma = sycl::fabs(node_flux[idx]) / (node_mass_pre[donor][k]);
+						sigma = sycl::fabs(node_flux[idx]) / (node_mass_pre[cl::sycl::id<2>{static_cast<size_t>(donor),static_cast<size_t>(k)}]);
 						width = celldx[j];
-						vdiffuw = vel1[donor][k] - vel1[upwind][k];
-						vdiffdw = vel1[downwind][k] - vel1[donor][k];
+						vdiffuw = vel1[cl::sycl::id<2>{static_cast<size_t>(donor),static_cast<size_t>(k)}] - vel1[cl::sycl::id<2>{static_cast<size_t>(upwind),static_cast<size_t>(k)}];
+						vdiffdw = vel1[cl::sycl::id<2>{static_cast<size_t>(downwind),static_cast<size_t>(k)}] - vel1[cl::sycl::id<2>{static_cast<size_t>(donor),static_cast<size_t>(k)}];
 						limiter = 0.0;
 						if (vdiffuw * vdiffdw > 0.0) {
 							auw = sycl::fabs(vdiffuw);
@@ -193,7 +193,7 @@ void advec_mom_kernel(
 									width * ((2.0 - sigma) * adw / width + (1.0 + sigma) * auw / celldx[dif]) / 6.0,
 									auw), adw);
 						}
-						advec_vel_s = vel1[donor][k] + (1.0 - sigma) * limiter;
+						advec_vel_s = vel1[cl::sycl::id<2>{static_cast<size_t>(donor),static_cast<size_t>(k)}] + (1.0 - sigma) * limiter;
 						mom_flux[idx] = advec_vel_s * node_flux[idx];
 					});
 		});
@@ -291,10 +291,10 @@ void advec_mom_kernel(
 						}
 
 
-						sigma = sycl::fabs(node_flux[idx]) / (node_mass_pre[j][donor]);
+						sigma = sycl::fabs(node_flux[idx]) / (node_mass_pre[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(donor)}]);
 						width = celldy[k];
-						vdiffuw = vel1[j][donor] - vel1[j][upwind];
-						vdiffdw = vel1[j][downwind] - vel1[j][donor];
+						vdiffuw = vel1[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(donor)}] - vel1[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(upwind)}];
+						vdiffdw = vel1[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(downwind)}] - vel1[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(donor)}];
 						limiter = 0.0;
 						if (vdiffuw * vdiffdw > 0.0) {
 							auw = sycl::fabs(vdiffuw);
@@ -305,7 +305,7 @@ void advec_mom_kernel(
 									width * ((2.0 - sigma) * adw / width + (1.0 + sigma) * auw / celldy[dif]) / 6.0,
 									auw), adw);
 						}
-						advec_vel_s = vel1[j][donor] + (1.0 - sigma) * limiter;
+						advec_vel_s = vel1[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(donor)}] + (1.0 - sigma) * limiter;
 						mom_flux[idx] = advec_vel_s * node_flux[idx];
 					});
 		});

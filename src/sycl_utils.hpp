@@ -26,7 +26,7 @@
 
 //#define SYCL_DEBUG // enable for debugging SYCL related things, also syncs kernel calls
 #define SYNC_KERNELS // enable for fully synchronous (e.g queue.wait_and_throw()) kernel calls
-#define SYCL_FLIP_2D // enable for flipped id<2> indices from SYCL default
+//#define SYCL_FLIP_2D // enable for flipped id<2> indices from SYCL default
 
 // this namespace houses all SYCL related abstractions
 namespace clover {

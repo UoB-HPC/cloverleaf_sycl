@@ -298,13 +298,13 @@ void calc_dt_kernel(
 				<< "x, y                 : " << cellx_acc[jldt] << " " << celly_acc[kldt] << std::endl
 				<< "timestep : " << dt_min_val << std::endl
 				<< "Cell velocities;" << std::endl
-				<< xvel0_acc[jldt][kldt] << " " << yvel0_acc[jldt][kldt] << std::endl
-				<< xvel0_acc[jldt + 1][kldt] << " " << yvel0_acc[jldt + 1][kldt] << std::endl
-				<< xvel0_acc[jldt + 1][kldt + 1] << " " << yvel0_acc[jldt + 1][kldt + 1] << std::endl
-				<< xvel0_acc[jldt][kldt + 1] << " " << yvel0_acc[jldt][kldt + 1] << std::endl
+				<< xvel0_acc[cl::sycl::id<2>{static_cast<size_t>(jldt),static_cast<size_t>(kldt)}] << " " << yvel0_acc[cl::sycl::id<2>{static_cast<size_t>(jldt),static_cast<size_t>(kldt)}] << std::endl
+				<< xvel0_acc[cl::sycl::id<2>{static_cast<size_t>(jldt + 1),static_cast<size_t>(kldt)}] << " " << yvel0_acc[cl::sycl::id<2>{static_cast<size_t>(jldt + 1),static_cast<size_t>(kldt)}] << std::endl
+				<< xvel0_acc[cl::sycl::id<2>{static_cast<size_t>(jldt + 1),static_cast<size_t>(kldt + 1)}] << " " << yvel0_acc[cl::sycl::id<2>{static_cast<size_t>(jldt + 1),static_cast<size_t>(kldt + 1)}] << std::endl
+				<< xvel0_acc[cl::sycl::id<2>{static_cast<size_t>(jldt),static_cast<size_t>(kldt + 1)}] << " " << yvel0_acc[cl::sycl::id<2>{static_cast<size_t>(jldt),static_cast<size_t>(kldt + 1)}] << std::endl
 				<< "density, energy, pressure, soundspeed " << std::endl
-				<< density0_acc[jldt][kldt] << " " << energy0_acc[jldt][kldt] << " " << pressure_acc[jldt][kldt]
-				<< " " << soundspeed_acc[jldt][kldt] << std::endl;
+				<< density0_acc[cl::sycl::id<2>{static_cast<size_t>(jldt),static_cast<size_t>(kldt)}] << " " << energy0_acc[cl::sycl::id<2>{static_cast<size_t>(jldt),static_cast<size_t>(kldt)}] << " " << pressure_acc[cl::sycl::id<2>{static_cast<size_t>(jldt),static_cast<size_t>(kldt)}]
+				<< " " << soundspeed_acc[cl::sycl::id<2>{static_cast<size_t>(jldt),static_cast<size_t>(kldt)}] << std::endl;
 	}
 }
 

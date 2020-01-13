@@ -125,15 +125,15 @@ void advec_cell_kernel(
 						}
 
 
-						sigmat = sycl::fabs(vol_flux_x[idx]) / pre_vol[donor][k];
+						sigmat = sycl::fabs(vol_flux_x[idx]) / pre_vol[cl::sycl::id<2>{static_cast<size_t>(donor),static_cast<size_t>(k)}];
 						sigma3 = (1.0 + sigmat) * (vertexdx[j] / vertexdx[dif]);
 						sigma4 = 2.0 - sigmat;
 
 						sigma = sigmat;
 						sigmav = sigmat;
 
-						diffuw = density1[donor][k] - density1[upwind][k];
-						diffdw = density1[downwind][k] - density1[donor][k];
+						diffuw = density1[cl::sycl::id<2>{static_cast<size_t>(donor),static_cast<size_t>(k)}] - density1[cl::sycl::id<2>{static_cast<size_t>(upwind),static_cast<size_t>(k)}];
+						diffdw = density1[cl::sycl::id<2>{static_cast<size_t>(downwind),static_cast<size_t>(k)}] - density1[cl::sycl::id<2>{static_cast<size_t>(donor),static_cast<size_t>(k)}];
 						wind = 1.0;
 						if (diffdw <= 0.0) wind = -1.0;
 						if (diffuw * diffdw > 0.0) {
@@ -145,11 +145,11 @@ void advec_cell_kernel(
 						} else {
 							limiter = 0.0;
 						}
-						mass_flux_x[idx] = vol_flux_x[idx] * (density1[donor][k] + limiter);
+						mass_flux_x[idx] = vol_flux_x[idx] * (density1[cl::sycl::id<2>{static_cast<size_t>(donor),static_cast<size_t>(k)}] + limiter);
 
-						sigmam = sycl::fabs(mass_flux_x[idx]) / (density1[donor][k] * pre_vol[donor][k]);
-						diffuw = energy1[donor][k] - energy1[upwind][k];
-						diffdw = energy1[downwind][k] - energy1[donor][k];
+						sigmam = sycl::fabs(mass_flux_x[idx]) / (density1[cl::sycl::id<2>{static_cast<size_t>(donor),static_cast<size_t>(k)}] * pre_vol[cl::sycl::id<2>{static_cast<size_t>(donor),static_cast<size_t>(k)}]);
+						diffuw = energy1[cl::sycl::id<2>{static_cast<size_t>(donor),static_cast<size_t>(k)}] - energy1[cl::sycl::id<2>{static_cast<size_t>(upwind),static_cast<size_t>(k)}];
+						diffdw = energy1[cl::sycl::id<2>{static_cast<size_t>(downwind),static_cast<size_t>(k)}] - energy1[cl::sycl::id<2>{static_cast<size_t>(donor),static_cast<size_t>(k)}];
 						wind = 1.0;
 						if (diffdw <= 0.0) wind = -1.0;
 						if (diffuw * diffdw > 0.0) {
@@ -161,7 +161,7 @@ void advec_cell_kernel(
 							limiter = 0.0;
 						}
 
-						ener_flux[idx] = mass_flux_x[idx] * (energy1[donor][k] + limiter);
+						ener_flux[idx] = mass_flux_x[idx] * (energy1[cl::sycl::id<2>{static_cast<size_t>(donor),static_cast<size_t>(k)}] + limiter);
 
 					});
 
@@ -258,15 +258,15 @@ void advec_cell_kernel(
 							dif = upwind;
 						}
 
-						sigmat = sycl::fabs(vol_flux_y[idx]) / pre_vol[j][donor];
+						sigmat = sycl::fabs(vol_flux_y[idx]) / pre_vol[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(donor)}];
 						sigma3 = (1.0 + sigmat) * (vertexdy[k] / vertexdy[dif]);
 						sigma4 = 2.0 - sigmat;
 
 						sigma = sigmat;
 						sigmav = sigmat;
 
-						diffuw = density1[j][donor] - density1[j][upwind];
-						diffdw = density1[j][downwind] - density1[j][donor];
+						diffuw = density1[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(donor)}] - density1[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(upwind)}];
+						diffdw = density1[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(downwind)}] - density1[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(donor)}];
 						wind = 1.0;
 						if (diffdw <= 0.0) wind = -1.0;
 						if (diffuw * diffdw > 0.0) {
@@ -277,11 +277,11 @@ void advec_cell_kernel(
 						} else {
 							limiter = 0.0;
 						}
-						mass_flux_y[idx] = vol_flux_y[idx] * (density1[j][donor] + limiter);
+						mass_flux_y[idx] = vol_flux_y[idx] * (density1[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(donor)}] + limiter);
 
-						sigmam = sycl::fabs(mass_flux_y[idx]) / (density1[j][donor] * pre_vol[j][donor]);
-						diffuw = energy1[j][donor] - energy1[j][upwind];
-						diffdw = energy1[j][downwind] - energy1[j][donor];
+						sigmam = sycl::fabs(mass_flux_y[idx]) / (density1[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(donor)}] * pre_vol[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(donor)}]);
+						diffuw = energy1[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(donor)}] - energy1[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(upwind)}];
+						diffdw = energy1[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(downwind)}] - energy1[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(donor)}];
 						wind = 1.0;
 						if (diffdw <= 0.0) wind = -1.0;
 						if (diffuw * diffdw > 0.0) {
@@ -292,7 +292,7 @@ void advec_cell_kernel(
 						} else {
 							limiter = 0.0;
 						}
-						ener_flux[idx] = mass_flux_y[idx] * (energy1[j][donor] + limiter);
+						ener_flux[idx] = mass_flux_y[idx] * (energy1[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(donor)}] + limiter);
 					});
 
 		});

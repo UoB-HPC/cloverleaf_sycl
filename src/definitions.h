@@ -20,7 +20,7 @@
 #ifndef GRID_H
 #define GRID_H
 
-#define DEBUG false
+#define DEBUG true
 
 #define CL_TARGET_OPENCL_VERSION 220
 
@@ -98,7 +98,7 @@ static inline void show(std::ostream &out, const std::string &name, clover::Buff
 	for (size_t i = 0; i < range[0]; ++i) {
 		out << "\t";
 		for (size_t j = 0; j < range[1]; ++j) {
-			out << view[i][j] << ", ";
+			out << view[cl::sycl::id<2>{i,j}] << ", ";
 		}
 		out << std::endl;
 	}

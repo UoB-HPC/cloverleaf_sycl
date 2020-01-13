@@ -87,6 +87,7 @@ namespace clover {
 	                                      BinaryOp combiner,
 	                                      Finaliser finaliser) {
 
+
 		auto dev = q.get_device();
 
 		size_t dot_num_groups;
@@ -136,7 +137,8 @@ namespace clover {
 
 					});
 		});
-
+q.wait_and_throw();
+return;
 		q.submit([=](cl::sycl::handler &h) mutable {
 			auto ctx = allocator(h, dot_num_groups);
 			h.parallel_for<class foobar>(
@@ -229,7 +231,7 @@ namespace clover {
 				Finaliser
 		>(q, range,
 		  [](clover::Range1d r) { return r.size; },
-		  [](cl::sycl::id<1> gid, clover::Range1d r) { return r.from + gid; },
+		  [](cl::sycl::id<1> gid, clover::Range1d r) { return cl::sycl::id<1>{r.from + gid[0]}; },
 		  allocator, empty, functor, combiner, finaliser);
 	}
 

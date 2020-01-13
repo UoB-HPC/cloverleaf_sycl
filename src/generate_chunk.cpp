@@ -153,8 +153,8 @@ void generate_chunk(const int tile, global_variables &globals) {
 							density0[idx] = state_density[state];
 							for (int kt = k; kt <= k + 1; ++kt) {
 								for (int jt = j; jt <= j + 1; ++jt) {
-									xvel0[jt][kt] = state_xvel[state];
-									yvel0[jt][kt] = state_yvel[state];
+									xvel0[cl::sycl::id<2>{static_cast<size_t>(jt),static_cast<size_t>(kt)}] = state_xvel[state];
+									yvel0[cl::sycl::id<2>{static_cast<size_t>(jt),static_cast<size_t>(kt)}] = state_yvel[state];
 								}
 							}
 						}
@@ -167,8 +167,8 @@ void generate_chunk(const int tile, global_variables &globals) {
 						density0[idx] = state_density[state];
 						for (int kt = k; kt <= k + 1; ++kt) {
 							for (int jt = j; jt <= j + 1; ++jt) {
-								xvel0[jt][kt] = state_xvel[state];
-								yvel0[jt][kt] = state_yvel[state];
+								xvel0[cl::sycl::id<2>{static_cast<size_t>(jt),static_cast<size_t>(kt)}] = state_xvel[state];
+								yvel0[cl::sycl::id<2>{static_cast<size_t>(jt),static_cast<size_t>(kt)}] = state_yvel[state];
 							}
 						}
 					}
@@ -178,8 +178,8 @@ void generate_chunk(const int tile, global_variables &globals) {
 						density0[idx] = state_density[state];
 						for (int kt = k; kt <= k + 1; ++kt) {
 							for (int jt = j; jt <= j + 1; ++jt) {
-								xvel0[jt][kt] = state_xvel[state];
-								yvel0[jt][kt] = state_yvel[state];
+								xvel0[cl::sycl::id<2>{static_cast<size_t>(jt),static_cast<size_t>(kt)}] = state_xvel[state];
+								yvel0[cl::sycl::id<2>{static_cast<size_t>(jt),static_cast<size_t>(kt)}] = state_yvel[state];
 							}
 						}
 					}

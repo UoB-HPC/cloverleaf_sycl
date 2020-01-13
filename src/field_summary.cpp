@@ -105,14 +105,14 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		clover::par_reduce_1d<class field_summary, value_type>(
 				globals.queue, policy,
 				[=](handler &h, size_t &size) mutable {
-					return ctx(h, size,
-					           {t.field.volume.access<R>(h),
+					return ctx{h, size,
+					           captures{t.field.volume.access<R>(h),
 					            t.field.density0.access<R>(h),
 					            t.field.energy0.access<R>(h),
 					            t.field.pressure.access<R>(h),
 					            t.field.xvel0.access<R>(h),
 					            t.field.yvel0.access<R>(h)},
-					           result.buffer);
+					           result.buffer};
 				},
 				[](const ctx &ctx, id<1> lidx) { ctx.local[lidx] = {}; },
 				[ymax, ymin, xmax, xmin](ctx ctx, id<1> lidx, id<1> idx) {
@@ -125,18 +125,18 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 					for (int kv = k; kv <= k + 1; ++kv) {
 						for (int jv = j; jv <= j + 1; ++jv) {
 							vsqrd += 0.25 * (
-									ctx.actual.xvel0[jv][kv] * ctx.actual.xvel0[jv][kv] +
-									ctx.actual.yvel0[jv][kv] * ctx.actual.yvel0[jv][kv]);
+									ctx.actual.xvel0[cl::sycl::id<2>{static_cast<size_t>(jv),static_cast<size_t>(kv)}] * ctx.actual.xvel0[cl::sycl::id<2>{static_cast<size_t>(jv),static_cast<size_t>(kv)}] +
+									ctx.actual.yvel0[cl::sycl::id<2>{static_cast<size_t>(jv),static_cast<size_t>(kv)}] * ctx.actual.yvel0[cl::sycl::id<2>{static_cast<size_t>(jv),static_cast<size_t>(kv)}]);
 						}
 					}
-					double cell_vol = ctx.actual.volume[j][k];
-					double cell_mass = cell_vol * ctx.actual.density0[j][k];
+					double cell_vol = ctx.actual.volume[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(k)}];
+					double cell_mass = cell_vol * ctx.actual.density0[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(k)}];
 
 					ctx.local[lidx].vol += cell_vol;
 					ctx.local[lidx].mass += cell_mass;
-					ctx.local[lidx].ie += cell_mass * ctx.actual.energy0[j][k];
+					ctx.local[lidx].ie += cell_mass * ctx.actual.energy0[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(k)}];
 					ctx.local[lidx].ke += cell_mass * 0.5 * vsqrd;
-					ctx.local[lidx].press += cell_vol * ctx.actual.pressure[j][k];
+					ctx.local[lidx].press += cell_vol * ctx.actual.pressure[cl::sycl::id<2>{static_cast<size_t>(j),static_cast<size_t>(k)}];
 				},
 				[](const ctx &ctx, id<1> idx, id<1> idy) {
 					ctx.local[idx].vol += ctx.local[idy].vol;
