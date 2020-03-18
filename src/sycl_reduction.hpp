@@ -229,7 +229,7 @@ namespace clover {
 				Finaliser
 		>(q, range,
 		  [](clover::Range1d r) { return r.size; },
-		  [](cl::sycl::id<1> gid, clover::Range1d r) { return r.from + gid; },
+		  [](cl::sycl::id<1> gid, clover::Range1d r) { return r.from + gid[0]; },
 		  allocator, empty, functor, combiner, finaliser);
 	}
 
