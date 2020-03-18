@@ -104,7 +104,7 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 	};
 
 	global_variables globals(config,
-	                         cl::sycl::queue(cl::sycl::default_selector{}, handler),
+	                         cl::sycl::queue(cl::sycl::default_selector{}, handler, {}),
 	                         chunk_type(
 			                         chunkNeighbours,
 			                         parallel.task, 1, 1, x_cells, y_cells,
