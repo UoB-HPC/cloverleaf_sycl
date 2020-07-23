@@ -2,29 +2,53 @@ cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
 project(cloverleaf_sycl)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
-add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 
-get_filename_component(OpenCL_INCLUDE "include" ABSOLUTE)
-set(OpenCL_INCLUDE_DIR ${OpenCL_INCLUDE})
-
-set(COMPUTECPP_USER_FLAGS -O3 -fsycl-split-modules=20 -mllvm -inline-threshold=10000 -no-serial-memop)
-
-
-find_package(ComputeCpp REQUIRED)
-find_package(MPI REQUIRED)
-
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if (SYCL_RUNTIME)
+
+    list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
+
+    if (${SYCL_RUNTIME} STREQUAL "HYPSYCL")
+
+        if (NOT HIPSYCL_INSTALL_DIR)
+            message(FATAL_ERROR "HIPSYCL_INSTALL_DIR is undefined")
+        endif ()
+
+        set(hipSYCL_DIR ${HIPSYCL_INSTALL_DIR}/lib/cmake)
+        find_package(hipSYCL CONFIG REQUIRED)
+
+    elseif (${SYCL_RUNTIME} STREQUAL "COMPUTECPP")
+
+        if (NOT ComputeCpp_DIR)
+            message(FATAL_ERROR "ComputeCpp_DIR is undefined")
+        endif ()
+
+        get_filename_component(OpenCL_INCLUDE "include" ABSOLUTE)
+        set(OpenCL_INCLUDE_DIR ${OpenCL_INCLUDE})
+
+        add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
+        set(COMPUTECPP_USER_FLAGS -O3 -fsycl-split-modules=20 -mllvm -inline-threshold=10000 -no-serial-memop)
+        find_package(ComputeCpp REQUIRED)
+
+    elseif (${SYCL_RUNTIME} STREQUAL "DPCPP")
+
+        set(CMAKE_CXX_STANDARD 17)
+        set(CMAKE_CXX_COMPILER "dpcpp")
+
+    else ()
+        message(FATAL_ERROR "SYCL_RUNTIME unsupported, must be one of HYPSYCL|COMPUTECPP|DPCPP, got ${SYCL_RUNTIME}")
+    endif ()
+else ()
+    message(FATAL_ERROR "SYCL_RUNTIME not defined, must be one of HYPSYCL|COMPUTECPP|DPCPP")
+endif ()
+
+
+find_package(MPI REQUIRED)
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 
-SET(SOURCES
-        src/cxx14_compat.hpp
-
-        src/sycl_reduction.hpp
-        src/sycl_utils.hpp
-
+set(SOURCES
         src/accelerate.cpp
         src/advec_cell.cpp
         src/advec_mom.cpp
@@ -53,12 +77,9 @@ SET(SOURCES
         src/update_tile_halo.cpp
         src/update_tile_halo_kernel.cpp
         src/viscosity.cpp
-        src/visit.cpp
+        src/visit.cpp)
 
-#                src/_main.cpp
-        )
-
-
+include_directories(src)
 add_executable(clover_leaf ${SOURCES})
 
 target_compile_options(clover_leaf
@@ -66,7 +87,7 @@ target_compile_options(clover_leaf
         -Wall
         -Wextra
         -Wcast-align
-        -Wpedantic
+#        -Wpedantic # too noisy
         -Wfatal-errors
         -Werror=return-type
         -Wno-unused-parameter
@@ -80,8 +101,9 @@ set(RELEASE_OPTIONS -O3 -march=native)
 target_link_libraries(clover_leaf PRIVATE ${MPI_CXX_LIBRARIES})
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_OPTIONS}>")
 
+if (NOT ${SYCL_RUNTIME} STREQUAL "DPCPP")
+    add_sycl_to_target(
+            TARGET clover_leaf
+            SOURCES ${SOURCES}) # must be the last
+endif ()
 
-add_sycl_to_target(
-        TARGET clover_leaf
-        SOURCES ${SOURCES}
-        ${CMAKE_CURRENT_BINARY_DIR}) # must be the last
