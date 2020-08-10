@@ -72,7 +72,7 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		      << "Total Energy    " << std::endl;
 	}
 
-	double kernel_time;
+	double kernel_time = 0;
 	if (globals.profiler_on) kernel_time = timer();
 
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
@@ -115,15 +115,15 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 					           result.buffer);
 				},
 				[](const ctx &ctx, id<1> lidx) { ctx.local[lidx] = {}; },
-				[ymax, ymin, xmax, xmin](ctx ctx, id<1> lidx, id<1> idx) {
+				[ymin, xmax, xmin](const ctx &ctx, id<1> lidx, id<1> idx) {
 
-					const int j = xmin + 1 + idx[0] % (xmax - xmin + 1);
-					const int k = ymin + 1 + idx[0] / (xmax - xmin + 1);
+					const size_t j = xmin + 1 + idx[0] % (xmax - xmin + 1);
+					const size_t k = ymin + 1 + idx[0] / (xmax - xmin + 1);
 
 
 					double vsqrd = 0.0;
-					for (int kv = k; kv <= k + 1; ++kv) {
-						for (int jv = j; jv <= j + 1; ++jv) {
+					for (size_t kv = k; kv <= k + 1; ++kv) {
+						for (size_t jv = j; jv <= j + 1; ++jv) {
 							vsqrd += 0.25 * (
 									ctx.actual.xvel0[jv][kv] * ctx.actual.xvel0[jv][kv] +
 									ctx.actual.yvel0[jv][kv] * ctx.actual.yvel0[jv][kv]);

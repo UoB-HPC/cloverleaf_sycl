@@ -49,12 +49,7 @@ parallel_::parallel_() {
 	MPI_Comm_rank(MPI_COMM_WORLD, &task);
 	MPI_Comm_size(MPI_COMM_WORLD, &max_task);
 
-	if (task == 0)
-		boss = true;
-	else
-		boss = false;
-
-	boss_task = 0;
+        boss = task == 0;
 }
 
 void clover_abort() {
@@ -330,10 +325,10 @@ void clover_min(double &value) {
 
 }
 
-void clover_allgather(double value, double *values) {
+void clover_allgather(double value, std::vector<double> &values) {
 
 	values[0] = value; // Just to ensure it will work in serial
-	MPI_Allgather(&value, 1, MPI_DOUBLE, values, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Allgather(&value, 1, MPI_DOUBLE, values.data(), 1, MPI_DOUBLE, MPI_COMM_WORLD);
 }
 
 
@@ -356,8 +351,6 @@ void clover_exchange(global_variables &globals, int fields[NUM_FIELDS], const in
 
 	MPI_Request request[4] = {0};
 	int message_count = 0;
-
-	int cnk = 1;
 
 	int end_pack_index_left_right = 0;
 	int end_pack_index_bottom_top = 0;
@@ -434,7 +427,7 @@ void clover_exchange(global_variables &globals, int fields[NUM_FIELDS], const in
 	}
 
 	message_count = 0;
-	for (int i = 0; i < 4; ++i) request[i] = 0;
+	for (int & i : request) i = 0;
 
 	if (globals.chunk.chunk_neighbours[chunk_bottom] != external_face) {
 		// do bottom exchanges
@@ -501,7 +494,7 @@ void clover_exchange(global_variables &globals, int fields[NUM_FIELDS], const in
 }
 
 
-void clover_pack_left(global_variables &globals, int tile, int fields[NUM_FIELDS], int depth,
+void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_FIELDS], int depth,
                       int left_right_offset[NUM_FIELDS]) {
 
 
@@ -725,7 +718,7 @@ void clover_send_recv_message_left(
 	          MPI_COMM_WORLD, &req_recv);
 }
 
-void clover_unpack_left(global_variables &globals, int fields[NUM_FIELDS], int tile, int depth,
+void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS], int tile, int depth,
                         int left_right_offset[NUM_FIELDS]) {
 
 	tile_type &t = globals.chunk.tiles[tile];
@@ -929,7 +922,7 @@ void clover_unpack_left(global_variables &globals, int fields[NUM_FIELDS], int t
 
 }
 
-void clover_pack_right(global_variables &globals, int tile, int fields[NUM_FIELDS], int depth,
+void clover_pack_right(global_variables &globals, int tile, const int fields[NUM_FIELDS], int depth,
                        int left_right_offset[NUM_FIELDS]) {
 
 	tile_type &t = globals.chunk.tiles[tile];
@@ -1152,7 +1145,7 @@ void clover_send_recv_message_right(
 	          tag_recv, MPI_COMM_WORLD, &req_recv);
 }
 
-void clover_unpack_right(global_variables &globals, int fields[NUM_FIELDS], int tile, int depth,
+void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS], int tile, int depth,
                          int left_right_offset[NUM_FIELDS]) {
 
 	tile_type &t = globals.chunk.tiles[tile];
@@ -1356,7 +1349,7 @@ void clover_unpack_right(global_variables &globals, int fields[NUM_FIELDS], int 
 
 }
 
-void clover_pack_top(global_variables &globals, int tile, int fields[NUM_FIELDS], int depth,
+void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_FIELDS], int depth,
                      int bottom_top_offset[NUM_FIELDS]) {
 
 	tile_type &t = globals.chunk.tiles[tile];
@@ -1579,7 +1572,7 @@ void clover_send_recv_message_top(
 	          MPI_COMM_WORLD, &req_recv);
 }
 
-void clover_unpack_top(global_variables &globals, int fields[NUM_FIELDS], int tile, int depth,
+void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], int tile, int depth,
                        int bottom_top_offset[NUM_FIELDS]) {
 
 	tile_type &t = globals.chunk.tiles[tile];
@@ -1784,7 +1777,7 @@ void clover_unpack_top(global_variables &globals, int fields[NUM_FIELDS], int ti
 
 }
 
-void clover_pack_bottom(global_variables &globals, int tile, int fields[NUM_FIELDS], int depth,
+void clover_pack_bottom(global_variables &globals, int tile, const int fields[NUM_FIELDS], int depth,
                         int bottom_top_offset[NUM_FIELDS]) {
 
 	tile_type &t = globals.chunk.tiles[tile];
@@ -2007,7 +2000,7 @@ void clover_send_recv_message_bottom(
 	          tag_recv, MPI_COMM_WORLD, &req_recv);
 }
 
-void clover_unpack_bottom(global_variables &globals, int fields[NUM_FIELDS], int tile, int depth,
+void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS], int tile, int depth,
                           int bottom_top_offset[NUM_FIELDS]) {
 
 

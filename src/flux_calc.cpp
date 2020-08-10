@@ -58,7 +58,7 @@ void flux_calc_kernel(
 // @details Invokes the used specified flux kernel
 void flux_calc(global_variables &globals) {
 
-	double kernel_time;
+	double kernel_time = 0;
 	if (globals.profiler_on) kernel_time = timer();
 
 	clover::execute(globals.queue, [&](handler &h) {

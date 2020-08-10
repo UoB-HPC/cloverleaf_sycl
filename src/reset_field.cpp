@@ -75,7 +75,7 @@ void reset_field_kernel(
 //  @details Invokes the user specified field reset kernel.
 void reset_field(global_variables &globals) {
 
-	double kernel_time;
+	double kernel_time = 0;
 	if (globals.profiler_on) kernel_time = timer();
 
 

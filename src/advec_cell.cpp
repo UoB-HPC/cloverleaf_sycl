@@ -68,7 +68,6 @@ void advec_cell_kernel(
 				auto vol_flux_y = vol_flux_y_buffer.access<R>(h);
 				auto pre_vol = pre_vol_buffer.access<RW>(h);
 				auto post_vol = post_vol_buffer.access<RW>(h);
-				auto advec_vol = advec_vol_buffer.access<R>(h);
 				clover::par_ranged<class advec_cell_xdir_seq1>(h, policy, [=](id<2> idx) {
 
 					pre_vol[idx] = volume[idx] +
@@ -82,10 +81,8 @@ void advec_cell_kernel(
 			clover::execute(queue, [&](handler &h) {
 				auto volume = volume_buffer.access<R>(h);
 				auto vol_flux_x = vol_flux_x_buffer.access<R>(h);
-				auto vol_flux_y = vol_flux_y_buffer.access<R>(h);
 				auto pre_vol = pre_vol_buffer.access<RW>(h);
 				auto post_vol = post_vol_buffer.access<RW>(h);
-				auto advec_vol = advec_vol_buffer.access<R>(h);
 				clover::par_ranged<class advec_cell_xdir_sne1>(h, policy, [=](id<2> idx) {
 					pre_vol[idx] = volume[idx] + vol_flux_x[clover::offset(idx, 1, 0)] - vol_flux_x[idx];
 					post_vol[idx] = volume[idx];
@@ -107,7 +104,7 @@ void advec_cell_kernel(
 
 
 						int upwind, donor, downwind, dif;
-						double sigmat, sigma3, sigma4, sigmav, sigma, sigmam, diffuw, diffdw, limiter, wind;
+						double sigmat, sigma3, sigma4, sigmav , sigmam, diffuw, diffdw, limiter, wind;
 
 						const int j = idx.get(0);
 						const int k = idx.get(1);
@@ -129,7 +126,6 @@ void advec_cell_kernel(
 						sigma3 = (1.0 + sigmat) * (vertexdx[j] / vertexdx[dif]);
 						sigma4 = 2.0 - sigmat;
 
-						sigma = sigmat;
 						sigmav = sigmat;
 
 						diffuw = density1[donor][k] - density1[upwind][k];
@@ -168,7 +164,6 @@ void advec_cell_kernel(
 
 		});
 		clover::execute(queue, [&](handler &h) {
-			auto vertexdx = vertexdx_buffer.access<R>(h);
 			auto density1 = density1_buffer.access<RW>(h);
 			auto energy1 = energy1_buffer.access<RW>(h);
 			auto mass_flux_x = mass_flux_x_buffer.access<R>(h);
@@ -204,7 +199,6 @@ void advec_cell_kernel(
 				auto vol_flux_y = vol_flux_y_buffer.access<R>(h);
 				auto pre_vol = pre_vol_buffer.access<RW>(h);
 				auto post_vol = post_vol_buffer.access<RW>(h);
-				auto advec_vol = advec_vol_buffer.access<R>(h);
 				clover::par_ranged<class APPEND_LN(advec_cell_ydir_s1)>(h, policy, [=](id<2> idx) {
 					pre_vol[idx] = volume[idx] +
 					               (vol_flux_y[clover::offset(idx, 0, 1)] - vol_flux_y[idx] + vol_flux_x[clover::offset(idx, 1, 0)] -
@@ -215,11 +209,9 @@ void advec_cell_kernel(
 		} else {
 			clover::execute(queue, [&](handler &h) {
 				auto volume = volume_buffer.access<R>(h);
-				auto vol_flux_x = vol_flux_x_buffer.access<R>(h);
 				auto vol_flux_y = vol_flux_y_buffer.access<R>(h);
 				auto pre_vol = pre_vol_buffer.access<RW>(h);
 				auto post_vol = post_vol_buffer.access<RW>(h);
-				auto advec_vol = advec_vol_buffer.access<R>(h);
 				clover::par_ranged<class APPEND_LN(advec_cell_ydir_s1)>(h, policy, [=](id<2> idx) {
 					pre_vol[idx] = volume[idx] + vol_flux_y[clover::offset(idx, 0, 1)] - vol_flux_y[idx];
 					post_vol[idx] = volume[idx];
@@ -241,7 +233,7 @@ void advec_cell_kernel(
 			clover::par_ranged<class advec_cell_ydir_ener_flux>(
 					h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2 + 2}, [=](id<2> idx) {
 						int upwind, donor, downwind, dif;
-						double sigmat, sigma3, sigma4, sigmav, sigma, sigmam, diffuw, diffdw, limiter, wind;
+						double sigmat, sigma3, sigma4, sigmav, sigmam, diffuw, diffdw, limiter, wind;
 
 						const int j = idx.get(0);
 						const int k = idx.get(1);
@@ -262,7 +254,6 @@ void advec_cell_kernel(
 						sigma3 = (1.0 + sigmat) * (vertexdy[k] / vertexdy[dif]);
 						sigma4 = 2.0 - sigmat;
 
-						sigma = sigmat;
 						sigmav = sigmat;
 
 						diffuw = density1[j][donor] - density1[j][upwind];
@@ -298,7 +289,6 @@ void advec_cell_kernel(
 		});
 
 		clover::execute(queue, [&](handler &h) {
-			auto vertexdy = vertexdy_buffer.access<R>(h);
 			auto density1 = density1_buffer.access<RW>(h);
 			auto energy1 = energy1_buffer.access<RW>(h);
 			auto mass_flux_y = mass_flux_y_buffer.access<R>(h);

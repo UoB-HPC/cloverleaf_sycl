@@ -64,7 +64,7 @@ void update_tile_halo_l_kernel(
 		clover::Buffer<double, 2> &left_vol_flux_y_buffer,
 		clover::Buffer<double, 2> &left_mass_flux_x_buffer,
 		clover::Buffer<double, 2> &left_mass_flux_y_buffer,
-		int fields[NUM_FIELDS],
+		const int fields[NUM_FIELDS],
 		int depth) {
 
 	// Density 0
@@ -331,7 +331,7 @@ void update_tile_halo_r_kernel(
 		clover::Buffer<double, 2> &right_vol_flux_y_buffer,
 		clover::Buffer<double, 2> &right_mass_flux_x_buffer,
 		clover::Buffer<double, 2> &right_mass_flux_y_buffer,
-		int fields[NUM_FIELDS],
+		const int fields[NUM_FIELDS],
 		int depth) {
 
 	// Density 0
@@ -602,7 +602,7 @@ void update_tile_halo_t_kernel(
 		clover::Buffer<double, 2> &top_vol_flux_y_buffer,
 		clover::Buffer<double, 2> &top_mass_flux_x_buffer,
 		clover::Buffer<double, 2> &top_mass_flux_y_buffer,
-		int fields[NUM_FIELDS],
+		const int fields[NUM_FIELDS],
 		int depth) {
 
 	// Density 0
@@ -868,7 +868,7 @@ void update_tile_halo_b_kernel(
 		clover::Buffer<double, 2> &bottom_vol_flux_y_buffer,
 		clover::Buffer<double, 2> &bottom_mass_flux_x_buffer,
 		clover::Buffer<double, 2> &bottom_mass_flux_y_buffer,
-		int fields[NUM_FIELDS],
+		const int fields[NUM_FIELDS],
 		int depth) {
 
 	// Density 0

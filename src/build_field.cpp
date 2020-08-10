@@ -110,7 +110,7 @@ void build_field(global_variables &globals) {
 			auto yvel0 = field.yvel0.access<W>(h);
 			auto yvel1 = field.yvel1.access<W>(h);
 			// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+3) inclusive
-			clover::par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange + 1, yrange + 1}, [=](
+			clover::par_ranged<class APPEND_LN(build_field)>(h, {0u, 0u, xrange + 1, yrange + 1}, [=](
 					id<2> id) {
 				work_array1[id] = 0.0;
 				work_array2[id] = 0.0;
@@ -137,7 +137,7 @@ void build_field(global_variables &globals) {
 			auto soundspeed = field.soundspeed.access<W>(h);
 			auto volume = field.volume.access<W>(h);
 			// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+2) inclusive
-			clover::par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange, yrange}, [=](id<2> idx) {
+			clover::par_ranged<class APPEND_LN(build_field)>(h, {0u, 0u, xrange, yrange}, [=](id<2> idx) {
 				density0[idx] = 0.0;
 				density1[idx] = 0.0;
 				energy0[idx] = 0.0;
@@ -154,7 +154,7 @@ void build_field(global_variables &globals) {
 			auto mass_flux_x = field.mass_flux_x.access<W>(h);
 			auto xarea = field.xarea.access<W>(h);
 			// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+3) inclusive
-			clover::par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange, yrange}, [=](id<2> idx) {
+			clover::par_ranged<class APPEND_LN(build_field)>(h, {0u, 0u, xrange, yrange}, [=](id<2> idx) {
 				vol_flux_x[idx] = 0.0;
 				mass_flux_x[idx] = 0.0;
 				xarea[idx] = 0.0;
@@ -166,7 +166,7 @@ void build_field(global_variables &globals) {
 			auto mass_flux_y = field.mass_flux_y.access<W>(h);
 			auto yarea = field.yarea.access<W>(h);
 			// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+2) inclusive
-			clover::par_ranged<class APPEND_LN(build_field)>(h, {0, 0, xrange, yrange + 1}, [=](id<2> idx) {
+			clover::par_ranged<class APPEND_LN(build_field)>(h, {0u, 0u, xrange, yrange + 1}, [=](id<2> idx) {
 				vol_flux_y[idx] = 0.0;
 				mass_flux_y[idx] = 0.0;
 				yarea[idx] = 0.0;
@@ -177,7 +177,7 @@ void build_field(global_variables &globals) {
 			auto cellx = field.cellx.access<W>(h);
 			auto celldx = field.celldx.access<W>(h);
 			// (t_xmin-2:t_xmax+2) inclusive
-			clover::par_ranged<class APPEND_LN(build_field)>(h, {0, xrange}, [=](id<1> id) {
+			clover::par_ranged<class APPEND_LN(build_field)>(h, {0u, xrange}, [=](id<1> id) {
 				cellx[id] = 0.0;
 				celldx[id] = 0.0;
 			});
@@ -187,7 +187,7 @@ void build_field(global_variables &globals) {
 			auto celly = field.celly.access<W>(h);
 			auto celldy = field.celldy.access<W>(h);
 			// (t_ymin-2:t_ymax+2) inclusive
-			clover::par_ranged<class APPEND_LN(build_field)>(h, {0, yrange}, [=](id<1> id) {
+			clover::par_ranged<class APPEND_LN(build_field)>(h, {0u, yrange}, [=](id<1> id) {
 				celly[id] = 0.0;
 				celldy[id] = 0.0;
 			});
@@ -197,7 +197,7 @@ void build_field(global_variables &globals) {
 			auto vertexx = field.vertexx.access<W>(h);
 			auto vertexdx = field.vertexdx.access<W>(h);
 			// (t_xmin-2:t_xmax+3) inclusive
-			clover::par_ranged<class APPEND_LN(build_field)>(h, {0, xrange + 1}, [=](id<1> id) {
+			clover::par_ranged<class APPEND_LN(build_field)>(h, {0u, xrange + 1}, [=](id<1> id) {
 				vertexx[id] = 0.0;
 				vertexdx[id] = 0.0;
 			});
@@ -207,7 +207,7 @@ void build_field(global_variables &globals) {
 			auto vertexy = field.vertexy.access<W>(h);
 			auto vertexdy = field.vertexdy.access<W>(h);
 			// (t_ymin-2:t_ymax+3) inclusive
-			clover::par_ranged<class APPEND_LN(build_field)>(h, {0, yrange + 1}, [=](id<1> id) {
+			clover::par_ranged<class APPEND_LN(build_field)>(h, {0u, yrange + 1}, [=](id<1> id) {
 				vertexy[id] = 0.0;
 				vertexdy[id] = 0.0;
 			});

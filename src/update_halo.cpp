@@ -885,7 +885,7 @@ void update_halo_kernel(
 //  the fields specified.
 void update_halo(global_variables &globals, int fields[NUM_FIELDS], const int depth) {
 
-	double kernel_time;
+	double kernel_time = 0;
 	if (globals.profiler_on) kernel_time = timer();
 	update_tile_halo(globals, fields, depth);
 	if (globals.profiler_on) {

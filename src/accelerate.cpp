@@ -87,7 +87,7 @@ void accelerate_kernel(
 //  @details Calls user requested kernel
 void accelerate(global_variables &globals) {
 
-	double kernel_time;
+	double kernel_time = 0;
 	if (globals.profiler_on) kernel_time = timer();
 
 

@@ -33,7 +33,7 @@
 
 extern std::ostream g_out;
 
-int maxloc(double *totals, const int len) {
+int maxloc(const std::vector<double> &totals, const int len) {
 	int loc = -1;
 	double max = -1.0;
 	for (int i = 0; i < len; ++i) {
@@ -103,7 +103,7 @@ void hydro(global_variables &globals, parallel_ &parallel) {
 		// On the short test runs, this can skew the results, so should be taken into account
 		//  in recorded run times.
 		double wall_clock;
-		double first_step, second_step;
+		double first_step = 0, second_step = 0;
 		if (globals.step == 1) first_step = timer() - step_time;
 		if (globals.step == 2) second_step = timer() - step_time;
 
@@ -125,7 +125,7 @@ void hydro(global_variables &globals, parallel_ &parallel) {
 						<< "First step overhead " << first_step - second_step << std::endl;
 			}
 
-			double totals[parallel.max_task];
+			std::vector<double> totals(parallel.max_task);
 			if (globals.profiler_on) {
 				// First we need to find the maximum kernel time for each task. This
 				// seems to work better than finding the maximum time for each kernel and

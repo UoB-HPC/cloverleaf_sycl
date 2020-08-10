@@ -92,7 +92,7 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 	int y_cells = top - bottom + 1;
 
 
-	auto handler = [](cl::sycl::exception_list exceptions) {
+	auto handler = [](const cl::sycl::exception_list& exceptions) {
 		for (std::exception_ptr const &e : exceptions) {
 			try {
 				std::rethrow_exception(e);
@@ -161,8 +161,7 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 	// Prime all halo data for the first step
 	// TODO replace with std::array
 	int fields[NUM_FIELDS];
-	for (int i = 0; i < NUM_FIELDS; ++i)
-		fields[i] = 0;
+	for (int &field : fields) field = 0;
 
 	fields[field_density0] = 1;
 	fields[field_energy0] = 1;

@@ -84,7 +84,7 @@ void generate_chunk(const int tile, global_variables &globals) {
 
 	// Take a reference to the lowest structure, as Kokkos device cannot necessarily chase through the structure.
 
-	clover::Range2d xyrange_policy(0, 0, xrange, yrange);
+	clover::Range2d xyrange_policy(0u, 0u, xrange, yrange);
 
 
 	field_type &field = globals.chunk.tiles[tile].field;

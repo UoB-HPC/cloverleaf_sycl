@@ -42,7 +42,7 @@ void timestep(global_variables &globals, parallel_ &parallel) {
 
 	int fields[NUM_FIELDS];
 
-	double kernel_time;
+	double kernel_time = 0;
 	if (globals.profiler_on) kernel_time = timer();
 
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {

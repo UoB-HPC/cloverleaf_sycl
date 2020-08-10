@@ -83,10 +83,6 @@ void PdV_kernel(
 
 			double volume_change_s = volume[idx] / (volume[idx] + total_flux);
 
-			double min_cell_volume =
-					sycl::fmin(sycl::fmin(volume[idx] + right_flux - left_flux + top_flux - bottom_flux,
-					                      volume[idx] + right_flux - left_flux), volume[idx] + top_flux - bottom_flux);
-
 			double recip_volume = 1.0 / volume[idx];
 
 			double energy_change =
@@ -122,10 +118,6 @@ void PdV_kernel(
 
 			double volume_change_s = volume[idx] / (volume[idx] + total_flux);
 
-			double min_cell_volume =
-					sycl::fmin(sycl::fmin(volume[idx] + right_flux - left_flux + top_flux - bottom_flux,
-					                      volume[idx] + right_flux - left_flux), volume[idx] + top_flux - bottom_flux);
-
 			double recip_volume = 1.0 / volume[idx];
 
 			double energy_change =
@@ -147,17 +139,10 @@ void PdV_kernel(
 //  @details Invokes the user specified kernel for the PdV update.
 void PdV(global_variables &globals, bool predict) {
 
-	double kernel_time;
+	double kernel_time = 0;
 	if (globals.profiler_on) kernel_time = timer();
 
 	globals.error_condition = 0;
-
-	int prdct;
-	if (predict) {
-		prdct = 0;
-	} else {
-		prdct = 1;
-	}
 
 	clover::execute(globals.queue, [&](handler &h) {
 		for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
@@ -205,7 +190,7 @@ void PdV(global_variables &globals, bool predict) {
 		if (globals.profiler_on) globals.profiler.ideal_gas += timer() - kernel_time;
 
 		int fields[NUM_FIELDS];
-		for (int i = 0; i < NUM_FIELDS; ++i) fields[i] = 0;
+		for (int & field : fields) field = 0;
 		fields[field_pressure] = 1;
 		update_halo(globals, fields, 1);
 	}

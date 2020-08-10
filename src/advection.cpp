@@ -38,14 +38,14 @@ void advection(global_variables &globals) {
 	int yvel = g_ydir;
 
 	int fields[NUM_FIELDS];
-	for (int i = 0; i < NUM_FIELDS; ++i) fields[i] = 0;
+	for (int & field : fields) field = 0;
 	fields[field_energy1] = 1;
 	fields[field_density1] = 1;
 	fields[field_vol_flux_x] = 1;
 	fields[field_vol_flux_y] = 1;
 	update_halo(globals, fields, 2);
 
-	double kernel_time;
+	double kernel_time = 0;
 	if (globals.profiler_on) kernel_time = timer();
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		advec_cell_driver(globals, tile, sweep_number, direction);
@@ -53,7 +53,7 @@ void advection(global_variables &globals) {
 
 	if (globals.profiler_on) globals.profiler.cell_advection += timer() - kernel_time;
 
-	for (int i = 0; i < NUM_FIELDS; ++i) fields[i] = 0;
+	for (int & field : fields) field = 0;
 	fields[field_density1] = 1;
 	fields[field_energy1] = 1;
 	fields[field_xvel1] = 1;
@@ -84,7 +84,7 @@ void advection(global_variables &globals) {
 
 	if (globals.profiler_on) globals.profiler.cell_advection += timer() - kernel_time;
 
-	for (int i = 0; i < NUM_FIELDS; ++i) fields[i] = 0;
+	for (int & field : fields) field = 0;
 	fields[field_density1] = 1;
 	fields[field_energy1] = 1;
 	fields[field_xvel1] = 1;

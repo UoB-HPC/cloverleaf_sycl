@@ -41,7 +41,6 @@
 //#include <Kokkos_Core.hpp>
 
 #include <iostream>
-#include <fstream>
 
 #include "definitions.h"
 #include "comms.h"
