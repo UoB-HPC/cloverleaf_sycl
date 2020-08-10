@@ -27,26 +27,6 @@
 #include "sycl_utils.hpp"
 
 namespace clover {
-	static inline size_t next_powerof2(size_t x) {
-		x--;
-		x |= x >> 1;
-		x |= x >> 2;
-		x |= x >> 4;
-		x |= x >> 8;
-		x |= x >> 16;
-		return x + 1;
-	}
-
-
-	static inline size_t prev_powerof2(size_t x) {
-		x |= x >> 1;
-		x |= x >> 2;
-		x |= x >> 4;
-		x |= x >> 8;
-		x |= x >> 16;
-		return x - (x >> 1);
-	}
-
 
 	template<typename T, typename U, typename C>
 	struct local_reducer {
@@ -117,16 +97,16 @@ namespace clover {
 						size_t li = item.get_local_id(0);
 						size_t global_size = item.get_global_range()[0];
 
-						empty(ctx, li);
+						empty(ctx, cl::sycl::id<1>(li));
 						for (; i < N; i += global_size) {
-							functor(ctx, li, rangeIdFn(cl::sycl::id<1>(i), range));
+							functor(ctx, cl::sycl::id<1>(li), rangeIdFn(cl::sycl::id<1>(i), range));
 						}
 
 						size_t local_size = item.get_local_range()[0]; // 8
-						for (int offset = local_size / 2; offset > 0; offset /= 2) {
+						for (size_t offset = local_size / 2; offset > 0; offset /= 2) {
 							item.barrier(cl::sycl::access::fence_space::local_space);
 							if (li < offset) {
-								combiner(ctx, li, li + offset);
+								combiner(ctx, cl::sycl::id<1>(li), cl::sycl::id<1>(li + offset));
 							}
 						}
 
@@ -139,10 +119,10 @@ namespace clover {
 
 		q.submit([=](cl::sycl::handler &h) mutable {
 			auto ctx = allocator(h, dot_num_groups);
-			h.parallel_for<class foobar>(
-					cl::sycl::range<1>(1),
-					[=](cl::sycl::id<1>) {
-						cl::sycl::id<1> zero = cl::sycl::id<1>(0);
+			h.parallel_for<class final_reduction>(
+					cl::sycl::nd_range<1>(1, 1),
+					[=](auto) {
+						auto zero = cl::sycl::id<1>(0);
 						empty(ctx, zero); // local[0] = empty
 						for (size_t i = 0; i < dot_num_groups; ++i) {
 							ctx.drain(cl::sycl::id<1>(i), cl::sycl::id<1>(i));
@@ -162,7 +142,6 @@ namespace clover {
 	}
 
 
-#pragma clang diagnostic push
 	template<typename nameT,
 			class LocalType,
 			class LocalAllocator = std::nullptr_t,
@@ -201,7 +180,6 @@ namespace clover {
 		  },
 		  allocator, empty, functor, combiner, finaliser);
 	}
-#pragma clang diagnostic pop
 
 // applies a 1d reduction
 	template<typename nameT,
