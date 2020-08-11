@@ -49,7 +49,7 @@ parallel_::parallel_() {
 	MPI_Comm_rank(MPI_COMM_WORLD, &task);
 	MPI_Comm_size(MPI_COMM_WORLD, &max_task);
 
-        boss = task == 0;
+	boss = task == 0;
 }
 
 void clover_abort() {
@@ -427,7 +427,7 @@ void clover_exchange(global_variables &globals, int fields[NUM_FIELDS], const in
 	}
 
 	message_count = 0;
-	for (int & i : request) i = 0;
+	for (MPI_Request &i : request) i = 0;
 
 	if (globals.chunk.chunk_neighbours[chunk_bottom] != external_face) {
 		// do bottom exchanges
