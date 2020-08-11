@@ -10,7 +10,7 @@ if (SYCL_RUNTIME)
 
     list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
-    if (${SYCL_RUNTIME} STREQUAL "HYPSYCL")
+    if (${SYCL_RUNTIME} STREQUAL "HIPSYCL")
 
         if (NOT HIPSYCL_INSTALL_DIR)
             message(FATAL_ERROR "HIPSYCL_INSTALL_DIR is undefined")
@@ -38,10 +38,10 @@ if (SYCL_RUNTIME)
         set(CMAKE_CXX_COMPILER "dpcpp")
         set(EXTRA_FLAGS -pedantic)
     else ()
-        message(FATAL_ERROR "SYCL_RUNTIME unsupported, must be one of HYPSYCL|COMPUTECPP|DPCPP, got ${SYCL_RUNTIME}")
+        message(FATAL_ERROR "SYCL_RUNTIME unsupported, must be one of HIPSYCL|COMPUTECPP|DPCPP, got ${SYCL_RUNTIME}")
     endif ()
 else ()
-    message(FATAL_ERROR "SYCL_RUNTIME not defined, must be one of HYPSYCL|COMPUTECPP|DPCPP")
+    message(FATAL_ERROR "SYCL_RUNTIME not defined, must be one of HIPSYCL|COMPUTECPP|DPCPP")
 endif ()
 
 
