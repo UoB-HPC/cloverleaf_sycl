@@ -28,11 +28,11 @@ The program was compiled and tested on the following configurations.
 **hipSYCL 0.8.0**
 
  * AMD CPU
-    * 1x Ryzen R9 3900X (program segfaults with any input) 
+    * 1x Ryzen R9 3900X 
 
 ## Building
 
-Prerequisites:
+Prerequisites(ComputeCpp):
 
  * CentOS 7
  * cmake3
@@ -40,13 +40,28 @@ Prerequisites:
  * [ComputeCpp community edition](https://www.codeplay.com/products/computesuite/computecpp)
  * [devtoolset-7](https://www.softwarecollections.org/en/scls/rhscl/devtoolset-7/)
  
+Prerequisites(hipSYCL):
+
+ * CentOS 7
+ * cmake3
+ * openmpi, opemmpi-devel
+ * [devtoolset-7](https://www.softwarecollections.org/en/scls/rhscl/devtoolset-7/) * [hipSYCL 0.8.0+](https://github.com/illuhad/hipSYCL)
+ 
+Prerequisites(DPCPP):
+
+ * CentOS 8
+ * cmake3
+ * [Intel oneAPI basekit+hpckit](https://software.intel.com/content/www/us/en/develop/articles/oneapi-repo-instructions.html)
+ 
+  
+ 
 First, generate a build:
  
     cmake3 -Bbuild -H. -DCMAKE_BUILD_TYPE=Release -DSYCL_RUNTIME=COMPUTECPP -DComputeCpp_DIR=<path_to_computecpp> -DOpenCL_INCLUDE_DIR=include/
     
 Flags: 
- * `SYCL_RUNTIME` - one of `HYPSYCL|COMPUTECPP|DPCPP`
- * For `SYCL_RUNTIME=HYPSYCL`, supply hipSYCL install path with `HIPSYCL_INSTALL_DIR`
+ * `SYCL_RUNTIME` - one of `HIPSYCL|COMPUTECPP|DPCPP`
+ * For `SYCL_RUNTIME=HIPSYCL`, supply hipSYCL install path with `HIPSYCL_INSTALL_DIR`
  * For `SYCL_RUNTIME=COMPUTECPP`, supply ComputeCpp install path with `ComputeCpp_DIR`
  * For `SYCL_RUNTIME=DPCPP`, make sure the DPC++ compiler (dpcpp) is available in `PATH` 
     
@@ -77,9 +92,20 @@ The main `clover_leaf` executable takes a `clover.in` file as parameter and outp
 
 For example, after successful compilation, at **project root**:
 
-    ./build/clover_leaf InputDecks/clover_bm16_short.in
+    ./build/clover_leaf --file InputDecks/clover_bm16_short.in
 
 See [Tested configurations](#tested-configurations) for tested platforms and drivers. Also see ComputeCpp's [platform support page](https://developer.codeplay.com/products/computecpp/ce/guides/platform-support) for supported configurations.
+
+For help, use the `-h` flag:
+```
+Options:
+  -h  --help               Print the message
+      --list               List available devices
+      --list-detailed      List available devices and capabilities
+      --device <INDEX>     Select device at INDEX from output of --list
+      --input              Custom clover.in file (defaults to clover.in if unspecified)
+```
+
 
 To run on a specific device, unload all other drivers or modify the device selector in `start.cpp:107` and recompile.
 
@@ -104,4 +130,3 @@ For a quick build, use:
 
  * Due to ComputeCpp's limitation where built-ins are missing when targeting ptx, NVidia based GPUs are not supported yet.
 
- * Selecting non-default devices requires recompiling.

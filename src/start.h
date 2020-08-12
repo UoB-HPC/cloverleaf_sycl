@@ -24,7 +24,9 @@
 #include "comms.h"
 #include "definitions.h"
 
-std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config &config);
+std::unique_ptr<global_variables> start(parallel_ &parallel,
+                                        const global_config &config,
+                                        const cl::sycl::device &device);
 
 #endif
 

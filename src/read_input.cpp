@@ -95,7 +95,7 @@ void read_input(std::ifstream &g_in, parallel_ &parallel, global_config &globals
 	while (true) {
 		std::getline(g_in, line);
 		if (g_in.eof()) break;
-		if (line.size() == 0) continue;
+		if (line.empty()) continue;
 
 		// Break on spaces
 		std::istringstream iss(line);
@@ -127,75 +127,75 @@ void read_input(std::ifstream &g_in, parallel_ &parallel, global_config &globals
 	while (true) {
 		std::getline(g_in, line);
 		if (g_in.eof()) break;
-		if (line.size() == 0) continue;
+		if (line.empty()) continue;
 
 		// Split line on spaces and =
 		std::vector<std::string> words;
 		char *c_line = new char[line.size() + 1];
 		std::strcpy(c_line, line.c_str());
 		for (char *w = std::strtok(c_line, " =");
-		     w != 0;
-		     w = std::strtok(NULL, " =")) {
-			words.push_back(std::string(w));
+		     w != nullptr;
+		     w = std::strtok(nullptr, " =")) {
+			words.emplace_back(w);
 		}
 
 		// Set options based on keywords
-		if (words[0].size() == 0) break;
+		if (words[0].empty()) break;
 
 		if (words[0] == "initial_timestep") {
-			globals.dtinit = std::atof(words[1].c_str());
+			globals.dtinit = std::stof(words[1]);
 			if (parallel.boss) g_out << " initial_timestep " << globals.dtinit << std::endl;
 		} else if (words[0] == "max_timestep") {
-			globals.dtmax = std::atof(words[1].c_str());
+			globals.dtmax = std::stof(words[1]);
 			if (parallel.boss) g_out << " max_timestep " << globals.dtmax << std::endl;
 		} else if (words[0] == "timestep_rise") {
-			globals.dtrise = std::atof(words[1].c_str());
+			globals.dtrise = std::stof(words[1]);
 			if (parallel.boss) g_out << " timestep_rise " << globals.dtrise << std::endl;
 		} else if (words[0] == "end_time") {
-			globals.end_time = std::atof(words[1].c_str());
+			globals.end_time = std::stof(words[1]);
 			if (parallel.boss) g_out << " end_time " << globals.end_time << std::endl;
 		} else if (words[0] == "end_step") {
-			globals.end_step = std::atof(words[1].c_str());
+			globals.end_step = std::stoi(words[1]);
 			if (parallel.boss) g_out << " end_step " << globals.end_step << std::endl;
 		} else if (words[0] == "xmin") {
-			globals.grid.xmin = std::atof(words[1].c_str());
+			globals.grid.xmin = std::stof(words[1]);
 			if (parallel.boss) g_out << " xmin " << globals.grid.xmin << std::endl;
 		} else if (words[0] == "xmax") {
-			globals.grid.xmax = std::atof(words[1].c_str());
+			globals.grid.xmax = std::stof(words[1]);
 			if (parallel.boss) g_out << " xmax " << globals.grid.xmax << std::endl;
 		} else if (words[0] == "ymin") {
-			globals.grid.ymin = std::atof(words[1].c_str());
+			globals.grid.ymin = std::stof(words[1]);
 			if (parallel.boss) g_out << " ymin " << globals.grid.ymin << std::endl;
 		} else if (words[0] == "ymax") {
-			globals.grid.ymax = std::atof(words[1].c_str());
+			globals.grid.ymax = std::stof(words[1]);
 			if (parallel.boss) g_out << " ymax " << globals.grid.ymax << std::endl;
 		} else if (words[0] == "x_cells") {
-			globals.grid.x_cells = std::atoi(words[1].c_str());
+			globals.grid.x_cells = std::stoi(words[1]);
 			if (parallel.boss) g_out << " x_cells " << globals.grid.x_cells << std::endl;
 		} else if (words[0] == "y_cells") {
-			globals.grid.y_cells = std::atoi(words[1].c_str());
+			globals.grid.y_cells = std::stoi(words[1]);
 			if (parallel.boss) g_out << " y_cells " << globals.grid.y_cells << std::endl;
 		} else if (words[0] == "visit_frequency") {
-			globals.visit_frequency = std::atoi(words[1].c_str());
+			globals.visit_frequency = std::stoi(words[1]);
 			if (parallel.boss) g_out << " visit_frequency " << globals.visit_frequency << std::endl;
 		} else if (words[0] == "summary_frequency") {
-			globals.summary_frequency = std::atoi(words[1].c_str());
+			globals.summary_frequency = std::stoi(words[1]);
 			if (parallel.boss)
 				g_out << " summary_frequency " << globals.summary_frequency << std::endl;
 		} else if (words[0] == "tiles_per_chunk") {
-			globals.tiles_per_chunk = std::atoi(words[1].c_str());
+			globals.tiles_per_chunk = std::stoi(words[1]);
 			if (parallel.boss) g_out << " tiles_per_chunk " << globals.tiles_per_chunk << std::endl;
 		} else if (words[0] == "tiles_per_problem") {
-			globals.tiles_per_chunk = std::atoi(words[1].c_str()) / parallel.max_task;
+			globals.tiles_per_chunk = std::stoi(words[1]) / parallel.max_task;
 			if (parallel.boss) g_out << " tiles_per_chunk " << globals.tiles_per_chunk << std::endl;
 		} else if (words[0] == "profiler_on") {
 			globals.profiler_on = true;
 			if (parallel.boss) g_out << " Profiler on" << std::endl;
 		} else if (words[0] == "test_problem") {
-			globals.test_problem = std::atoi(words[1].c_str());
+			globals.test_problem = std::stoi(words[1]);
 			if (parallel.boss) g_out << " test_problem " << globals.test_problem;
 		} else if (words[0] == "state") {
-			int state = std::atoi(words[1].c_str()) - 1;
+			int state = std::stoi(words[1]) - 1;
 
 			if (parallel.boss)
 				g_out << "Reading specification for state " << state + 1 << std::endl << std::endl;
@@ -203,47 +203,47 @@ void read_input(std::ifstream &g_in, parallel_ &parallel, global_config &globals
 				report_error((char *) "read_input", (char *) "State defined twice.");
 
 			globals.states[state].defined = true;
-			for (int iw = 2; iw < words.size(); ++iw) {
+			for (size_t iw = 2; iw < words.size(); ++iw) {
 				std::string w = words[iw];
-				if (w == "") break;
+				if (w.empty()) break;
 
 				if (w == "xvel") {
 					w = words[++iw];
-					globals.states[state].xvel = std::atof(w.c_str());
+					globals.states[state].xvel = std::stof(w);
 					if (parallel.boss) g_out << " xvel " << globals.states[state].xvel << std::endl;
 				} else if (w == "yvel") {
 					w = words[++iw];
-					globals.states[state].yvel = std::atof(w.c_str());
+					globals.states[state].yvel = std::stof(w);
 					if (parallel.boss) g_out << " yvel " << globals.states[state].yvel << std::endl;
 				} else if (w == "xmin") {
 					w = words[++iw];
-					globals.states[state].xmin = std::atof(w.c_str());
+					globals.states[state].xmin = std::stof(w);
 					if (parallel.boss) g_out << " xmin " << globals.states[state].xmin << std::endl;
 				} else if (w == "ymin") {
 					w = words[++iw];
-					globals.states[state].ymin = std::atof(w.c_str());
+					globals.states[state].ymin = std::stof(w);
 					if (parallel.boss) g_out << " ymin " << globals.states[state].ymin << std::endl;
 				} else if (w == "xmax") {
 					w = words[++iw];
-					globals.states[state].xmax = std::atof(w.c_str());
+					globals.states[state].xmax = std::stof(w);
 					if (parallel.boss) g_out << " xmax " << globals.states[state].xmax << std::endl;
 				} else if (w == "ymax") {
 					w = words[++iw];
-					globals.states[state].ymax = std::atof(w.c_str());
+					globals.states[state].ymax = std::stof(w);
 					if (parallel.boss) g_out << " ymax " << globals.states[state].ymax << std::endl;
 				} else if (w == "radius") {
 					w = words[++iw];
-					globals.states[state].radius = std::atof(w.c_str());
+					globals.states[state].radius = std::stof(w);
 					if (parallel.boss)
 						g_out << " radius " << globals.states[state].radius << std::endl;
 				} else if (w == "density") {
 					w = words[++iw];
-					globals.states[state].density = std::atof(w.c_str());
+					globals.states[state].density = std::stof(w);
 					if (parallel.boss)
 						g_out << " density " << globals.states[state].density << std::endl;
 				} else if (w == "energy") {
 					w = words[++iw];
-					globals.states[state].energy = std::atof(w.c_str());
+					globals.states[state].energy = std::stof(w);
 					if (parallel.boss)
 						g_out << " energy " << globals.states[state].energy << std::endl;
 				} else if (w == "geometry") {

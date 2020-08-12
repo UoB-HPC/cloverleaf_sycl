@@ -30,9 +30,6 @@
 
 #define SPLIT
 
-static double accRd = 0;
-static double accDt = 0;
-
 
 void calc_dt_kernel(
 		queue &q,
@@ -56,7 +53,6 @@ void calc_dt_kernel(
 		clover::Buffer<double, 2> soundspeed,
 		clover::Buffer<double, 2> xvel0,
 		clover::Buffer<double, 2> yvel0,
-		clover::Buffer<double, 2> dt_min,
 		double &dt_min_val,
 		int &dtl_control,
 		double &xl_pos,
@@ -157,12 +153,12 @@ void calc_dt_kernel(
 	typedef clover::local_reducer<double, double, captures> ctx;
 
 	clover::par_reduce_1d<class dt_kernel_reduce, double>(
-			q, clover::Range1d(0, policy.sizeX * policy.sizeY),
+			q, clover::Range1d(0u, policy.sizeX * policy.sizeY),
 			[=](handler &h, size_t &size) mutable {
 				return ctx(h, size, {result.access<R>(h)}, result.buffer);
 			},
 			[](const ctx &ctx, id<1> lidx) { ctx.local[lidx] = g_big; },
-			[](ctx ctx, id<1> lidx, id<1> idx) {
+			[](const ctx &ctx, id<1> lidx, id<1> idx) {
 				ctx.local[lidx] = sycl::fmin(ctx.local[lidx], ctx.actual.data[idx]);
 			},
 			[](const ctx &ctx, id<1> idx, id<1> idy) { ctx.local[idx] = sycl::fmin(ctx.local[idx], ctx.local[idy]); },
@@ -270,10 +266,10 @@ void calc_dt_kernel(
 
 
 	//  Extract the mimimum timestep information
-	dtl_control = 10.01 * (jk_control - (int) (jk_control));
+	dtl_control = static_cast<int>(10.01 * (jk_control - static_cast<int>(jk_control)));
 	jk_control = jk_control - (jk_control - (int) (jk_control));
 	jldt = ((int) jk_control) % x_max;
-	kldt = 1 + (jk_control / x_max);
+	kldt = static_cast<int>(1.f + (jk_control / x_max));
 	// TODO: cannot do this with GPU memory directly
 	//xl_pos = cellx(jldt+1); // Offset by 1 because of Fortran halos in original code
 	//yl_pos = celly(kldt+1);
@@ -347,7 +343,6 @@ void calc_dt(global_variables &globals, int tile, double &local_dt, std::string 
 			t.field.soundspeed,
 			t.field.xvel0,
 			t.field.yvel0,
-			t.field.work_array1,
 			local_dt,
 			l_control,
 			xl_pos,

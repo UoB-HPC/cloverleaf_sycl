@@ -84,7 +84,6 @@ void advec_mom_kernel(
 	} else if (mom_sweep == 3) { // x 2
 		clover::execute(q, [&](handler &h) {
 			auto vol_flux_y = vol_flux_y_buffer.access<R>(h);
-			auto vol_flux_x = vol_flux_x_buffer.access<R>(h);
 			auto volume = volume_buffer.access<R>(h);
 			auto pre_vol = pre_vol_buffer.access<W>(h);
 			auto post_vol = post_vol_buffer.access<RW>(h);
@@ -95,7 +94,6 @@ void advec_mom_kernel(
 		});
 	} else if (mom_sweep == 4) { // y 2
 		clover::execute(q, [&](handler &h) {
-			auto vol_flux_y = vol_flux_y_buffer.access<R>(h);
 			auto vol_flux_x = vol_flux_x_buffer.access<R>(h);
 			auto volume = volume_buffer.access<R>(h);
 			auto pre_vol = pre_vol_buffer.access<W>(h);
@@ -154,7 +152,6 @@ void advec_mom_kernel(
 		clover::execute(q, [&](handler &h) {
 			auto vel1 = vel1_buffer.access<R>(h);
 			auto node_flux = node_flux_buffer.access<R>(h);
-			auto node_mass_post = node_mass_post_buffer.access<R>(h);
 			auto node_mass_pre = node_mass_pre_buffer.access<R>(h);
 			auto mom_flux = mom_flux_buffer.access<RW>(h);
 			auto celldx = celldx_buffer.access<R>(h);
@@ -219,11 +216,7 @@ void advec_mom_kernel(
 			//   DO j=x_min,x_max+1
 
 			clover::execute(q, [&](handler &h) {
-				auto density1 = density1_buffer.access<R>(h);
 				auto node_flux = node_flux_buffer.access<RW>(h);
-				auto node_mass_post = node_mass_post_buffer.access<R>(h);
-				auto node_mass_pre = node_mass_pre_buffer.access<R>(h);
-				auto post_vol = post_vol_buffer.access<R>(h);
 				auto mass_flux_y = mass_flux_y_buffer.access<R>(h);
 				clover::par_ranged<class advec_mom_dir2_vel1_node_flux>(
 						h, {x_min + 1, y_min - 2 + 1, x_max + 1 + 2, y_max + 2 + 2}, [=](id<2> idx) {
@@ -265,7 +258,6 @@ void advec_mom_kernel(
 		clover::execute(q, [&](handler &h) {
 			auto vel1 = vel1_buffer.access<R>(h);
 			auto node_flux = node_flux_buffer.access<R>(h);
-			auto node_mass_post = node_mass_post_buffer.access<R>(h);
 			auto node_mass_pre = node_mass_pre_buffer.access<R>(h);
 			auto mom_flux = mom_flux_buffer.access<RW>(h);
 			auto celldy = celldy_buffer.access<R>(h);

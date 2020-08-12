@@ -40,37 +40,10 @@
 
 extern std::ostream g_out;
 
-// dumps device info to stdout
-void print_device(const cl::sycl::device &device) {
-	auto exts = device.get_info<cl::sycl::info::device::extensions>();
-	std::ostringstream extensions;
-	std::copy(exts.begin(), exts.end(), std::ostream_iterator<std::string>(extensions, ","));
 
-	auto type = device.get_info<cl::sycl::info::device::device_type>();
-	auto typeName = "(unknown)";
-	//@formatter:off
-	switch (type){
-		case sycl::info::device_type::cpu: typeName = "CPU"; break;
-		case sycl::info::device_type::gpu: typeName = "GPU"; break;
-		case sycl::info::device_type::accelerator: typeName = "ACCELERATOR"; break;
-		case sycl::info::device_type::custom: typeName = "CUSTOM"; break;
-		case sycl::info::device_type::automatic: typeName = "AUTOMATIC"; break;
-		case sycl::info::device_type::host: typeName = "HOST"; break;
-		case sycl::info::device_type::all: typeName = "ALL"; break;
-	}
-	//@formatter:on
-	cl::sycl::platform platform = device.get_platform();
-	std::cout << "[SYCL] Device        : " << device.get_info<cl::sycl::info::device::name>() << "\n";
-	std::cout << "[SYCL]  - Type       : " << typeName << "\n";
-	std::cout << "[SYCL]  - Vendor     : " << device.get_info<cl::sycl::info::device::vendor>() << "\n";
-	std::cout << "[SYCL]  - Extensions : " << extensions.str() << "\n";
-	std::cout << "[SYCL]  - Platform   : " << platform.get_info<cl::sycl::info::platform::name>() << "\n";
-	std::cout << "[SYCL]     - Vendor  : " << platform.get_info<cl::sycl::info::platform::vendor>() << "\n";
-	std::cout << "[SYCL]     - Version : " << platform.get_info<cl::sycl::info::platform::version>() << "\n";
-	std::cout << "[SYCL]     - Profile : " << platform.get_info<cl::sycl::info::platform::profile>() << "\n";
-}
-
-std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config &config) {
+std::unique_ptr<global_variables> start(parallel_ &parallel,
+                                        const global_config &config,
+                                        const cl::sycl::device &device) {
 
 	if (parallel.boss) {
 		g_out << "Setting up initial geometry" << std::endl
@@ -92,7 +65,7 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 	int y_cells = top - bottom + 1;
 
 
-	auto handler = [](cl::sycl::exception_list exceptions) {
+	auto handler = [](const cl::sycl::exception_list &exceptions) {
 		for (std::exception_ptr const &e : exceptions) {
 			try {
 				std::rethrow_exception(e);
@@ -103,8 +76,9 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 		}
 	};
 
+
 	global_variables globals(config,
-	                         cl::sycl::queue(cl::sycl::default_selector{}, handler, {}),
+	                         cl::sycl::queue(device, handler, {}),
 	                         chunk_type(
 			                         chunkNeighbours,
 			                         parallel.task, 1, 1, x_cells, y_cells,
@@ -112,13 +86,6 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 			                         1, config.grid.x_cells,
 			                         1, config.grid.y_cells,
 			                         config.tiles_per_chunk));
-
-
-	auto devices = cl::sycl::device::get_devices();
-	for (const auto &dev : devices) print_device(dev);
-
-	std::cout << "[SYCL] Selected device:" << std::endl;
-	print_device(globals.queue.get_device());
 
 
 	if (DEBUG) std::cout << "Globals configured" << std::endl;
@@ -161,8 +128,7 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
 	// Prime all halo data for the first step
 	// TODO replace with std::array
 	int fields[NUM_FIELDS];
-	for (int i = 0; i < NUM_FIELDS; ++i)
-		fields[i] = 0;
+	for (int &field : fields) field = 0;
 
 	fields[field_density0] = 1;
 	fields[field_energy0] = 1;

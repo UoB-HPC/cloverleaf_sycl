@@ -10,7 +10,7 @@ if (SYCL_RUNTIME)
 
     list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
-    if (${SYCL_RUNTIME} STREQUAL "HYPSYCL")
+    if (${SYCL_RUNTIME} STREQUAL "HIPSYCL")
 
         if (NOT HIPSYCL_INSTALL_DIR)
             message(FATAL_ERROR "HIPSYCL_INSTALL_DIR is undefined")
@@ -18,30 +18,30 @@ if (SYCL_RUNTIME)
 
         set(hipSYCL_DIR ${HIPSYCL_INSTALL_DIR}/lib/cmake)
         find_package(hipSYCL CONFIG REQUIRED)
-
+        set(EXTRA_FLAGS -Wno-sign-compare -Wno-stringop-truncation)
     elseif (${SYCL_RUNTIME} STREQUAL "COMPUTECPP")
 
         if (NOT ComputeCpp_DIR)
             message(FATAL_ERROR "ComputeCpp_DIR is undefined")
         endif ()
 
-        get_filename_component(OpenCL_INCLUDE "include" ABSOLUTE)
-        set(OpenCL_INCLUDE_DIR ${OpenCL_INCLUDE})
+#        get_filename_component(OpenCL_INCLUDE "include" ABSOLUTE)
+#        set(OpenCL_INCLUDE_DIR ${OpenCL_INCLUDE})
 
         add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
         set(COMPUTECPP_USER_FLAGS -O3 -fsycl-split-modules=20 -mllvm -inline-threshold=10000 -no-serial-memop)
         find_package(ComputeCpp REQUIRED)
-
+        #        set(EXTRA_FLAGS  -pedantic)
     elseif (${SYCL_RUNTIME} STREQUAL "DPCPP")
 
         set(CMAKE_CXX_STANDARD 17)
         set(CMAKE_CXX_COMPILER "dpcpp")
-
+        set(EXTRA_FLAGS -pedantic)
     else ()
-        message(FATAL_ERROR "SYCL_RUNTIME unsupported, must be one of HYPSYCL|COMPUTECPP|DPCPP, got ${SYCL_RUNTIME}")
+        message(FATAL_ERROR "SYCL_RUNTIME unsupported, must be one of HIPSYCL|COMPUTECPP|DPCPP, got ${SYCL_RUNTIME}")
     endif ()
 else ()
-    message(FATAL_ERROR "SYCL_RUNTIME not defined, must be one of HYPSYCL|COMPUTECPP|DPCPP")
+    message(FATAL_ERROR "SYCL_RUNTIME not defined, must be one of HIPSYCL|COMPUTECPP|DPCPP")
 endif ()
 
 
@@ -87,19 +87,23 @@ target_compile_options(clover_leaf
         -Wall
         -Wextra
         -Wcast-align
-#        -Wpedantic # too noisy
         -Wfatal-errors
         -Werror=return-type
         -Wno-unused-parameter
         -Wno-unused-variable
         -Wno-ignored-attributes
+
+        ${EXTRA_FLAGS}
         )
 
 set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer -march=native -g)
-set(RELEASE_OPTIONS -O3 -march=native)
+set(RELEASE_OPTIONS -O3 -march=native -mtune=native)
 
 target_link_libraries(clover_leaf PRIVATE ${MPI_CXX_LIBRARIES})
-target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:DEBUG>:${DEBUG_OPTIONS}>")
+
+target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:RelWithDebInfo>:${RELEASE_OPTIONS}>")
+target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Release>:${RELEASE_OPTIONS}>")
+target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Debug>:${DEBUG_OPTIONS}>")
 
 if (NOT ${SYCL_RUNTIME} STREQUAL "DPCPP")
     add_sycl_to_target(
