@@ -61,22 +61,26 @@ First, generate a build:
     
 Flags: 
  * `SYCL_RUNTIME` - one of `HIPSYCL|COMPUTECPP|DPCPP`
- * For `SYCL_RUNTIME=HIPSYCL`, supply hipSYCL install path with `HIPSYCL_INSTALL_DIR`
- * For `SYCL_RUNTIME=COMPUTECPP`, supply ComputeCpp install path with `ComputeCpp_DIR`
- * For `SYCL_RUNTIME=DPCPP`, make sure the DPC++ compiler (dpcpp) is available in `PATH` 
+   * For `SYCL_RUNTIME=HIPSYCL`, supply hipSYCL install path with `HIPSYCL_INSTALL_DIR`
+   * For `SYCL_RUNTIME=COMPUTECPP`, supply ComputeCpp install path with `ComputeCpp_DIR`
+   * For `SYCL_RUNTIME=DPCPP`, make sure the DPC++ compiler (dpcpp) is available in `PATH`
+ * `MPI_AS_LIBRARY` - `BOOL(ON|OFF)`, enable if CMake is unable to detect the correct MPI implementation or if you want to use a specific MPI installation. Use this a last resort only as your MPI implementation may pass on extra linker flags.
+   * Set `MPI_C_LIB_DIR` to  <mpi_root_dir>/lib
+   * Set `MPI_C_INCLUDE_DIR` to  <mpi_root_dir>/include
+   * Set `MPI_C_LIB` to the library name, for exampe: mpich for libmpich.so
+ * `CXX_EXTRA_FLAGS` - `STRING`, appends extra flags that will be passed on to the compiler, applies to all configs
+  * `CXX_EXTRA_LINKER_FLAGS` - `STRING`, appends extra linker flags (the comma separated list after the `-Wl` flag) to the linker, applies to all configs
     
 
 If parts of your toolchain are installed at different places, you'll have to specify it manually, for example:
 
     cmake3 -Bbuild -H.  \
-    -DOpenCL_INCLUDE_DIR=include/ \
-    -DOpenCL_LIBRARY=/nfs/software/x86_64/intel/opencl/18.1/opt/intel/opencl_compilers_and_libraries_18.1.0.015/linux/compiler/lib/intel64_lin/libOpenCL.so.2.0 \ 
     -DSYCL_RUNTIME=COMPUTECPP \
     -DComputeCpp_DIR=/nfs/software/x86_64/computecpp/1.1.3 \
     -DCMAKE_C_COMPILER=/nfs/software/x86_64/gcc/9.1.0/bin/gcc \
     -DCMAKE_CXX_COMPILER=/nfs/software/x86_64/gcc/9.1.0/bin/g++ \
     -DCMAKE_BUILD_TYPE=Release \
-
+    
 For ComputeCpp's experimental NVidia ptx support, add:
 
     -DCOMPUTECPP_BITCODE=ptx64

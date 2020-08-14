@@ -24,10 +24,6 @@ if (SYCL_RUNTIME)
         if (NOT ComputeCpp_DIR)
             message(FATAL_ERROR "ComputeCpp_DIR is undefined")
         endif ()
-
-#        get_filename_component(OpenCL_INCLUDE "include" ABSOLUTE)
-#        set(OpenCL_INCLUDE_DIR ${OpenCL_INCLUDE})
-
         add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
         set(COMPUTECPP_USER_FLAGS -O3 -fsycl-split-modules=20 -mllvm -inline-threshold=10000 -no-serial-memop)
         find_package(ComputeCpp REQUIRED)
@@ -45,8 +41,31 @@ else ()
 endif ()
 
 
-find_package(MPI REQUIRED)
-include_directories(SYSTEM ${MPI_INCLUDE_PATH})
+if (MPI_AS_LIBRARY)
+
+    if (NOT DEFINED MPI_C_LIB_DIR)
+        message(FATAL_ERROR "MPI_C_LIB_DIR must be specified, typically <mpi_root_dir>/lib")
+    endif ()
+
+    if (NOT DEFINED MPI_C_INCLUDE_DIR)
+        message(FATAL_ERROR "MPI_C_INCLUDE_DIR must be specified, typically <mpi_root_dir>/include")
+    endif ()
+
+    if (NOT DEFINED MPI_C_LIB)
+        message(FATAL_ERROR "MPI_C_LIB must be specified, for example: mpich for libmpich.so in MPI_C_LIB_DIR")
+    endif ()
+
+    message(STATUS "Using MPI as a library (${MPI_C_LIB})")
+    message(STATUS "MPI include dir: ${MPI_C_INCLUDE_DIR}")
+    message(STATUS "MPI library dir: ${MPI_C_LIB_DIR}")
+
+    include_directories(${MPI_C_INCLUDE_DIR})
+    link_directories(${MPI_C_LIB_DIR})
+else ()
+    find_package(MPI REQUIRED)
+    set(MPI_C_LIB MPI::MPI_C)
+endif ()
+
 
 set(SOURCES
         src/accelerate.cpp
@@ -96,14 +115,16 @@ target_compile_options(clover_leaf
         ${EXTRA_FLAGS}
         )
 
-set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer -march=native -g)
-set(RELEASE_OPTIONS -O3 -march=native -mtune=native)
+set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer ${CXX_EXTRA_FLAGS})
+set(RELEASE_OPTIONS -O3 ${CXX_EXTRA_FLAGS})
 
-target_link_libraries(clover_leaf PRIVATE ${MPI_CXX_LIBRARIES})
+target_link_libraries(clover_leaf PUBLIC ${MPI_C_LIB})
 
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:RelWithDebInfo>:${RELEASE_OPTIONS}>")
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Release>:${RELEASE_OPTIONS}>")
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Debug>:${DEBUG_OPTIONS}>")
+
+target_link_options(clover_leaf PUBLIC LINKER:${CXX_EXTRA_LINKER_FLAGS})
 
 if (NOT ${SYCL_RUNTIME} STREQUAL "DPCPP")
     add_sycl_to_target(
