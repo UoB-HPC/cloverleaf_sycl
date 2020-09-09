@@ -39,8 +39,8 @@ std::ofstream of;
 
 
 struct RunConfig {
-	std::optional<std::string> file;
-	std::optional<cl::sycl::device> device;
+	std::string file;
+	cl::sycl::device device;
 };
 
 std::string deviceName(sycl::info::device_type type) {
@@ -109,7 +109,7 @@ RunConfig parseArgs(const std::vector<cl::sycl::device> &devices,
 		}
 	};
 
-	auto config = RunConfig{};
+	auto config = RunConfig{ "clover.in",devices[0]};
 	for (size_t i = 0; i < args.size(); ++i) {
 		const auto arg = args[i];
 
@@ -174,8 +174,8 @@ initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 	}
 
 	auto runConfig = parseArgs(devices, args);
-	auto file = runConfig.file.value_or("clover.in");
-	auto selectedDevice = runConfig.device.value_or(devices[0]);
+	auto file = runConfig.file;
+	auto selectedDevice = runConfig.device;
 
 	std::cout << "Detected SYCL devices:" << std::endl;
 	for (size_t i = 0; i < devices.size(); ++i) printSimple(devices[i], i);
