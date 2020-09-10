@@ -143,31 +143,31 @@ void read_input(std::ifstream &g_in, parallel_ &parallel, global_config &globals
 		if (words[0].empty()) break;
 
 		if (words[0] == "initial_timestep") {
-			globals.dtinit = std::stof(words[1]);
+			globals.dtinit = std::stod(words[1]);
 			if (parallel.boss) g_out << " initial_timestep " << globals.dtinit << std::endl;
 		} else if (words[0] == "max_timestep") {
-			globals.dtmax = std::stof(words[1]);
+			globals.dtmax = std::stod(words[1]);
 			if (parallel.boss) g_out << " max_timestep " << globals.dtmax << std::endl;
 		} else if (words[0] == "timestep_rise") {
-			globals.dtrise = std::stof(words[1]);
+			globals.dtrise = std::stod(words[1]);
 			if (parallel.boss) g_out << " timestep_rise " << globals.dtrise << std::endl;
 		} else if (words[0] == "end_time") {
-			globals.end_time = std::stof(words[1]);
+			globals.end_time = std::stod(words[1]);
 			if (parallel.boss) g_out << " end_time " << globals.end_time << std::endl;
 		} else if (words[0] == "end_step") {
 			globals.end_step = std::stoi(words[1]);
 			if (parallel.boss) g_out << " end_step " << globals.end_step << std::endl;
 		} else if (words[0] == "xmin") {
-			globals.grid.xmin = std::stof(words[1]);
+			globals.grid.xmin = std::stod(words[1]);
 			if (parallel.boss) g_out << " xmin " << globals.grid.xmin << std::endl;
 		} else if (words[0] == "xmax") {
-			globals.grid.xmax = std::stof(words[1]);
+			globals.grid.xmax = std::stod(words[1]);
 			if (parallel.boss) g_out << " xmax " << globals.grid.xmax << std::endl;
 		} else if (words[0] == "ymin") {
-			globals.grid.ymin = std::stof(words[1]);
+			globals.grid.ymin = std::stod(words[1]);
 			if (parallel.boss) g_out << " ymin " << globals.grid.ymin << std::endl;
 		} else if (words[0] == "ymax") {
-			globals.grid.ymax = std::stof(words[1]);
+			globals.grid.ymax = std::stod(words[1]);
 			if (parallel.boss) g_out << " ymax " << globals.grid.ymax << std::endl;
 		} else if (words[0] == "x_cells") {
 			globals.grid.x_cells = std::stoi(words[1]);
@@ -209,41 +209,41 @@ void read_input(std::ifstream &g_in, parallel_ &parallel, global_config &globals
 
 				if (w == "xvel") {
 					w = words[++iw];
-					globals.states[state].xvel = std::stof(w);
+					globals.states[state].xvel = std::stod(w);
 					if (parallel.boss) g_out << " xvel " << globals.states[state].xvel << std::endl;
 				} else if (w == "yvel") {
 					w = words[++iw];
-					globals.states[state].yvel = std::stof(w);
+					globals.states[state].yvel = std::stod(w);
 					if (parallel.boss) g_out << " yvel " << globals.states[state].yvel << std::endl;
 				} else if (w == "xmin") {
 					w = words[++iw];
-					globals.states[state].xmin = std::stof(w);
+					globals.states[state].xmin = std::stod(w);
 					if (parallel.boss) g_out << " xmin " << globals.states[state].xmin << std::endl;
 				} else if (w == "ymin") {
 					w = words[++iw];
-					globals.states[state].ymin = std::stof(w);
+					globals.states[state].ymin = std::stod(w);
 					if (parallel.boss) g_out << " ymin " << globals.states[state].ymin << std::endl;
 				} else if (w == "xmax") {
 					w = words[++iw];
-					globals.states[state].xmax = std::stof(w);
+					globals.states[state].xmax = std::stod(w);
 					if (parallel.boss) g_out << " xmax " << globals.states[state].xmax << std::endl;
 				} else if (w == "ymax") {
 					w = words[++iw];
-					globals.states[state].ymax = std::stof(w);
+					globals.states[state].ymax = std::stod(w);
 					if (parallel.boss) g_out << " ymax " << globals.states[state].ymax << std::endl;
 				} else if (w == "radius") {
 					w = words[++iw];
-					globals.states[state].radius = std::stof(w);
+					globals.states[state].radius = std::stod(w);
 					if (parallel.boss)
 						g_out << " radius " << globals.states[state].radius << std::endl;
 				} else if (w == "density") {
 					w = words[++iw];
-					globals.states[state].density = std::stof(w);
+					globals.states[state].density = std::stod(w);
 					if (parallel.boss)
 						g_out << " density " << globals.states[state].density << std::endl;
 				} else if (w == "energy") {
 					w = words[++iw];
-					globals.states[state].energy = std::stof(w);
+					globals.states[state].energy = std::stod(w);
 					if (parallel.boss)
 						g_out << " energy " << globals.states[state].energy << std::endl;
 				} else if (w == "geometry") {
