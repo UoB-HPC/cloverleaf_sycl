@@ -93,8 +93,14 @@ namespace clover {
 					cl::sycl::nd_range<1>(dot_num_groups * dot_wgsize, dot_wgsize),
 					[=](cl::sycl::nd_item<1> item) {
 
+						#ifdef USE_PRE_SYCL121R3
+						size_t i = item.get_global(0);
+						size_t li = item.get_local(0);
+						#else
 						size_t i = item.get_global_id(0);
 						size_t li = item.get_local_id(0);
+						#endif
+
 						size_t global_size = item.get_global_range()[0];
 
 						empty(ctx, cl::sycl::id<1>(li));

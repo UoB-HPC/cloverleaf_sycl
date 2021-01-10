@@ -33,6 +33,7 @@
 
 #include <fstream>
 #include <iomanip>
+#include <algorithm>
 
 extern std::ostream g_out;
 std::ofstream of;
@@ -69,35 +70,35 @@ void printDetailed(const cl::sycl::device &device, size_t index) {
 	std::cout << " + Device        : " << device.get_info<cl::sycl::info::device::name>() << "\n";
 	std::cout << "   - Index      : " << index << "\n";
 	std::cout << "   - Type       : " << deviceName(type) << "\n";
-	std::cout << "   - Vendor     : " << device.get_info<cl::sycl::info::device::vendor>()<< "\n";
+	std::cout << "   - Vendor     : " << device.get_info<cl::sycl::info::device::vendor>() << "\n";
 	std::cout << "   - Extensions : " << extensions.str() << "\n";
-	std::cout << "   + Platform   : " << platform.get_info<cl::sycl::info::platform::name>()<< "\n";
-	std::cout << "      - Vendor  : " << platform.get_info<cl::sycl::info::platform::vendor>()<< "\n";
-	std::cout << "      - Version : " << platform.get_info<cl::sycl::info::platform::version>()<< "\n";
-	std::cout << "      - Profile : " << platform.get_info<cl::sycl::info::platform::profile>()<< "\n";
+	std::cout << "   + Platform   : " << platform.get_info<cl::sycl::info::platform::name>() << "\n";
+	std::cout << "      - Vendor  : " << platform.get_info<cl::sycl::info::platform::vendor>() << "\n";
+	std::cout << "      - Version : " << platform.get_info<cl::sycl::info::platform::version>() << "\n";
+	std::cout << "      - Profile : " << platform.get_info<cl::sycl::info::platform::profile>() << "\n";
 }
 
 void printSimple(const cl::sycl::device &device, size_t index) {
 	std::cout << std::setw(3) << index << ". "
-	          << device.get_info<cl::sycl::info::device::name>()
-	          << "(" << deviceName(device.get_info<cl::sycl::info::device::device_type>()) << ")"
-	          << std::endl;
+			<< device.get_info<cl::sycl::info::device::name>()
+			<< "(" << deviceName(device.get_info<cl::sycl::info::device::device_type>()) << ")"
+			<< std::endl;
 }
 
 void printHelp(const std::string &name) {
 	std::cout << std::endl;
 	std::cout << "Usage: " << name << " [OPTIONS]\n\n"
-	          << "Options:\n"
-	          << "  -h  --help               Print the message\n"
-	          << "      --list               List available devices\n"
-	          << "      --list-detailed      List available devices and capabilities\n"
-	          << "      --device <INDEX>     Select device at INDEX from output of --list\n"
-	          << "      --file               Custom clover.in file (defaults to clover.in if unspecified)\n"
-	          << std::endl;
+			<< "Options:\n"
+			<< "  -h  --help               Print the message\n"
+			<< "      --list               List available devices\n"
+			<< "      --list-detailed      List available devices and capabilities\n"
+			<< "      --device <INDEX>     Select device at INDEX from output of --list\n"
+			<< "      --file               Custom clover.in file (defaults to clover.in if unspecified)\n"
+			<< std::endl;
 }
 
 RunConfig parseArgs(const std::vector<cl::sycl::device> &devices,
-                    const std::vector<std::string> &args) {
+		const std::vector<std::string> &args) {
 
 	const auto readParam = [&args](size_t current, const std::string &emptyMessage, auto map) {
 		if (current + 1 < args.size()) {
@@ -109,7 +110,7 @@ RunConfig parseArgs(const std::vector<cl::sycl::device> &devices,
 		}
 	};
 
-	auto config = RunConfig{ "clover.in",devices[0]};
+	auto config = RunConfig{"clover.in", devices[0]};
 	for (size_t i = 0; i < args.size(); ++i) {
 		const auto arg = args[i];
 
@@ -124,12 +125,27 @@ RunConfig parseArgs(const std::vector<cl::sycl::device> &devices,
 			std::exit(EXIT_SUCCESS);
 		} else if (arg == "--device") {
 			readParam(i, "--device specified but no size was given", [&config](const auto &param) {
-				try { config.device = cl::sycl::device::get_devices().at(std::stoul(param)); }
+				auto devices = cl::sycl::device::get_devices();
+
+				try { config.device = devices.at(std::stoul(param)); }
 				catch (const std::exception &e) {
-					std::cerr << "failed to parse/select device index `" << param << "`:"
-					          << e.what() << std::endl;
-					std::exit(EXIT_FAILURE);
+					std::cout << "Unable to parse/select device index `" << param << "`:" << e.what() << std::endl;
+					std::cout << "Attempting to match device with substring  `" << param << "`" << std::endl;
+
+					auto matching = std::find_if(devices.begin(), devices.end(), [param](const cl::sycl::device &device) {
+						return device.get_info<cl::sycl::info::device::name>().find(param) != std::string::npos;
+					});
+					if (matching != devices.end()) {
+						config.device = *matching;
+						std::cout << "Using first device matching substring `" << param << "`" << std::endl;
+					} else if (devices.size() == 1)
+						std::cerr << "No matching device but there's only one device, will be using that anyway" << std::endl;
+					else {
+						std::cerr << "No matching devices" << std::endl;
+						std::exit(EXIT_FAILURE);
+					}
 				}
+
 			});
 		} else if (arg == "--file") {
 			readParam(i, "--file specified but no file was given", [&config](const auto &param) {
@@ -158,9 +174,9 @@ initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 
 	if (parallel.boss) {
 		g_out << "Clover Version " << g_version << std::endl
-		      << "Kokkos Version" << std::endl
-		      << "Task Count " << parallel.max_task << std::endl
-		      << std::endl;
+				<< "Kokkos Version" << std::endl
+				<< "Task Count " << parallel.max_task << std::endl
+				<< std::endl;
 
 		std::cout << "Output file clover.out opened. All output will go there." << std::endl;
 	}
@@ -181,16 +197,16 @@ initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 	for (size_t i = 0; i < devices.size(); ++i) printSimple(devices[i], i);
 
 	std::cout << "Using SYCL device: "
-	          << selectedDevice.get_info<cl::sycl::info::device::name>()
-	          << "("
-	          << deviceName(selectedDevice.get_info<cl::sycl::info::device::device_type>())
-	          << ")"
-	          << std::endl;
+			<< selectedDevice.get_info<cl::sycl::info::device::name>()
+			<< "("
+			<< deviceName(selectedDevice.get_info<cl::sycl::info::device::device_type>())
+			<< ")"
+			<< std::endl;
 
 	std::ifstream g_in;
 	if (parallel.boss) {
 		g_out << "Clover will run from the following input:-" << std::endl
-		      << std::endl;
+				<< std::endl;
 
 		if (!args.empty()) {
 			std::cout << "Args:";
@@ -231,8 +247,8 @@ initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 
 	if (parallel.boss) {
 		g_out << std::endl
-		      << "Initialising and generating" << std::endl
-		      << std::endl;
+				<< "Initialising and generating" << std::endl
+				<< std::endl;
 	}
 
 	read_input(g_in, parallel, config);

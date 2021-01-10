@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 project(cloverleaf_sycl)
 
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (SYCL_RUNTIME)
@@ -15,8 +16,17 @@ if (SYCL_RUNTIME)
         if (NOT HIPSYCL_INSTALL_DIR)
             message(FATAL_ERROR "HIPSYCL_INSTALL_DIR is undefined")
         endif ()
-
         set(hipSYCL_DIR ${HIPSYCL_INSTALL_DIR}/lib/cmake)
+        find_package(hipSYCL CONFIG REQUIRED)
+        set(EXTRA_FLAGS -Wno-sign-compare -Wno-stringop-truncation)
+    elseif (${SYCL_RUNTIME} STREQUAL "HIPSYCL-NEXT")
+
+        if (NOT HIPSYCL_INSTALL_DIR)
+            message(FATAL_ERROR "HIPSYCL_INSTALL_DIR is undefined")
+        endif ()
+        set(CMAKE_CXX_STANDARD 17)
+        set(hipSYCL_DIR ${HIPSYCL_INSTALL_DIR}/lib/cmake/hipSYCL)
+        add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
         find_package(hipSYCL CONFIG REQUIRED)
         set(EXTRA_FLAGS -Wno-sign-compare -Wno-stringop-truncation)
     elseif (${SYCL_RUNTIME} STREQUAL "COMPUTECPP")
@@ -24,20 +34,32 @@ if (SYCL_RUNTIME)
         if (NOT ComputeCpp_DIR)
             message(FATAL_ERROR "ComputeCpp_DIR is undefined")
         endif ()
+        set(OpenCL_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
+        add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
         add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
-        set(COMPUTECPP_USER_FLAGS -O3 -fsycl-split-modules=20 -mllvm -inline-threshold=10000 -no-serial-memop)
         find_package(ComputeCpp REQUIRED)
-        #        set(EXTRA_FLAGS  -pedantic)
+        set(COMPUTECPP_USER_FLAGS -O3 -no-serial-memop)
     elseif (${SYCL_RUNTIME} STREQUAL "DPCPP")
 
-        set(CMAKE_CXX_STANDARD 17)
-        set(CMAKE_CXX_COMPILER "dpcpp")
+        if (NOT DPCPP_BIN)
+            message(STATUS "DPCPP_BIN unspecified, using dpcpp on path")
+            set(CMAKE_CXX_COMPILER "dpcpp")
+        else()
+            set(CMAKE_CXX_COMPILER ${DPCPP_BIN})
+        endif ()
+
+        if(DPCPP_INCLUDE)
+            include_directories(${DPCPP_INCLUDE})
+        endif()
+
+        add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
+        set(CMAKE_CXX_STANDARD 14)
         set(EXTRA_FLAGS -pedantic)
     else ()
-        message(FATAL_ERROR "SYCL_RUNTIME unsupported, must be one of HIPSYCL|COMPUTECPP|DPCPP, got ${SYCL_RUNTIME}")
+        message(FATAL_ERROR "SYCL_RUNTIME unsupported, must be one of HIPSYCL|HIPSYCL-NEXT|COMPUTECPP|DPCPP, got ${SYCL_RUNTIME}")
     endif ()
 else ()
-    message(FATAL_ERROR "SYCL_RUNTIME not defined, must be one of HIPSYCL|COMPUTECPP|DPCPP")
+    message(FATAL_ERROR "SYCL_RUNTIME not defined, must be one of HIPSYCL|HIPSYCL-NEXT|COMPUTECPP|DPCPP")
 endif ()
 
 
@@ -99,9 +121,12 @@ set(SOURCES
         src/visit.cpp)
 
 include_directories(src)
-add_executable(clover_leaf ${SOURCES})
+add_executable(cloverleaf ${SOURCES})
 
-target_compile_options(clover_leaf
+separate_arguments(CXX_EXTRA_FLAGS)
+separate_arguments(CXX_EXTRA_LINKER_FLAGS)
+
+target_compile_options(cloverleaf
         PUBLIC
         -Wall
         -Wextra
@@ -115,20 +140,40 @@ target_compile_options(clover_leaf
         ${EXTRA_FLAGS}
         )
 
+
+if (DEFINED USE_PRE_SYCL121R3)
+    add_definitions(-DUSE_PRE_SYCL121R3)
+endif ()
+
+
 set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer ${CXX_EXTRA_FLAGS})
-set(RELEASE_OPTIONS -O3 ${CXX_EXTRA_FLAGS})
+set(RELEASE_OPTIONS -O3   ${CXX_EXTRA_FLAGS})
 
-target_link_libraries(clover_leaf PUBLIC ${MPI_C_LIB})
+target_link_libraries(cloverleaf PUBLIC ${MPI_C_LIB})
 
-target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:RelWithDebInfo>:${RELEASE_OPTIONS}>")
-target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Release>:${RELEASE_OPTIONS}>")
-target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Debug>:${DEBUG_OPTIONS}>")
+target_compile_options(cloverleaf PUBLIC "$<$<CONFIG:RelWithDebInfo>:${RELEASE_OPTIONS}>")
+target_compile_options(cloverleaf PUBLIC "$<$<CONFIG:Release>:${RELEASE_OPTIONS}>")
+target_compile_options(cloverleaf PUBLIC "$<$<CONFIG:Debug>:${DEBUG_OPTIONS}>")
 
-target_link_options(clover_leaf PUBLIC LINKER:${CXX_EXTRA_LINKER_FLAGS})
+if (${CMAKE_VERSION} VERSION_LESS "3.13.0")
+    message(WARNING "target_link_options is only available in CMake >= 3.13.0, using fallback target_link_libraries, this may cause issues with some compilers")
+    message(WARNING "whitespaces are not supported for CXX_EXTRA_LINKER_FLAGS/CXX_EXTRA_FLAGS in this mode as they are treated as libraries arguments (CMake splits them)")
+    if (DEFINED CXX_EXTRA_LINKER_FLAGS)
+        list(APPEND EXTRA_LINK_FLAGS "-Wl,${CXX_EXTRA_LINKER_FLAGS}")
+    endif ()
+
+    target_link_libraries(cloverleaf PUBLIC ${EXTRA_LINK_FLAGS})
+    target_link_libraries(cloverleaf PUBLIC ${CXX_EXTRA_FLAGS})
+
+else ()
+    target_link_options(cloverleaf PUBLIC LINKER:${CXX_EXTRA_LINKER_FLAGS})
+    target_link_options(cloverleaf PUBLIC ${CXX_EXTRA_FLAGS})
+endif ()
+
 
 if (NOT ${SYCL_RUNTIME} STREQUAL "DPCPP")
     add_sycl_to_target(
-            TARGET clover_leaf
+            TARGET cloverleaf
             SOURCES ${SOURCES}) # must be the last
 endif ()
 
