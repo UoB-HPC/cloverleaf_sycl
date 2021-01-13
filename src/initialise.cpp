@@ -196,12 +196,13 @@ initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 	std::cout << "Detected SYCL devices:" << std::endl;
 	for (size_t i = 0; i < devices.size(); ++i) printSimple(devices[i], i);
 
-	std::cout << "Using SYCL device: "
-			<< selectedDevice.get_info<cl::sycl::info::device::name>()
-			<< "("
-			<< deviceName(selectedDevice.get_info<cl::sycl::info::device::device_type>())
-			<< ")"
-			<< std::endl;
+	std::cout << "Using SYCL device: "<< std::endl;
+	std::cout << "Device    : " << selectedDevice.get_info<cl::sycl::info::device::name>() << std::endl;
+	std::cout << "\tType    : " << deviceName(selectedDevice.get_info<cl::sycl::info::device::device_type>()) << std::endl;
+	std::cout << "\tProfile : " << selectedDevice.get_info<cl::sycl::info::device::profile>() << std::endl;
+	std::cout << "\tVersion : " << selectedDevice.get_info<cl::sycl::info::device::version>() << std::endl;
+	std::cout << "\tVendor  : " << selectedDevice.get_info<cl::sycl::info::device::vendor>() << std::endl;
+	std::cout << "\tDriver  : " << selectedDevice.get_info<cl::sycl::info::device::driver_version>() << std::endl;
 
 	std::ifstream g_in;
 	if (parallel.boss) {
