@@ -2,17 +2,6 @@ cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
 project(cloverleaf_sycl)
 
-set(SYCL_RUNTIME COMPUTECPP)
-set(ComputeCpp_DIR /home/tom/Desktop/computecpp_archive/ComputeCpp-CE-1.0.0-CentOS-x86_64/)
-#
-##set(SYCL_RUNTIME DPCPP)
-##set(ComputeCpp_DIR /home/tom/Desktop/computecpp_archive/ComputeCpp-CE-1.0.0-CentOS-x86_64/)
-#
-set(MPI_AS_LIBRARY ON)
-set(MPI_C_LIB_DIR /opt/intel/oneapi/mpi/2021.1.1/lib)
-set(MPI_C_INCLUDE_DIR /opt/intel/oneapi/mpi/2021.1.1/include)
-set(MPI_C_LIB /opt/intel/oneapi/mpi/2021.1.1/lib/release/libmpi.so)
-
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
