@@ -34,6 +34,8 @@
 #include <fstream>
 #include <iomanip>
 #include <algorithm>
+#include <string>
+#include <sstream>
 
 extern std::ostream g_out;
 std::ofstream of;
