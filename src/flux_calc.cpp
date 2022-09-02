@@ -45,7 +45,6 @@ void flux_calc_kernel(
 	// allows loop fusion that improves performance
 	clover::par_ranged<class flux_calc>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](
 			id<2> idx) {
-
 		vol_flux_x[idx] = 0.25 * dt * xarea[idx]
 		                  * (xvel0[idx] + xvel0[clover::offset(idx, 0, 1)] + xvel1[idx] + xvel1[clover::offset(idx, 0, 1)]);
 		vol_flux_y[idx] = 0.25 * dt * yarea[idx]
@@ -89,4 +88,3 @@ void flux_calc(global_variables &globals) {
 	if (globals.profiler_on) globals.profiler.flux += timer() - kernel_time;
 
 }
-

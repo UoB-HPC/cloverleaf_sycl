@@ -55,10 +55,20 @@ struct value_type {
 	double vol = 0.0, mass = 0.0, ie = 0.0, ke = 0.0, press = 0.0;
 };
 
+value_type operator+(const value_type& a, const value_type& b)
+{
+    value_type res;
+    res.vol = a.vol + b.vol;
+    res.mass = a.mass + b.mass;
+    res.ie = a.ie + b.ie;
+    res.ke = a.ke + b.ke;
+    res.press = a.press + b.press;
+    return res;
+}
+
 typedef clover::local_reducer<value_type, value_type, captures> ctx;
 
 void field_summary(global_variables &globals, parallel_ &parallel) {
-
 	if (parallel.boss) {
 		g_out << std::endl
 		      << "Time " << globals.time << std::endl
@@ -74,11 +84,9 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 
 	double kernel_time = 0;
 	if (globals.profiler_on) kernel_time = timer();
-
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		ideal_gas(globals, tile, false);
 	}
-
 	if (globals.profiler_on) {
 		globals.profiler.ideal_gas += timer() - kernel_time;
 		kernel_time = timer();
@@ -90,20 +98,20 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 	double ke = 0.0;
 	double press = 0.0;
 
+	const value_type id;
 
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		tile_type &t = globals.chunk.tiles[tile];
-
 		int ymax = t.info.t_ymax;
 		int ymin = t.info.t_ymin;
 		int xmax = t.info.t_xmax;
 		int xmin = t.info.t_xmin;
 		clover::Range1d policy(0, (ymax - ymin + 1) * (xmax - xmin + 1));
-
-		clover::Buffer<value_type, 1> result(range<1>(policy.size));
+        value_type r;
+		sycl::buffer<value_type, 1> result(&r, range<1>(1));
 
 		clover::par_reduce_1d<class field_summary, value_type>(
-				globals.queue, policy,
+				globals.queue, policy, result,
 				[=](handler &h, size_t &size) mutable {
 					return ctx(h, size,
 					           {t.field.volume.access<R>(h),
@@ -112,10 +120,10 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 					            t.field.pressure.access<R>(h),
 					            t.field.xvel0.access<R>(h),
 					            t.field.yvel0.access<R>(h)},
-					           result.buffer);
+					           result);
 				},
-				[](const ctx &ctx, id<1> lidx) { ctx.local[lidx] = {}; },
-				[ymin, xmax, xmin](const ctx &ctx, id<1> lidx, id<1> idx) {
+				id,
+				[ymin, xmax, xmin](const ctx &ctx, sycl::id<1> idx, auto& red_sum) {
 
 					const size_t j = xmin + 1 + idx[0] % (xmax - xmin + 1);
 					const size_t k = ymin + 1 + idx[0] / (xmax - xmin + 1);
@@ -131,39 +139,34 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 					}
 					double cell_vol = ctx.actual.volume[j][k];
 					double cell_mass = cell_vol * ctx.actual.density0[j][k];
+					value_type res;
 
-					ctx.local[lidx].vol += cell_vol;
-					ctx.local[lidx].mass += cell_mass;
-					ctx.local[lidx].ie += cell_mass * ctx.actual.energy0[j][k];
-					ctx.local[lidx].ke += cell_mass * 0.5 * vsqrd;
-					ctx.local[lidx].press += cell_vol * ctx.actual.pressure[j][k];
+					res.vol += cell_vol;
+					res.mass += cell_mass;
+					res.ie += cell_mass * ctx.actual.energy0[j][k];
+					res.ke += cell_mass * 0.5 * vsqrd;
+					res.press += cell_vol * ctx.actual.pressure[j][k];
+
+					red_sum.combine(res);
 				},
-				[](const ctx &ctx, id<1> idx, id<1> idy) {
-					ctx.local[idx].vol += ctx.local[idy].vol;
-					ctx.local[idx].mass += ctx.local[idy].mass;
-					ctx.local[idx].ie += ctx.local[idy].ie;
-					ctx.local[idx].ke += ctx.local[idy].ke;
-					ctx.local[idx].press += ctx.local[idy].press;
-				},
-				[](const ctx &ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
+				std::plus());
 
 		{
-			vol = result.access<R>()[0].vol;
-			mass = result.access<R>()[0].mass;
-			ie = result.access<R>()[0].ie;
-			ke = result.access<R>()[0].ke;
-			press = result.access<R>()[0].press;
+			sycl::host_accessor res {result, sycl::read_only};
+			vol += res[0].vol;
+			mass += res[0].mass;
+			ie += res[0].ie;
+			ke += res[0].ke;
+			press += res[0].press;
 		}
 
 
 	}
-
 	clover_sum(vol);
 	clover_sum(mass);
 	clover_sum(ie);
 	clover_sum(ke);
 	clover_sum(press);
-
 	if (globals.profiler_on) globals.profiler.summary += timer() - kernel_time;
 
 	if (parallel.boss) {
@@ -180,7 +183,6 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 				<< std::endl;
 		g_out.flags(formatting);
 	}
-
 	if (globals.complete) {
 		double qa_diff;
 		if (parallel.boss) {

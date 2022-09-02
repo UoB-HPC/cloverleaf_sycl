@@ -309,8 +309,8 @@ void clover_allocate_buffers(global_variables &globals, parallel_ &parallel) {
 }
 
 void clover_sum(double &value) {
-
-	double total;
+	//todo
+	double total = value;
 	MPI_Reduce(&value, &total, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	value = total;
 }

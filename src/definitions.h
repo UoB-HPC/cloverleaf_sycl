@@ -45,8 +45,6 @@
 
 #define APPEND_LN(base) PP_CAT(base, __LINE__) // appends line number to the given base name
 
-using namespace cl;
-
 using sycl::accessor;
 using sycl::queue;
 using sycl::buffer;
@@ -386,7 +384,7 @@ struct global_variables {
 
 	const global_config config;
 
-	cl::sycl::queue queue;
+	sycl::queue queue;
 	chunk_type chunk;
 
 	int error_condition;
@@ -410,7 +408,7 @@ struct global_variables {
 
 	explicit global_variables(
 			const global_config &config,
-			cl::sycl::queue queue,
+			sycl::queue queue,
 			chunk_type chunk) :
 			config(config), queue(std::move(queue)), chunk(std::move(chunk)),
 			dt(config.dtinit),

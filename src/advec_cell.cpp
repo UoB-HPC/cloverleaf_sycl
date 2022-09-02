@@ -104,7 +104,7 @@ void advec_cell_kernel(
 
 
 						int upwind, donor, downwind, dif;
-						double sigmat, sigma3, sigma4, sigmav, sigma, sigmam, diffuw, diffdw, limiter, wind;
+						double sigmat, sigma3, sigma4, sigmav, sigmam, diffuw, diffdw, limiter, wind;
 
 						const int j = idx.get(0);
 						const int k = idx.get(1);
@@ -126,7 +126,6 @@ void advec_cell_kernel(
 						sigma3 = (1.0 + sigmat) * (vertexdx[j] / vertexdx[dif]);
 						sigma4 = 2.0 - sigmat;
 
-						sigma = sigmat;
 						sigmav = sigmat;
 
 						diffuw = density1[donor][k] - density1[upwind][k];
@@ -234,7 +233,7 @@ void advec_cell_kernel(
 			clover::par_ranged<class advec_cell_ydir_ener_flux>(
 					h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2 + 2}, [=](id<2> idx) {
 						int upwind, donor, downwind, dif;
-						double sigmat, sigma3, sigma4, sigmav, sigma, sigmam, diffuw, diffdw, limiter, wind;
+						double sigmat, sigma3, sigma4, sigmav, sigmam, diffuw, diffdw, limiter, wind;
 
 						const int j = idx.get(0);
 						const int k = idx.get(1);
@@ -255,7 +254,6 @@ void advec_cell_kernel(
 						sigma3 = (1.0 + sigmat) * (vertexdy[k] / vertexdy[dif]);
 						sigma4 = 2.0 - sigmat;
 
-						sigma = sigmat;
 						sigmav = sigmat;
 
 						diffuw = density1[j][donor] - density1[j][upwind];

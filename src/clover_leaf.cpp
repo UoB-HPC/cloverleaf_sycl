@@ -71,7 +71,6 @@ int main(int argc, char *argv[]) {
 				<< std::endl;
 	}
 
-
 	std::unique_ptr<global_variables> config = initialise(parallel,
 	                                                      std::vector<std::string>(argv + 1, argv + argc));
 

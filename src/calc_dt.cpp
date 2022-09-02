@@ -93,7 +93,6 @@ void calc_dt_kernel(
 
 		clover::par_ranged<class APPEND_LN(advec_mom_x1)>(h, policy, [=](
 				id<2> idx) {
-
 			double dsx = celldx_[idx[0]];
 			double dsy = celldy_[idx[1]];
 
@@ -147,25 +146,31 @@ void calc_dt_kernel(
 	});
 
 
+
 	struct captures {
 		clover::Accessor<double, 1, R>::Type data;
 	};
 	typedef clover::local_reducer<double, double, captures> ctx;
 
+	const double id = g_big;
+
+	double r = g_big;
+	clover::Buffer<double, 1> result_red(&r, range<1>(1));
+
 	clover::par_reduce_1d<class dt_kernel_reduce, double>(
-			q, clover::Range1d(0u, policy.sizeX * policy.sizeY),
+			q, clover::Range1d(0u, policy.sizeX * policy.sizeY), result_red.buffer,
 			[=](handler &h, size_t &size) mutable {
 				return ctx(h, size, {result.access<R>(h)}, result.buffer);
 			},
-			[](const ctx &ctx, id<1> lidx) { ctx.local[lidx] = g_big; },
-			[](const ctx &ctx, id<1> lidx, id<1> idx) {
-				ctx.local[lidx] = sycl::fmin(ctx.local[lidx], ctx.actual.data[idx]);
+			id,
+			[](const ctx &ctx, sycl::id<1> idx, auto& red_sum) {
+				red_sum.combine(ctx.actual.data[idx]);
 			},
-			[](const ctx &ctx, id<1> idx, id<1> idy) { ctx.local[idx] = sycl::fmin(ctx.local[idx], ctx.local[idy]); },
-			[](const ctx &ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
+			sycl::minimum<>());
 
 	{
-		dt_min_val = result.access<R>()[0];
+		auto res = result_red.access<R>();
+		dt_min_val = res[0];
 	}
 
 #else
@@ -188,9 +193,13 @@ void calc_dt_kernel(
 
 
 	clover::Buffer<double, 1> result(range<1>(policy.sizeX * policy.sizeY));
+	
+	double r = g_big;
+	clover::Buffer<double, 1> result_red(&r, range<1>(1));
+
 
 	clover::par_reduce_2d<class dt_kernel_reduce, double>(
-			q, policy,
+			q, policy, result_red,
 			[=](handler &h, size_t &size) mutable {
 				return ctx(h, size,
 						   {xarea.access<R>(h),
@@ -205,8 +214,8 @@ void calc_dt_kernel(
 							yvel0.access<R>(h) },
 						   result.buffer);
 			},
-			[](const ctx &ctx, id<1> lidx) { ctx.local[lidx] = g_big; },
-			[dtc_safe, dtv_safe, dtu_safe, dtdiv_safe](ctx ctx, id<1> lidx, id<2> idx) {
+			g_big,
+			[dtc_safe, dtv_safe, dtu_safe, dtdiv_safe](ctx ctx, id<2> idx, auto& red_sum) {
 
 
 				double dsx = ctx.actual.celldx[idx[0]];
@@ -253,13 +262,13 @@ void calc_dt_kernel(
 				}
 
 				double mins = sycl::fmin(dtct, sycl::fmin(dtut, sycl::fmin(dtvt, sycl::fmin(dtdivt, g_big))));
-				ctx.local[lidx] = sycl::fmin(ctx.local[lidx], mins);
+				red_sum.combine(mins);
 			},
-			[](const ctx &ctx, id<1> idx, id<1> idy) { ctx.local[idx] = sycl::fmin(ctx.local[idx], ctx.local[idy]); },
-			[](const ctx &ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
+			sycl::minimum<double>());
 
 	{
-		dt_min_val = result.access<R>()[0];
+		auto res = result_red.access<R>();
+		dt_min_val = res[0];
 	}
 
 #endif

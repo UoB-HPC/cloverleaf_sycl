@@ -45,9 +45,12 @@ void timestep(global_variables &globals, parallel_ &parallel) {
 	double kernel_time = 0;
 	if (globals.profiler_on) kernel_time = timer();
 
+
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		ideal_gas(globals, tile, false);
 	}
+
+
 
 	if (globals.profiler_on) globals.profiler.ideal_gas += timer() - kernel_time;
 
@@ -59,13 +62,20 @@ void timestep(global_variables &globals, parallel_ &parallel) {
 	fields[field_yvel0] = 1;
 	update_halo(globals, fields, 1);
 
+
+
 	if (globals.profiler_on) kernel_time = timer();
 	viscosity(globals);
 	if (globals.profiler_on) globals.profiler.viscosity += timer() - kernel_time;
 
+
+
 	for (int i = 0; i < NUM_FIELDS; ++i) fields[i] = 0;
 	fields[field_viscosity] = 1;
 	update_halo(globals, fields, 1);
+
+
+
 
 	if (globals.profiler_on) kernel_time = timer();
 
@@ -86,6 +96,8 @@ void timestep(global_variables &globals, parallel_ &parallel) {
 		}
 	}
 
+
+
 	globals.dt = std::min(std::min(globals.dt, globals.dtold * globals.config.dtrise), globals.config.dtmax);
 
 //	globals.queue.wait_and_throw();
@@ -102,7 +114,6 @@ void timestep(global_variables &globals, parallel_ &parallel) {
 		          << dt_control << " timestep  " << globals.dt << " " << globals.jdt << ","
 		          << globals.kdt << " x " << x_pos << " y " << y_pos << std::endl;
 	}
-
 	if (small == 1) {
 		report_error((char *) "timestep", (char *) "small timestep");
 	}

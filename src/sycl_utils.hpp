@@ -24,53 +24,66 @@
 #include <iostream>
 #include <utility>
 
-//#define SYCL_DEBUG // enable for debugging SYCL related things, also syncs kernel calls
-//#define SYNC_KERNELS // enable for fully synchronous (e.g queue.wait_and_throw()) kernel calls
-//#define SYCL_FLIP_2D // enable for flipped id<2> indices from SYCL default
+
+// #define SYCL_DEBUG // enable for debugging SYCL related things, also syncs kernel calls
+// #define SYNC_KERNELS // enable for fully synchronous (e.g queue.wait_and_throw()) kernel calls
+// #define SYCL_FLIP_2D // enable for flipped id<2> indices from SYCL default
 
 // this namespace houses all SYCL related abstractions
 namespace clover {
 
-	// abstracts away cl::sycl::accessor
+	// abstracts away sycl::accessor
 	template<typename T,
 			int N,
-			cl::sycl::access::mode mode>
+			sycl::access::mode mode>
 	struct Accessor {
-		typedef cl::sycl::accessor<T, N, mode, cl::sycl::access::target::global_buffer> Type;
-		typedef cl::sycl::accessor<T, N, mode, cl::sycl::access::target::host_buffer> HostType;
+		typedef sycl::accessor<T, N, mode, sycl::access::target::device> Type;
+		typedef sycl::accessor<T, N, mode, sycl::access::target::host_buffer> HostType;
 
-		inline static Type from(cl::sycl::buffer<T, N> &b, cl::sycl::handler &cgh) {
-			return b.template get_access<mode, cl::sycl::access::target::global_buffer>(cgh);
+		inline static Type from(sycl::buffer<T, N> &b, sycl::handler &cgh) {
+			return b.template get_access<mode, sycl::access::target::device>(cgh);
 		}
 
-		inline static HostType access_host(cl::sycl::buffer<T, N> &b) {
+		inline static Type from(sycl::buffer<T, N> &b, sycl::handler &cgh, sycl::range<N> accessRange, sycl::id<N> accessOffset) {
+			return b.template get_access<mode, sycl::access::target::device>(cgh, accessRange, accessOffset);
+		}
+
+		inline static HostType access_host(sycl::buffer<T, N> &b) {
 			return b.template get_access<mode>();
 		}
 
 	};
 
-	// abstracts away cl::sycl::buffer
+	// abstracts away sycl::buffer
 	template<typename T, int N>
 	struct Buffer {
 
-		cl::sycl::buffer<T, N> buffer;
+		sycl::buffer<T, N> buffer;
 
 		// delegates to the corresponding buffer constructor
-		explicit Buffer(cl::sycl::range<N> range) : buffer(range) {}
+		explicit Buffer(sycl::range<N> range) : buffer(range) {}
+
+		explicit Buffer(T* src, sycl::range<N> range) : buffer(src, range){}
 
 		// delegates to the corresponding buffer constructor
 		template<typename Iterator>
 		explicit Buffer(Iterator begin, Iterator end) : buffer(begin, end) {}
 
 		// delegates to accessor.get_access<mode>(handler)
-		template<cl::sycl::access::mode mode>
+		template<sycl::access::mode mode>
 		inline typename Accessor<T, N, mode>::Type
-		access(cl::sycl::handler &cgh) { return Accessor<T, N, mode>::from(buffer, cgh); }
+		access(sycl::handler &cgh) { return Accessor<T, N, mode>::from(buffer, cgh); }
+		
+		
+		// delegates to accessor.get_access<mode>(handler)
+		template<sycl::access::mode mode>
+		inline typename Accessor<T, N, mode>::Type
+		access(sycl::handler &cgh, sycl::range<N> accessRange, sycl::id<N> accessOffset) { return Accessor<T, N, mode>::from(buffer, cgh, accessRange, accessOffset); }
 
 
 		// delegates to accessor.get_access<mode>()
 		// **for host buffers only**
-		template<cl::sycl::access::mode mode>
+		template<sycl::access::mode mode>
 		inline typename Accessor<T, N, mode>::HostType
 		access() { return Accessor<T, N, mode>::access_host(buffer); }
 
@@ -115,7 +128,7 @@ namespace clover {
 	};
 
 	// safely offset an id<2> by j and k
-	static inline cl::sycl::id<2> offset(const cl::sycl::id<2> idx, const int j, const int k) {
+	static inline sycl::id<2> offset(const sycl::id<2> idx, const int j, const int k) {
 		int jj = static_cast<int>(idx[0]) + j;
 		int kk = static_cast<int>(idx[1]) + k;
 #ifdef SYCL_DEBUG
@@ -123,49 +136,51 @@ namespace clover {
 		assert(jj >= 0);
 		assert(kk >= 0);
 #endif
-		return cl::sycl::id<2>(jj, kk);
+		return sycl::id<2>(jj, kk);
 	}
 
 
 	// delegates to parallel_for, handles flipping if enabled
 	template<typename nameT, class functorT>
-	static inline void par_ranged(cl::sycl::handler &cgh, const Range1d &range, functorT functor) {
+	static inline void par_ranged(sycl::handler &cgh, const Range1d &range, functorT functor) {
 		cgh.parallel_for<nameT>(
-				cl::sycl::range<1>(range.size),
-				cl::sycl::id<1>(range.from),
-				functor);
+				sycl::range<1>(range.size),
+				[=](sycl::id<1> idx){
+					idx = sycl::id<1>(idx.get(0) + range.from);
+					functor(idx);
+				});
 	}
 
 	// delegates to parallel_for, handles flipping if enabled
 	template<typename nameT, class functorT>
-	static inline void par_ranged(cl::sycl::handler &cgh, const Range2d &range, functorT functor) {
+	static inline void par_ranged(sycl::handler &cgh, const Range2d &range, functorT functor) {
 #ifdef SYCL_FLIP_2D
 		cgh.parallel_for<nameT>(
-				cl::sycl::range<2>(range.sizeY, range.sizeX),
-				cl::sycl::id<2>(range.fromY, range.fromX),
-				[=](cl::sycl::id<2> idx) {
-					functor(cl::sycl::id<2>(idx[1], idx[0]));
+				sycl::range<2>(range.sizeY, range.sizeX),
+				sycl::id<2>(range.fromY, range.fromX),
+				[=](sycl::id<2> idx) {
+					functor(sycl::id<2>(idx[1], idx[0]));
 				});
 #else
 		cgh.parallel_for<nameT>(
-				cl::sycl::range<2>(range.sizeX, range.sizeY),
-				cl::sycl::id<2>(range.fromX, range.fromY),
-				functor);
+				sycl::range<2>(range.sizeX, range.sizeY),
+				[=](sycl::id<2> idx){
+					idx = sycl::id<2>(idx.get(0) + range.fromX, idx.get(1) + range.fromY);
+					functor(idx);
+				});
 #endif
 	}
 
+
 	// delegates to queue.submit(cgf), handles blocking submission if enable
 	template<typename T>
-	static void execute(cl::sycl::queue &queue, T cgf) {
+	static void execute(sycl::queue &queue, T cgf) {
 		try {
 			queue.submit(cgf);
 #if defined(SYCL_DEBUG) || defined(SYNC_KERNELS)
 			queue.wait_and_throw();
 #endif
-		} catch (cl::sycl::device_error &e) {
-			std::cerr << "[SYCL] Device error: : `" << e.what() << "`" << std::endl;
-			throw e;
-		} catch (cl::sycl::exception &e) {
+		} catch (sycl::exception &e) {
 			std::cerr << "[SYCL] Exception : `" << e.what() << "`" << std::endl;
 			throw e;
 		}

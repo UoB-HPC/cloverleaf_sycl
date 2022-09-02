@@ -49,7 +49,8 @@ void hydro(global_variables &globals, parallel_ &parallel) {
 
 	double timerstart = timer();
 
-	if (DEBUG) globals.dump("dump_" + std::to_string(globals.step) + "_0.txt");
+	
+	if (DEBUG) globals.dump("dumps/dump_" + std::to_string(parallel.task) + "_" + std::to_string(globals.step) + "_0.txt");
 
 
 	while (true) {
@@ -59,32 +60,31 @@ void hydro(global_variables &globals, parallel_ &parallel) {
 		globals.step += 1;
 
 		timestep(globals, parallel);
-		if (DEBUG) globals.dump("dump_" + std::to_string(globals.step) + "_1_timestep.txt");
+		if (DEBUG) globals.dump("dumps/dump_" + std::to_string(parallel.task) + "_" + std::to_string(globals.step) + "_1_timestep.txt");
 
 
 		PdV(globals, true);
-		if (DEBUG) globals.dump("dump_" + std::to_string(globals.step) + "_2_PdV.txt");
+		if (DEBUG) globals.dump("dumps/dump_" + std::to_string(parallel.task) + "_" + std::to_string(globals.step) + "_2_PdV.txt");
 
 
 		accelerate(globals);
-		if (DEBUG) globals.dump("dump_" + std::to_string(globals.step) + "_3_accelerate.txt");
+		if (DEBUG) globals.dump("dumps/dump_" + std::to_string(parallel.task) + "_" + std::to_string(globals.step) + "_3_accelerate.txt");
 
 
 		PdV(globals, false);
-		if (DEBUG) globals.dump("dump_" + std::to_string(globals.step) + "_4_PdV.txt");
+		if (DEBUG) globals.dump("dumps/dump_" + std::to_string(parallel.task) + "_" + std::to_string(globals.step) + "_4_PdV.txt");
 
 
 		flux_calc(globals);
-		if (DEBUG) globals.dump("dump_" + std::to_string(globals.step) + "_5_flux_calc.txt");
+		if (DEBUG) globals.dump("dumps/dump_" + std::to_string(parallel.task) + "_" + std::to_string(globals.step) + "_5_flux_calc.txt");
 
 
 		advection(globals);
-		if (DEBUG) globals.dump("dump_" + std::to_string(globals.step) + "_6_advection.txt");
+		if (DEBUG) globals.dump("dumps/dump_" + std::to_string(parallel.task) + "_" + std::to_string(globals.step) + "_6_advection.txt");
 
 
 		reset_field(globals);
-		if (DEBUG) globals.dump("dump_" + std::to_string(globals.step) + "_7_reset_field.txt");
-
+		if (DEBUG) globals.dump("dumps/dump_" + std::to_string(parallel.task) + "_" + std::to_string(globals.step) + "_7_reset_field.txt");
 
 		globals.advect_x = !globals.advect_x;
 
