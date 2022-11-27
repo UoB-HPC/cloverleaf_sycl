@@ -60,7 +60,11 @@ std::string deviceName(sycl::info::device_type type) {
 
 // dumps device info to stdout
 void printDetailed(const sycl::device &device, size_t index) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 	auto exts = device.get_info<sycl::info::device::extensions>();
+#pragma clang diagnostic pop
+
 	std::ostringstream extensions;
 	std::copy(exts.begin(), exts.end(), std::ostream_iterator<std::string>(extensions, ","));
 

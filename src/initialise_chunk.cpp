@@ -113,7 +113,7 @@ void initialise_chunk(const int tile, global_variables &globals) {
 		auto xarea = field.xarea.access<W>(h);
 		auto yarea = field.yarea.access<W>(h);
 		auto celldx = field.celldx.access<W>(h);
-		auto celldy = field.celldx.access<W>(h);
+		auto celldy = field.celldy.access<W>(h);
 		clover::par_ranged<class APPEND_LN(initialise)>(h, {0u, 0u, xrange1, yrange1}, [=](id<2> idx) {
 			volume[idx] = dx * dy;
 			xarea[idx] = celldy[idx[1]];
