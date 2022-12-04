@@ -711,10 +711,10 @@ void clover_send_recv_message_left(
 
 	int left_task = globals.chunk.chunk_neighbours[chunk_left] - 1;
 
-	MPI_Isend(globals.chunk.left_snd_buffer.access<R>().get_pointer(), total_size, MPI_DOUBLE, left_task, tag_send,
+	MPI_Isend(globals.chunk.left_snd_buffer.access_ptr<R>(total_size), total_size, MPI_DOUBLE, left_task, tag_send,
 	          MPI_COMM_WORLD, &req_send);
 
-	MPI_Irecv(globals.chunk.left_rcv_buffer.access<R>().get_pointer(), total_size, MPI_DOUBLE, left_task, tag_recv,
+	MPI_Irecv(globals.chunk.left_rcv_buffer.access_ptr<W>(total_size), total_size, MPI_DOUBLE, left_task, tag_recv,
 	          MPI_COMM_WORLD, &req_recv);
 }
 
@@ -1138,10 +1138,10 @@ void clover_send_recv_message_right(
 
 	int right_task = globals.chunk.chunk_neighbours[chunk_right] - 1;
 
-	MPI_Isend(globals.chunk.right_snd_buffer.access<R>().get_pointer(), total_size, MPI_DOUBLE, right_task,
+	MPI_Isend(globals.chunk.right_snd_buffer.access_ptr<R>(total_size), total_size, MPI_DOUBLE, right_task,
 	          tag_send, MPI_COMM_WORLD, &req_send);
 
-	MPI_Irecv(globals.chunk.right_rcv_buffer.access<R>().get_pointer(), total_size, MPI_DOUBLE, right_task,
+	MPI_Irecv(globals.chunk.right_rcv_buffer.access_ptr<W>(total_size), total_size, MPI_DOUBLE, right_task,
 	          tag_recv, MPI_COMM_WORLD, &req_recv);
 }
 
@@ -1565,10 +1565,10 @@ void clover_send_recv_message_top(
 
 	int top_task = globals.chunk.chunk_neighbours[chunk_top] - 1;
 
-	MPI_Isend(globals.chunk.top_snd_buffer.access<R>().get_pointer(), total_size, MPI_DOUBLE, top_task, tag_send,
+	MPI_Isend(globals.chunk.top_snd_buffer.access_ptr<R>(total_size), total_size, MPI_DOUBLE, top_task, tag_send,
 	          MPI_COMM_WORLD, &req_send);
 
-	MPI_Irecv(globals.chunk.top_rcv_buffer.access<R>().get_pointer(), total_size, MPI_DOUBLE, top_task, tag_recv,
+	MPI_Irecv(globals.chunk.top_rcv_buffer.access_ptr<W>(total_size), total_size, MPI_DOUBLE, top_task, tag_recv,
 	          MPI_COMM_WORLD, &req_recv);
 }
 
@@ -1993,10 +1993,10 @@ void clover_send_recv_message_bottom(
 
 	int bottom_task = globals.chunk.chunk_neighbours[chunk_bottom] - 1;
 
-	MPI_Isend(globals.chunk.bottom_snd_buffer.access<R>().get_pointer(), total_size, MPI_DOUBLE, bottom_task,
+	MPI_Isend(globals.chunk.bottom_snd_buffer.access_ptr<R>(total_size), total_size, MPI_DOUBLE, bottom_task,
 	          tag_send, MPI_COMM_WORLD, &req_send);
 
-	MPI_Irecv(globals.chunk.bottom_rcv_buffer.access<R>().get_pointer(), total_size, MPI_DOUBLE, bottom_task,
+	MPI_Irecv(globals.chunk.bottom_rcv_buffer.access_ptr<W>(total_size), total_size, MPI_DOUBLE, bottom_task,
 	          tag_recv, MPI_COMM_WORLD, &req_recv);
 }
 

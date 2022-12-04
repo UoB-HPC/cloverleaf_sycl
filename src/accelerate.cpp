@@ -36,8 +36,8 @@ void accelerate_kernel(
 		clover::Accessor<double, 2, R>::Type density0,
 		clover::Accessor<double, 2, R>::Type pressure,
 		clover::Accessor<double, 2, R>::Type viscosity,
-		clover::Accessor<double, 2, RW>::Type xvel0,
-		clover::Accessor<double, 2, RW>::Type yvel0,
+		clover::Accessor<double, 2, R>::Type xvel0,
+		clover::Accessor<double, 2, R>::Type yvel0,
 		clover::Accessor<double, 2, RW>::Type xvel1,
 		clover::Accessor<double, 2, RW>::Type yvel1) {
 
@@ -109,8 +109,8 @@ void accelerate(global_variables &globals) {
 					t.field.density0.access<R>(h),
 					t.field.pressure.access<R>(h),
 					t.field.viscosity.access<R>(h),
-					t.field.xvel0.access<RW>(h),
-					t.field.yvel0.access<RW>(h),
+					t.field.xvel0.access<R>(h),
+					t.field.yvel0.access<R>(h),
 					t.field.xvel1.access<RW>(h),
 					t.field.yvel1.access<RW>(h));
 		});

@@ -32,7 +32,9 @@ if (SYCL_RUNTIME)
     elseif (${SYCL_RUNTIME} STREQUAL "DPCPP")
 
         set(CMAKE_CXX_STANDARD 17)
-        set(CMAKE_CXX_COMPILER "dpcpp")
+        if(NOT CMAKE_CXX_COMPILER)
+            set(CMAKE_CXX_COMPILER "dpcpp")
+        endif()
         set(EXTRA_FLAGS -pedantic)
     else ()
         message(FATAL_ERROR "SYCL_RUNTIME unsupported, must be one of HIPSYCL|COMPUTECPP|DPCPP, got ${SYCL_RUNTIME}")
@@ -125,6 +127,7 @@ target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:RelWithDebInfo>:${RELEASE_
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Release>:${RELEASE_OPTIONS}>")
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Debug>:${DEBUG_OPTIONS}>")
 
+target_link_options(clover_leaf PUBLIC ${CXX_EXTRA_LINK_FLAGS})
 target_link_options(clover_leaf PUBLIC LINKER:${CXX_EXTRA_LINKER_FLAGS})
 
 if (NOT ${SYCL_RUNTIME} STREQUAL "DPCPP")

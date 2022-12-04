@@ -38,7 +38,7 @@ void ideal_gas_kernel(
 		clover::Accessor<double, 2, R>::Type density,
 		clover::Accessor<double, 2, R>::Type energy,
 		clover::Accessor<double, 2, RW>::Type pressure,
-		clover::Accessor<double, 2, RW>::Type soundspeed) {
+		clover::Accessor<double, 2, W>::Type soundspeed) {
 
 	//std::cout <<" ideal_gas(" << x_min+1 << ","<< y_min+1<< ","<< x_max+2<< ","<< y_max +2  << ")" << std::endl;
 	// DO k=y_min,y_max
@@ -79,7 +79,7 @@ void ideal_gas(global_variables &globals, const int tile, bool predict) {
 					t.field.density0.access<R>(h),
 					t.field.energy0.access<R>(h),
 					t.field.pressure.access<RW>(h),
-					t.field.soundspeed.access<RW>(h)
+					t.field.soundspeed.access<W>(h)
 			);
 		} else {
 			ideal_gas_kernel(
@@ -91,7 +91,7 @@ void ideal_gas(global_variables &globals, const int tile, bool predict) {
 					t.field.density1.access<R>(h),
 					t.field.energy1.access<R>(h),
 					t.field.pressure.access<RW>(h),
-					t.field.soundspeed.access<RW>(h)
+					t.field.soundspeed.access<W>(h)
 			);
 		}
 	});

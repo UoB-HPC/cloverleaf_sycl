@@ -90,7 +90,7 @@ void initialise_chunk(const int tile, global_variables &globals) {
 	clover::execute(globals.queue, [&](handler &h) {
 		auto cellx = field.cellx.access<W>(h);
 		auto celldx = field.celldx.access<W>(h);
-		auto vertexx = field.vertexx.access<W>(h);
+		auto vertexx = field.vertexx.access<R>(h);
 		clover::par_ranged<class APPEND_LN(initialise)>(h, {0u, xrange1}, [=](id<1> j) {
 			cellx[j] = 0.5 * (vertexx[j] + vertexx[j[0] + 1]);
 			celldx[j] = dx;
@@ -100,7 +100,7 @@ void initialise_chunk(const int tile, global_variables &globals) {
 	clover::execute(globals.queue, [&](handler &h) {
 		auto celly = field.celly.access<W>(h);
 		auto celldy = field.celldy.access<W>(h);
-		auto vertexy = field.vertexy.access<W>(h);
+		auto vertexy = field.vertexy.access<R>(h);
 
 		clover::par_ranged<class APPEND_LN(initialise)>(h, {0u, yrange1}, [=](id<1> k) {
 			celly[k] = 0.5 * (vertexy[k] + vertexy[k[0] + 1]);
@@ -112,8 +112,8 @@ void initialise_chunk(const int tile, global_variables &globals) {
 		auto volume = field.volume.access<W>(h);
 		auto xarea = field.xarea.access<W>(h);
 		auto yarea = field.yarea.access<W>(h);
-		auto celldx = field.celldx.access<W>(h);
-		auto celldy = field.celldy.access<W>(h);
+		auto celldx = field.celldx.access<R>(h);
+		auto celldy = field.celldy.access<R>(h);
 		clover::par_ranged<class APPEND_LN(initialise)>(h, {0u, 0u, xrange1, yrange1}, [=](id<2> idx) {
 			volume[idx] = dx * dy;
 			xarea[idx] = celldy[idx[1]];

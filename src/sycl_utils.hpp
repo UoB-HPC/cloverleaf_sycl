@@ -26,7 +26,7 @@
 
 
 // #define SYCL_DEBUG // enable for debugging SYCL related things, also syncs kernel calls
-// #define SYNC_KERNELS // enable for fully synchronous (e.g queue.wait_and_throw()) kernel calls
+ #define SYNC_KERNELS // enable for fully synchronous (e.g queue.wait_and_throw()) kernel calls
 // #define SYCL_FLIP_2D // enable for flipped id<2> indices from SYCL default
 
 // this namespace houses all SYCL related abstractions
@@ -87,6 +87,11 @@ namespace clover {
 		inline typename Accessor<T, N, mode>::HostType
 		access() { return Accessor<T, N, mode>::access_host(buffer); }
 
+                template<sycl::access::mode mode>
+                inline T*
+                access_ptr(size_t count) {
+                     return buffer.template get_access<mode>(count).get_pointer();
+                }
 	};
 
 	struct Range1d {

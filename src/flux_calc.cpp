@@ -36,8 +36,8 @@ void flux_calc_kernel(
 		clover::Accessor<double, 2, R>::Type yvel0,
 		clover::Accessor<double, 2, R>::Type xvel1,
 		clover::Accessor<double, 2, R>::Type yvel1,
-		clover::Accessor<double, 2, RW>::Type vol_flux_x,
-		clover::Accessor<double, 2, RW>::Type vol_flux_y) {
+		clover::Accessor<double, 2, W>::Type vol_flux_x,
+		clover::Accessor<double, 2, W>::Type vol_flux_y) {
 
 	// DO k=y_min,y_max+1
 	//   DO j=x_min,x_max+1
@@ -79,8 +79,8 @@ void flux_calc(global_variables &globals) {
 					t.field.yvel0.access<R>(h),
 					t.field.xvel1.access<R>(h),
 					t.field.yvel1.access<R>(h),
-					t.field.vol_flux_x.access<RW>(h),
-					t.field.vol_flux_y.access<RW>(h));
+					t.field.vol_flux_x.access<W>(h),
+					t.field.vol_flux_y.access<W>(h));
 
 		}
 	});

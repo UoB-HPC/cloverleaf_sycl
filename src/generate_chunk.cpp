@@ -91,10 +91,10 @@ void generate_chunk(const int tile, global_variables &globals) {
 
 
 	clover::execute(globals.queue, [&](handler &h) {
-		auto density0 = field.density0.access<RW>(h);
-		auto xvel0 = field.xvel0.access<RW>(h);
-		auto yvel0 = field.yvel0.access<RW>(h);
-		auto energy0 = field.energy0.access<RW>(h);
+		auto density0 = field.density0.access<W>(h);
+		auto xvel0 = field.xvel0.access<W>(h);
+		auto yvel0 = field.yvel0.access<W>(h);
+		auto energy0 = field.energy0.access<W>(h);
 
 		auto state_density = hm_state_density.access<R>(h);
 		auto state_energy = hm_state_energy.access<R>(h);
@@ -112,10 +112,10 @@ void generate_chunk(const int tile, global_variables &globals) {
 	for (int state = 1; state < globals.config.number_of_states; ++state) {
 		clover::execute(globals.queue, [&](handler &h) {
 
-			auto density0 = field.density0.access<RW>(h);
-			auto xvel0 = field.xvel0.access<RW>(h);
-			auto yvel0 = field.yvel0.access<RW>(h);
-			auto energy0 = field.energy0.access<RW>(h);
+			auto density0 = field.density0.access<W>(h);
+			auto xvel0 = field.xvel0.access<W>(h);
+			auto yvel0 = field.yvel0.access<W>(h);
+			auto energy0 = field.energy0.access<W>(h);
 
 			auto state_density = hm_state_density.access<R>(h);
 			auto state_energy = hm_state_energy.access<R>(h);
