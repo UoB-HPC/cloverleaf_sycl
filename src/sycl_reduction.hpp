@@ -42,7 +42,7 @@ namespace clover {
 				local(sycl::range<1>(size), h),
 				actual(actual),
 				result(b.template get_access<sycl::access::mode::read_write>(h)) {}
-				
+
 
 		inline void drain(sycl::id<1> lid, sycl::id<1> gid) const { local[lid] = result[gid]; }
 
@@ -86,7 +86,7 @@ namespace clover {
 		dot_num_groups = std::min(N, dot_num_groups);
 #ifdef SYCL_DEBUG
 		std::cout << "RD: dot_wgsize=" << dot_wgsize << " dot_num_groups:" << dot_num_groups << " N=" << N << "\n";
-#endif	
+#endif
 
 		q.submit([=](sycl::handler &h) mutable {
 			auto ctx = allocator(h, dot_wgsize);
@@ -96,7 +96,14 @@ namespace clover {
 					reduction,
 					[=](sycl::nd_item<1> item, auto& red_sum) {
 
+						#ifdef USE_PRE_SYCL121R3
+						size_t i = item.get_global(0);
+						size_t li = item.get_local(0);
+						#else
 						size_t i = item.get_global_id(0);
+						size_t li = item.get_local_id(0);
+						#endif
+
 						size_t global_size = item.get_global_range()[0];
 
 						for (; i < N; i += global_size) {

@@ -37,6 +37,7 @@
 #include "cxx14_compat.hpp"
 #include <string>
 #include <sstream>
+#include <algorithm>
 
 extern std::ostream g_out;
 

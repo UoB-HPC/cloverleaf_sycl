@@ -52,7 +52,9 @@ struct captures {
 };
 
 struct value_type {
-	double vol = 0.0, mass = 0.0, ie = 0.0, ke = 0.0, press = 0.0;
+	double vol, mass, ie, ke, press;
+	value_type(double vol = 0.0, double mass = 0.0, double ie = 0.0, double ke = 0.0, double press = 0.0) :
+	vol(vol), mass(mass), ie(ie), ke(ke), press(press) {}
 };
 
 value_type operator+(const value_type& a, const value_type& b)
