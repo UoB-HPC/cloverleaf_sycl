@@ -3,20 +3,19 @@
 
  This file is part of CloverLeaf.
 
- CloverLeaf is free software: you can redistribute it and/or modify it under 
- the terms of the GNU General Public License as published by the 
- Free Software Foundation, either version 3 of the License, or (at your option) 
+ CloverLeaf is free software: you can redistribute it and/or modify it under
+ the terms of the GNU General Public License as published by the
+ Free Software Foundation, either version 3 of the License, or (at your option)
  any later version.
 
- CloverLeaf is distributed in the hope that it will be useful, but 
- WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
- FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more 
+ CloverLeaf is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  details.
 
  You should have received a copy of the GNU General Public License along with
  CloverLeaf. If not, see http://www.gnu.org/licenses/.
  */
-
 
 //  @brief CloverLeaf top level program: Invokes the main cycle
 //  @author Wayne Gaudin
@@ -38,12 +37,12 @@
 
 #include <mpi.h>
 
-//#include <Kokkos_Core.hpp>
+// #include <Kokkos_Core.hpp>
 
 #include <iostream>
 
-#include "definitions.h"
 #include "comms.h"
+#include "definitions.h"
 #include "hydro.h"
 #include "initialise.h"
 #include "version.h"
@@ -53,36 +52,33 @@ std::ostream g_out(nullptr);
 
 int main(int argc, char *argv[]) {
 
-	// Initialise MPI first
-	MPI_Init(&argc, &argv);
+  // Initialise MPI first
+  MPI_Init(&argc, &argv);
 
-	// Initialise Kokkos
-//	Kokkos::initialize();
+  // Initialise Kokkos
+  //	Kokkos::initialize();
 
-	// Initialise communications
-	struct parallel_ parallel;
+  // Initialise communications
+  struct parallel_ parallel;
 
-	if (parallel.boss) {
-		std::cout
-				<< std::endl
-				<< "Clover Version " << g_version << std::endl
-				<< "Kokkos Version" << std::endl
-				<< "Task Count " << parallel.max_task << std::endl
-				<< std::endl;
-	}
+  if (parallel.boss) {
+    std::cout << std::endl
+              << "Clover Version " << g_version << std::endl
+              << "Kokkos Version" << std::endl
+              << "Task Count " << parallel.max_task << std::endl
+              << std::endl;
+  }
 
-	std::unique_ptr<global_variables> config = initialise(parallel,
-	                                                      std::vector<std::string>(argv + 1, argv + argc));
+  std::unique_ptr<global_variables> config = initialise(parallel, std::vector<std::string>(argv + 1, argv + argc));
 
-	std::cout << "Launching hydro" << std::endl;
-	hydro(*config, parallel);
+  std::cout << "Launching hydro" << std::endl;
+  hydro(*config, parallel);
 
-	// Finilise programming models
-//	Kokkos::finalize();
-	config->queue.wait_and_throw();
-	MPI_Finalize();
+  // Finilise programming models
+  //	Kokkos::finalize();
+  config->queue.wait_and_throw();
+  MPI_Finalize();
 
-	std::cout << "Done" << std::endl;
-	return EXIT_SUCCESS;
+  std::cout << "Done" << std::endl;
+  return EXIT_SUCCESS;
 }
-
