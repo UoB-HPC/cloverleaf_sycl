@@ -121,12 +121,12 @@ set(SOURCES
         src/visit.cpp)
 
 include_directories(src)
-add_executable(cloverleaf ${SOURCES})
+add_executable(clover_leaf ${SOURCES})
 
 separate_arguments(CXX_EXTRA_FLAGS)
 separate_arguments(CXX_EXTRA_LINKER_FLAGS)
 
-target_compile_options(cloverleaf
+target_compile_options(clover_leaf
         PUBLIC
         -Wall
         -Wextra
@@ -149,11 +149,11 @@ endif ()
 set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer ${CXX_EXTRA_FLAGS})
 set(RELEASE_OPTIONS -O3   ${CXX_EXTRA_FLAGS})
 
-target_link_libraries(cloverleaf PUBLIC ${MPI_C_LIB})
+target_link_libraries(clover_leaf PUBLIC ${MPI_C_LIB})
 
-target_compile_options(cloverleaf PUBLIC "$<$<CONFIG:RelWithDebInfo>:${RELEASE_OPTIONS}>")
-target_compile_options(cloverleaf PUBLIC "$<$<CONFIG:Release>:${RELEASE_OPTIONS}>")
-target_compile_options(cloverleaf PUBLIC "$<$<CONFIG:Debug>:${DEBUG_OPTIONS}>")
+target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:RelWithDebInfo>:${RELEASE_OPTIONS}>")
+target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Release>:${RELEASE_OPTIONS}>")
+target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Debug>:${DEBUG_OPTIONS}>")
 
 if (${CMAKE_VERSION} VERSION_LESS "3.13.0")
     message(WARNING "target_link_options is only available in CMake >= 3.13.0, using fallback target_link_libraries, this may cause issues with some compilers")
@@ -162,18 +162,18 @@ if (${CMAKE_VERSION} VERSION_LESS "3.13.0")
         list(APPEND EXTRA_LINK_FLAGS "-Wl,${CXX_EXTRA_LINKER_FLAGS}")
     endif ()
 
-    target_link_libraries(cloverleaf PUBLIC ${EXTRA_LINK_FLAGS})
-    target_link_libraries(cloverleaf PUBLIC ${CXX_EXTRA_FLAGS})
+    target_link_libraries(clover_leaf PUBLIC ${EXTRA_LINK_FLAGS})
+    target_link_libraries(clover_leaf PUBLIC ${CXX_EXTRA_FLAGS})
 
 else ()
-    target_link_options(cloverleaf PUBLIC LINKER:${CXX_EXTRA_LINKER_FLAGS})
-    target_link_options(cloverleaf PUBLIC ${CXX_EXTRA_FLAGS})
+    target_link_options(clover_leaf PUBLIC LINKER:${CXX_EXTRA_LINKER_FLAGS})
+    target_link_options(clover_leaf PUBLIC ${CXX_EXTRA_FLAGS})
 endif ()
 
 
 if (NOT ${SYCL_RUNTIME} STREQUAL "DPCPP")
     add_sycl_to_target(
-            TARGET cloverleaf
+            TARGET clover_leaf
             SOURCES ${SOURCES}) # must be the last
 endif ()
 
