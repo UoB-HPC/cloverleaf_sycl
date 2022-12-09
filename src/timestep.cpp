@@ -102,6 +102,7 @@ void timestep(global_variables &globals, parallel_ &parallel) {
               << globals.dt << " " << globals.jdt << "," << globals.kdt << " x " << x_pos << " y " << y_pos
               << std::endl;
   }
+
   if (small == 1) {
     report_error((char *)"timestep", (char *)"small timestep");
   }

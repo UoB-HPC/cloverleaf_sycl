@@ -79,6 +79,27 @@ int main(int argc, char *argv[]) {
   config->queue.wait_and_throw();
   MPI_Finalize();
 
+  clover::free(config->queue,                                                                                    //
+               config->chunk.left_rcv, config->chunk.right_rcv, config->chunk.bottom_rcv, config->chunk.top_rcv, //
+               config->chunk.left_snd, config->chunk.right_snd, config->chunk.bottom_snd, config->chunk.top_snd  //
+  );
+  for (tile_type &t : config->chunk.tiles) {
+    clover::free(config->queue,
+                 t.field.density0, t.field.density1, t.field.energy0, t.field.energy1, t.field.pressure,
+                 t.field.viscosity, t.field.soundspeed, t.field.xvel0, t.field.xvel1, t.field.yvel0, t.field.yvel1,
+                 t.field.vol_flux_x, t.field.mass_flux_x, t.field.vol_flux_y, t.field.mass_flux_y,
+                 t.field.work_array1, // node_flux, stepbymass, volume_change, pre_vol
+                 t.field.work_array2, // node_mass_post, post_vol
+                 t.field.work_array3, // node_mass_pre,pre_mass
+                 t.field.work_array4, // advec_vel, post_mass
+                 t.field.work_array5, // mom_flux, advec_vol
+                 t.field.work_array6, // pre_vol, post_ener
+                 t.field.work_array7, // post_vol, ener_flux
+                 t.field.cellx, t.field.celldx, t.field.celly, t.field.celldy, t.field.vertexx, t.field.vertexdx,
+                 t.field.vertexy, t.field.vertexdy, t.field.volume, t.field.xarea, t.field.yarea
+    );
+  }
+
   std::cout << "Done" << std::endl;
   return EXIT_SUCCESS;
 }

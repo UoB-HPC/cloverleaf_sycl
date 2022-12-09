@@ -32,7 +32,6 @@
 #include "initialise_chunk.h"
 #include "update_halo.h"
 #include "visit.h"
-#include <algorithm>
 #include <sstream>
 #include <string>
 
@@ -66,16 +65,17 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
     }
   };
 
-  global_variables globals(config, cl::sycl::queue(device, handler, {}),
+  auto queue = cl::sycl::queue(device, handler, {});
+  global_variables globals(config, queue,
                            chunk_type(chunkNeighbours, parallel.task, 1, 1, x_cells, y_cells, left, right, bottom, top,
-                                      1, config.grid.x_cells, 1, config.grid.y_cells, config.tiles_per_chunk));
+                                      1, config.grid.x_cells, 1, config.grid.y_cells, config.tiles_per_chunk, queue));
 
   if (DEBUG) std::cout << "Globals configured" << std::endl;
 
   auto infos = clover_tile_decompose(globals, x_cells, y_cells);
 
   std::transform(infos.begin(), infos.end(), std::back_inserter(globals.chunk.tiles),
-                 [](const tile_info &ti) { return tile_type(ti); });
+                 [&](const tile_info &ti) { return tile_type(ti, queue); });
 
   // Line 92 start.f90
   build_field(globals);
@@ -89,7 +89,7 @@ std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config
   }
 
   for (int tile = 0; tile < config.tiles_per_chunk; ++tile) {
-    initialise_chunk(tile, globals);
+    initialise_chunk(queue, tile, globals);
     generate_chunk(tile, globals);
   }
 

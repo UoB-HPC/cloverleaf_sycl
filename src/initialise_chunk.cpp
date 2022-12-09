@@ -27,7 +27,7 @@
 #include "initialise_chunk.h"
 #include "sycl_utils.hpp"
 
-void initialise_chunk(const int tile, global_variables &globals) {
+void initialise_chunk(sycl::queue &queue, const int tile, global_variables &globals) {
 
   double dx = (globals.config.grid.xmax - globals.config.grid.xmin) / (double)(globals.config.grid.x_cells);
   double dy = (globals.config.grid.ymax - globals.config.grid.ymin) / (double)(globals.config.grid.y_cells);
@@ -35,23 +35,6 @@ void initialise_chunk(const int tile, global_variables &globals) {
   double xmin = globals.config.grid.xmin + dx * (double)(globals.chunk.tiles[tile].info.t_left - 1);
 
   double ymin = globals.config.grid.ymin + dy * (double)(globals.chunk.tiles[tile].info.t_bottom - 1);
-
-  ////    CALL initialise_chunk_kernel(chunk%tiles(tile)%t_xmin,    &
-  //     chunk%tiles(tile)%t_xmax,    &
-  //     chunk%tiles(tile)%t_ymin,    &
-  //     chunk%tiles(tile)%t_ymax,    &
-  //     xmin,ymin,dx,dy,              &
-  //     chunk%tiles(tile)%field%vertexx,  &
-  //     chunk%tiles(tile)%field%vertexdx, &
-  //     chunk%tiles(tile)%field%vertexy,  &
-  //     chunk%tiles(tile)%field%vertexdy, &
-  //     chunk%tiles(tile)%field%cellx,    &
-  //     chunk%tiles(tile)%field%celldx,   &
-  //     chunk%tiles(tile)%field%celly,    &
-  //     chunk%tiles(tile)%field%celldy,   &
-  //     chunk%tiles(tile)%field%volume,   &
-  //     chunk%tiles(tile)%field%xarea,    &
-  //     chunk%tiles(tile)%field%yarea     )
 
   const int x_min = globals.chunk.tiles[tile].info.t_xmin;
   const int x_max = globals.chunk.tiles[tile].info.t_xmax;
@@ -62,60 +45,34 @@ void initialise_chunk(const int tile, global_variables &globals) {
   const size_t yrange = (y_max + 3) - (y_min - 2) + 1;
 
   // Take a reference to the lowest structure, as Kokkos device cannot necessarily chase through the structure.
-  field_type &field = globals.chunk.tiles[tile].field;
+  auto &field = globals.chunk.tiles[tile].field;
 
-  clover::execute(globals.queue, [&](handler &h) {
-    auto vertexx = field.vertexx.access<W>(h);
-    auto vertexdx = field.vertexdx.access<W>(h);
-    clover::par_ranged<class APPEND_LN(initialise)>(h, {0u, xrange}, [=](id<1> j) {
-      vertexx[j] = xmin + dx * (static_cast<int>(j[0]) - 1 - x_min);
-      vertexdx[j] = dx;
-    });
+  clover::par_ranged1(queue, Range1d{0u, xrange}, [=](int j) {
+    field.vertexx[j] = xmin + dx * (static_cast<int>(j) - 1 - x_min);
+    field.vertexdx[j] = dx;
   });
 
-  clover::execute(globals.queue, [&](handler &h) {
-    auto vertexy = field.vertexy.access<W>(h);
-    auto vertexdy = field.vertexdy.access<W>(h);
-    clover::par_ranged<class APPEND_LN(initialise)>(h, {0u, yrange}, [=](id<1> k) {
-      vertexy[k] = ymin + dy * (static_cast<int>(k[0]) - 1 - y_min);
-      vertexdy[k] = dy;
-    });
+  clover::par_ranged1(queue, Range1d{0u, yrange}, [=](int k) {
+    field.vertexy[k] = ymin + dy * (static_cast<int>(k) - 1 - y_min);
+    field.vertexdy[k] = dy;
   });
 
   const size_t xrange1 = (x_max + 2) - (x_min - 2) + 1;
   const size_t yrange1 = (y_max + 2) - (y_min - 2) + 1;
 
-  clover::execute(globals.queue, [&](handler &h) {
-    auto cellx = field.cellx.access<W>(h);
-    auto celldx = field.celldx.access<W>(h);
-    auto vertexx = field.vertexx.access<R>(h);
-    clover::par_ranged<class APPEND_LN(initialise)>(h, {0u, xrange1}, [=](id<1> j) {
-      cellx[j] = 0.5 * (vertexx[j] + vertexx[j[0] + 1]);
-      celldx[j] = dx;
-    });
+  clover::par_ranged1(queue, Range1d{0u, xrange1}, [=](int j) {
+    field.cellx[j] = 0.5 * (field.vertexx[j] + field.vertexx[j + 1]);
+    field.celldx[j] = dx;
   });
 
-  clover::execute(globals.queue, [&](handler &h) {
-    auto celly = field.celly.access<W>(h);
-    auto celldy = field.celldy.access<W>(h);
-    auto vertexy = field.vertexy.access<R>(h);
-
-    clover::par_ranged<class APPEND_LN(initialise)>(h, {0u, yrange1}, [=](id<1> k) {
-      celly[k] = 0.5 * (vertexy[k] + vertexy[k[0] + 1]);
-      celldy[k] = dy;
-    });
+  clover::par_ranged1(queue, Range1d{0u, yrange1}, [=](int k) {
+    field.celly[k] = 0.5 * (field.vertexy[k] + field.vertexy[k + 1]);
+    field.celldy[k] = dy;
   });
 
-  clover::execute(globals.queue, [&](handler &h) {
-    auto volume = field.volume.access<W>(h);
-    auto xarea = field.xarea.access<W>(h);
-    auto yarea = field.yarea.access<W>(h);
-    auto celldx = field.celldx.access<R>(h);
-    auto celldy = field.celldy.access<R>(h);
-    clover::par_ranged<class APPEND_LN(initialise)>(h, {0u, 0u, xrange1, yrange1}, [=](id<2> idx) {
-      volume[idx] = dx * dy;
-      xarea[idx] = celldy[idx[1]];
-      yarea[idx] = celldx[idx[0]];
-    });
+  clover::par_ranged2(queue, Range2d{0u, 0u, xrange1, yrange1}, [=](const int i, const int j) {
+    field.volume(i, j) = dx * dy;
+    field.xarea(i, j) = field.celldy[j];
+    field.yarea(i, j) = field.celldx[i];
   });
 }

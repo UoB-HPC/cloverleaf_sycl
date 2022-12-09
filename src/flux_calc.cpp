@@ -24,23 +24,22 @@
 //  @brief Fortran flux kernel.
 //  @author Wayne Gaudin
 //  @details The edge volume fluxes are calculated based on the velocity fields.
-void flux_calc_kernel(handler &h, int x_min, int x_max, int y_min, int y_max, double dt,
-                      clover::Accessor<double, 2, R>::Type xarea, clover::Accessor<double, 2, R>::Type yarea,
-                      clover::Accessor<double, 2, R>::Type xvel0, clover::Accessor<double, 2, R>::Type yvel0,
-                      clover::Accessor<double, 2, R>::Type xvel1, clover::Accessor<double, 2, R>::Type yvel1,
-                      clover::Accessor<double, 2, W>::Type vol_flux_x,
-                      clover::Accessor<double, 2, W>::Type vol_flux_y) {
+void flux_calc_kernel(sycl::queue &queue, int x_min, int x_max, int y_min, int y_max, double dt,
+                      clover::Buffer<double, 2> xarea, clover::Buffer<double, 2> yarea, clover::Buffer<double, 2> xvel0,
+                      clover::Buffer<double, 2> yvel0, clover::Buffer<double, 2> xvel1, clover::Buffer<double, 2> yvel1,
+                      clover::Buffer<double, 2> vol_flux_x, clover::Buffer<double, 2> vol_flux_y) {
 
   // DO k=y_min,y_max+1
   //   DO j=x_min,x_max+1
   // Note that the loops calculate one extra flux than required, but this
   // allows loop fusion that improves performance
-  clover::par_ranged<class flux_calc>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](id<2> idx) {
-    vol_flux_x[idx] = 0.25 * dt * xarea[idx] *
-                      (xvel0[idx] + xvel0[clover::offset(idx, 0, 1)] + xvel1[idx] + xvel1[clover::offset(idx, 0, 1)]);
-    vol_flux_y[idx] = 0.25 * dt * yarea[idx] *
-                      (yvel0[idx] + yvel0[clover::offset(idx, 1, 0)] + yvel1[idx] + yvel1[clover::offset(idx, 1, 0)]);
-  });
+  clover::par_ranged2(
+      queue, Range2d{x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](const int i, const int j) {
+        vol_flux_x(i, j) =
+            0.25 * dt * xarea(i, j) * (xvel0(i, j) + xvel0(i + 0, j + 1) + xvel1(i, j) + xvel1(i + 0, j + 1));
+        vol_flux_y(i, j) =
+            0.25 * dt * yarea(i, j) * (yvel0(i, j) + yvel0(i + 1, j + 0) + yvel1(i, j) + yvel1(i + 1, j + 0));
+      });
 }
 
 // @brief Driver for the flux kernels
@@ -51,16 +50,13 @@ void flux_calc(global_variables &globals) {
   double kernel_time = 0;
   if (globals.profiler_on) kernel_time = timer();
 
-  clover::execute(globals.queue, [&](handler &h) {
-    for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
+  for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 
-      tile_type &t = globals.chunk.tiles[tile];
-      flux_calc_kernel(h, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax, globals.dt,
-                       t.field.xarea.access<R>(h), t.field.yarea.access<R>(h), t.field.xvel0.access<R>(h),
-                       t.field.yvel0.access<R>(h), t.field.xvel1.access<R>(h), t.field.yvel1.access<R>(h),
-                       t.field.vol_flux_x.access<W>(h), t.field.vol_flux_y.access<W>(h));
-    }
-  });
+    tile_type &t = globals.chunk.tiles[tile];
+    flux_calc_kernel(globals.queue, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax, globals.dt,
+                     t.field.xarea, t.field.yarea, t.field.xvel0, t.field.yvel0, t.field.xvel1, t.field.yvel1,
+                     t.field.vol_flux_x, t.field.vol_flux_y);
+  }
 
   if (globals.profiler_on) globals.profiler.flux += timer() - kernel_time;
 }

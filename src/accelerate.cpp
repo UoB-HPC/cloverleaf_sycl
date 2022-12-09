@@ -25,12 +25,12 @@
 // @author Wayne Gaudin
 // @details The pressure and viscosity gradients are used to update the
 // velocity field.
-void accelerate_kernel(handler &h, int x_min, int x_max, int y_min, int y_max, double dt,
-                       clover::Accessor<double, 2, R>::Type xarea, clover::Accessor<double, 2, R>::Type yarea,
-                       clover::Accessor<double, 2, R>::Type volume, clover::Accessor<double, 2, R>::Type density0,
-                       clover::Accessor<double, 2, R>::Type pressure, clover::Accessor<double, 2, R>::Type viscosity,
-                       clover::Accessor<double, 2, R>::Type xvel0, clover::Accessor<double, 2, R>::Type yvel0,
-                       clover::Accessor<double, 2, RW>::Type xvel1, clover::Accessor<double, 2, RW>::Type yvel1) {
+void accelerate_kernel(sycl::queue &queue, int x_min, int x_max, int y_min, int y_max, double dt,
+                       clover::Buffer<double, 2> xarea, clover::Buffer<double, 2> yarea,
+                       clover::Buffer<double, 2> volume, clover::Buffer<double, 2> density0,
+                       clover::Buffer<double, 2> pressure, clover::Buffer<double, 2> viscosity,
+                       clover::Buffer<double, 2> xvel0, clover::Buffer<double, 2> yvel0,
+                       clover::Buffer<double, 2> xvel1, clover::Buffer<double, 2> yvel1) {
 
   double halfdt = 0.5 * dt;
 
@@ -39,30 +39,26 @@ void accelerate_kernel(handler &h, int x_min, int x_max, int y_min, int y_max, d
   //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1},
   //	                                               {x_max + 1 + 2, y_max + 1 + 2});
 
-  clover::par_ranged<class accelerate>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](id<2> idx) {
-    double stepbymass_s = halfdt / ((density0[clover::offset(idx, -1, -1)] * volume[clover::offset(idx, -1, -1)] +
-                                     density0[clover::offset(idx, -1, 0)] * volume[clover::offset(idx, -1, 0)] +
-                                     density0[idx] * volume[idx] +
-                                     density0[clover::offset(idx, 0, -1)] * volume[clover::offset(idx, 0, -1)]) *
-                                    0.25);
+  clover::par_ranged2(
+      queue, Range2d{x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](const int i, const int j) {
+        double stepbymass_s =
+            halfdt / ((density0(i - 1, j - 1) * volume(i - 1, j - 1) + density0(i - 1, j + 0) * volume(i - 1, j + 0) +
+                       density0(i, j) * volume(i, j) + density0(i + 0, j - 1) * volume(i + 0, j - 1)) *
+                      0.25);
 
-    xvel1[idx] = xvel0[idx] -
-                 stepbymass_s * (xarea[idx] * (pressure[idx] - pressure[clover::offset(idx, -1, 0)]) +
-                                 xarea[clover::offset(idx, 0, -1)] *
-                                     (pressure[clover::offset(idx, 0, -1)] - pressure[clover::offset(idx, -1, -1)]));
-    yvel1[idx] = yvel0[idx] -
-                 stepbymass_s * (yarea[idx] * (pressure[idx] - pressure[clover::offset(idx, 0, -1)]) +
-                                 yarea[clover::offset(idx, -1, 0)] *
-                                     (pressure[clover::offset(idx, -1, 0)] - pressure[clover::offset(idx, -1, -1)]));
-    xvel1[idx] = xvel1[idx] -
-                 stepbymass_s * (xarea[idx] * (viscosity[idx] - viscosity[clover::offset(idx, -1, 0)]) +
-                                 xarea[clover::offset(idx, 0, -1)] *
-                                     (viscosity[clover::offset(idx, 0, -1)] - viscosity[clover::offset(idx, -1, -1)]));
-    yvel1[idx] = yvel1[idx] -
-                 stepbymass_s * (yarea[idx] * (viscosity[idx] - viscosity[clover::offset(idx, 0, -1)]) +
-                                 yarea[clover::offset(idx, -1, 0)] *
-                                     (viscosity[clover::offset(idx, -1, 0)] - viscosity[clover::offset(idx, -1, -1)]));
-  });
+        xvel1(i, j) =
+            xvel0(i, j) - stepbymass_s * (xarea(i, j) * (pressure(i, j) - pressure(i - 1, j + 0)) +
+                                          xarea(i + 0, j - 1) * (pressure(i + 0, j - 1) - pressure(i - 1, j - 1)));
+        yvel1(i, j) =
+            yvel0(i, j) - stepbymass_s * (yarea(i, j) * (pressure(i, j) - pressure(i + 0, j - 1)) +
+                                          yarea(i - 1, j + 0) * (pressure(i - 1, j + 0) - pressure(i - 1, j - 1)));
+        xvel1(i, j) =
+            xvel1(i, j) - stepbymass_s * (xarea(i, j) * (viscosity(i, j) - viscosity(i - 1, j + 0)) +
+                                          xarea(i + 0, j - 1) * (viscosity(i + 0, j - 1) - viscosity(i - 1, j - 1)));
+        yvel1(i, j) =
+            yvel1(i, j) - stepbymass_s * (yarea(i, j) * (viscosity(i, j) - viscosity(i + 0, j - 1)) +
+                                          yarea(i - 1, j + 0) * (viscosity(i - 1, j + 0) - viscosity(i - 1, j - 1)));
+      });
 }
 
 //  @brief Driver for the acceleration kernels
@@ -76,13 +72,9 @@ void accelerate(global_variables &globals) {
   for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
     tile_type &t = globals.chunk.tiles[tile];
 
-    clover::execute(globals.queue, [&](handler &h) {
-      accelerate_kernel(h, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax, globals.dt,
-                        t.field.xarea.access<R>(h), t.field.yarea.access<R>(h), t.field.volume.access<R>(h),
-                        t.field.density0.access<R>(h), t.field.pressure.access<R>(h), t.field.viscosity.access<R>(h),
-                        t.field.xvel0.access<R>(h), t.field.yvel0.access<R>(h), t.field.xvel1.access<RW>(h),
-                        t.field.yvel1.access<RW>(h));
-    });
+    accelerate_kernel(globals.queue, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax, globals.dt,
+                      t.field.xarea, t.field.yarea, t.field.volume, t.field.density0, t.field.pressure,
+                      t.field.viscosity, t.field.xvel0, t.field.yvel0, t.field.xvel1, t.field.yvel1);
   }
 
   if (globals.profiler_on) globals.profiler.acceleration += timer() - kernel_time;

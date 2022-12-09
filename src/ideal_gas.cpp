@@ -19,6 +19,7 @@
 
 #include "ideal_gas.h"
 #include "sycl_utils.hpp"
+#include <cmath>
 
 #define IDX(buffer, x, y) buffer[idx[(x)]][idx[(y)]]
 
@@ -30,9 +31,9 @@ int N = 0;
 //  @author Wayne Gaudin
 //  @details Calculates the pressure and sound speed for the mesh chunk using
 //  the ideal gas equation of state, with a fixed gamma of 1.4.
-void ideal_gas_kernel(handler &h, int x_min, int x_max, int y_min, int y_max,
-                      clover::Accessor<double, 2, R>::Type density, clover::Accessor<double, 2, R>::Type energy,
-                      clover::Accessor<double, 2, RW>::Type pressure, clover::Accessor<double, 2, W>::Type soundspeed) {
+void ideal_gas_kernel(sycl::queue &queue, int x_min, int x_max, int y_min, int y_max, clover::Buffer<double, 2> density,
+                      clover::Buffer<double, 2> energy, clover::Buffer<double, 2> pressure,
+                      clover::Buffer<double, 2> soundspeed) {
 
   // std::cout <<" ideal_gas(" << x_min+1 << ","<< y_min+1<< ","<< x_max+2<< ","<< y_max +2  << ")" << std::endl;
   //  DO k=y_min,y_max
@@ -40,13 +41,13 @@ void ideal_gas_kernel(handler &h, int x_min, int x_max, int y_min, int y_max,
 
   //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
-  clover::par_ranged<class ideal_gas>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](id<2> idx) {
-    double v = 1.0 / density[idx];
-    pressure[idx] = (1.4 - 1.0) * density[idx] * energy[idx];
-    double pressurebyenergy = (1.4 - 1.0) * density[idx];
-    double pressurebyvolume = -density[idx] * pressure[idx];
-    double sound_speed_squared = v * v * (pressure[idx] * pressurebyenergy - pressurebyvolume);
-    soundspeed[idx] = sycl::sqrt(sound_speed_squared);
+  clover::par_ranged2(queue, Range2d{x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](int i, int j) {
+    double v = 1.0 / density(i, j);
+    pressure(i, j) = (1.4 - 1.0) * density(i, j) * energy(i, j);
+    double pressurebyenergy = (1.4 - 1.0) * density(i, j);
+    double pressurebyvolume = -density(i, j) * pressure(i, j);
+    double sound_speed_squared = v * v * (pressure(i, j) * pressurebyenergy - pressurebyvolume);
+    soundspeed(i, j) = sycl::sqrt(sound_speed_squared);
   });
 }
 
@@ -60,13 +61,11 @@ void ideal_gas(global_variables &globals, const int tile, bool predict) {
 
   tile_type &t = globals.chunk.tiles[tile];
 
-  clover::execute(globals.queue, [&](handler &h) {
-    if (!predict) {
-      ideal_gas_kernel(h, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax, t.field.density0.access<R>(h),
-                       t.field.energy0.access<R>(h), t.field.pressure.access<RW>(h), t.field.soundspeed.access<W>(h));
-    } else {
-      ideal_gas_kernel(h, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax, t.field.density1.access<R>(h),
-                       t.field.energy1.access<R>(h), t.field.pressure.access<RW>(h), t.field.soundspeed.access<W>(h));
-    }
-  });
+  if (!predict) {
+    ideal_gas_kernel(globals.queue, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax, t.field.density0,
+                     t.field.energy0, t.field.pressure, t.field.soundspeed);
+  } else {
+    ideal_gas_kernel(globals.queue, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax, t.field.density1,
+                     t.field.energy1, t.field.pressure, t.field.soundspeed);
+  }
 }

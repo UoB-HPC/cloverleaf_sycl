@@ -22,6 +22,6 @@
 
 #include "definitions.h"
 
-void initialise_chunk(const int tile, global_variables &globals);
+void initialise_chunk(sycl::queue &queue, const int tile, global_variables &globals);
 
 #endif

@@ -27,45 +27,34 @@
 #include "generate_chunk.h"
 #include "sycl_utils.hpp"
 
+
 void generate_chunk(const int tile, global_variables &globals) {
 
   // Need to copy the host array of state input data into a device array
-  std::vector<double> state_density_vec(globals.config.number_of_states);
-  std::vector<double> state_energy_vec(globals.config.number_of_states);
-  std::vector<double> state_xvel_vec(globals.config.number_of_states);
-  std::vector<double> state_yvel_vec(globals.config.number_of_states);
-  std::vector<double> state_xmin_vec(globals.config.number_of_states);
-  std::vector<double> state_xmax_vec(globals.config.number_of_states);
-  std::vector<double> state_ymin_vec(globals.config.number_of_states);
-  std::vector<double> state_ymax_vec(globals.config.number_of_states);
-  std::vector<double> state_radius_vec(globals.config.number_of_states);
-  std::vector<int> state_geometry_vec(globals.config.number_of_states);
+  clover::Buffer<double, 1> state_density(globals.config.number_of_states, globals.queue);
+  clover::Buffer<double, 1> state_energy(globals.config.number_of_states, globals.queue);
+  clover::Buffer<double, 1> state_xvel(globals.config.number_of_states, globals.queue);
+  clover::Buffer<double, 1> state_yvel(globals.config.number_of_states, globals.queue);
+  clover::Buffer<double, 1> state_xmin(globals.config.number_of_states, globals.queue);
+  clover::Buffer<double, 1> state_xmax(globals.config.number_of_states, globals.queue);
+  clover::Buffer<double, 1> state_ymin(globals.config.number_of_states, globals.queue);
+  clover::Buffer<double, 1> state_ymax(globals.config.number_of_states, globals.queue);
+  clover::Buffer<double, 1> state_radius(globals.config.number_of_states, globals.queue);
+  clover::Buffer<int, 1> state_geometry(globals.config.number_of_states, globals.queue);
 
   // Copy the data to the new views
   for (int state = 0; state < globals.config.number_of_states; ++state) {
-    state_density_vec[state] = globals.config.states[state].density;
-    state_energy_vec[state] = globals.config.states[state].energy;
-    state_xvel_vec[state] = globals.config.states[state].xvel;
-    state_yvel_vec[state] = globals.config.states[state].yvel;
-    state_xmin_vec[state] = globals.config.states[state].xmin;
-    state_xmax_vec[state] = globals.config.states[state].xmax;
-    state_ymin_vec[state] = globals.config.states[state].ymin;
-    state_ymax_vec[state] = globals.config.states[state].ymax;
-    state_radius_vec[state] = globals.config.states[state].radius;
-    state_geometry_vec[state] = globals.config.states[state].geometry;
+    state_density[state] = globals.config.states[state].density;
+    state_energy[state] = globals.config.states[state].energy;
+    state_xvel[state] = globals.config.states[state].xvel;
+    state_yvel[state] = globals.config.states[state].yvel;
+    state_xmin[state] = globals.config.states[state].xmin;
+    state_xmax[state] = globals.config.states[state].xmax;
+    state_ymin[state] = globals.config.states[state].ymin;
+    state_ymax[state] = globals.config.states[state].ymax;
+    state_radius[state] = globals.config.states[state].radius;
+    state_geometry[state] = globals.config.states[state].geometry;
   }
-
-  // Create host mirrors of this to copy on the host
-  clover::Buffer<double, 1> hm_state_density(state_density_vec.begin(), state_density_vec.end());
-  clover::Buffer<double, 1> hm_state_energy(state_energy_vec.begin(), state_energy_vec.end());
-  clover::Buffer<double, 1> hm_state_xvel(state_xvel_vec.begin(), state_xvel_vec.end());
-  clover::Buffer<double, 1> hm_state_yvel(state_yvel_vec.begin(), state_yvel_vec.end());
-  clover::Buffer<double, 1> hm_state_xmin(state_xmin_vec.begin(), state_xmin_vec.end());
-  clover::Buffer<double, 1> hm_state_xmax(state_xmax_vec.begin(), state_xmax_vec.end());
-  clover::Buffer<double, 1> hm_state_ymin(state_ymin_vec.begin(), state_ymin_vec.end());
-  clover::Buffer<double, 1> hm_state_ymax(state_ymax_vec.begin(), state_ymax_vec.end());
-  clover::Buffer<double, 1> hm_state_radius(state_radius_vec.begin(), state_radius_vec.end());
-  clover::Buffer<int, 1> hm_state_geometry(state_geometry_vec.begin(), state_geometry_vec.end());
 
   // Kokkos::deep_copy (TO, FROM)
 
@@ -81,98 +70,64 @@ void generate_chunk(const int tile, global_variables &globals) {
 
   clover::Range2d xyrange_policy(0u, 0u, xrange, yrange);
 
-  field_type &field = globals.chunk.tiles[tile].field;
+  auto &field = globals.chunk.tiles[tile].field;
 
-  clover::execute(globals.queue, [&](handler &h) {
-    auto density0 = field.density0.access<W>(h);
-    auto xvel0 = field.xvel0.access<W>(h);
-    auto yvel0 = field.yvel0.access<W>(h);
-    auto energy0 = field.energy0.access<W>(h);
+  // State 1 is always the background state
 
-    auto state_density = hm_state_density.access<R>(h);
-    auto state_energy = hm_state_energy.access<R>(h);
-    auto state_xvel = hm_state_xvel.access<R>(h);
-    auto state_yvel = hm_state_yvel.access<R>(h);
-    // State 1 is always the background state
-    clover::par_ranged<class generate_chunk_1>(h, xyrange_policy, [=](id<2> idx) {
-      energy0[idx] = state_energy[0];
-      density0[idx] = state_density[0];
-      xvel0[idx] = state_xvel[0];
-      yvel0[idx] = state_yvel[0];
-    });
+  clover::par_ranged2(globals.queue, xyrange_policy, [=](const int i, const int j) {
+    field.energy0(i, j) = state_energy[0];
+    field.density0(i, j) = state_density[0];
+    field.xvel0(i, j) = state_xvel[0];
+    field.yvel0(i, j) = state_yvel[0];
   });
 
   for (int state = 1; state < globals.config.number_of_states; ++state) {
-    clover::execute(globals.queue, [&](handler &h) {
-      auto density0 = field.density0.access<W>(h);
-      auto xvel0 = field.xvel0.access<W>(h);
-      auto yvel0 = field.yvel0.access<W>(h);
-      auto energy0 = field.energy0.access<W>(h);
 
-      auto state_density = hm_state_density.access<R>(h);
-      auto state_energy = hm_state_energy.access<R>(h);
-      auto state_xvel = hm_state_xvel.access<R>(h);
-      auto state_yvel = hm_state_yvel.access<R>(h);
+    clover::par_ranged2(globals.queue, xyrange_policy, [=](const int x, const int y) {
+      const int j = x;
+      const int k = y;
 
-      auto state_xmin = hm_state_xmin.access<R>(h);
-      auto state_xmax = hm_state_xmax.access<R>(h);
-      auto state_ymin = hm_state_ymin.access<R>(h);
-      auto state_ymax = hm_state_ymax.access<R>(h);
-      auto state_radius = hm_state_radius.access<R>(h);
-      auto state_geometry = hm_state_geometry.access<R>(h);
+      double x_cent = state_xmin[state];
+      double y_cent = state_ymin[state];
 
-      auto cellx = field.cellx.access<RW>(h);
-      auto celly = field.celly.access<RW>(h);
-
-      auto vertexx = field.vertexx.access<RW>(h);
-      auto vertexy = field.vertexy.access<RW>(h);
-
-      clover::par_ranged<class generate_chunk_2>(h, xyrange_policy, [=](id<2> idx) {
-        const int j = idx.get(0);
-        const int k = idx.get(1);
-
-        double x_cent = state_xmin[state];
-        double y_cent = state_ymin[state];
-
-        if (state_geometry[state] == g_rect) {
-          if (vertexx[j + 1] >= state_xmin[state] && vertexx[j] < state_xmax[state]) {
-            if (vertexy[k + 1] >= state_ymin[state] && vertexy[k] < state_ymax[state]) {
-              energy0[idx] = state_energy[state];
-              density0[idx] = state_density[state];
-              for (int kt = k; kt <= k + 1; ++kt) {
-                for (int jt = j; jt <= j + 1; ++jt) {
-                  xvel0[jt][kt] = state_xvel[state];
-                  yvel0[jt][kt] = state_yvel[state];
-                }
-              }
-            }
-          }
-        } else if (state_geometry[state] == g_circ) {
-          double radius =
-              sycl::sqrt((cellx[j] - x_cent) * (cellx[j] - x_cent) + (celly[k] - y_cent) * (celly[k] - y_cent));
-          if (radius <= state_radius[state]) {
-            energy0[idx] = state_energy[state];
-            density0[idx] = state_density[state];
+      if (state_geometry[state] == g_rect) {
+        if (field.vertexx[j + 1] >= state_xmin[state] && field.vertexx[j] < state_xmax[state]) {
+          if (field.vertexy[k + 1] >= state_ymin[state] && field.vertexy[k] < state_ymax[state]) {
+            field.energy0(x, y) = state_energy[state];
+            field.density0(x, y) = state_density[state];
             for (int kt = k; kt <= k + 1; ++kt) {
               for (int jt = j; jt <= j + 1; ++jt) {
-                xvel0[jt][kt] = state_xvel[state];
-                yvel0[jt][kt] = state_yvel[state];
-              }
-            }
-          }
-        } else if (state_geometry[state] == g_point) {
-          if (vertexx[j] == x_cent && vertexy[k] == y_cent) {
-            energy0[idx] = state_energy[state];
-            density0[idx] = state_density[state];
-            for (int kt = k; kt <= k + 1; ++kt) {
-              for (int jt = j; jt <= j + 1; ++jt) {
-                xvel0[jt][kt] = state_xvel[state];
-                yvel0[jt][kt] = state_yvel[state];
+                field.xvel0(jt, kt) = state_xvel[state];
+                field.yvel0(jt, kt) = state_yvel[state];
               }
             }
           }
         }
-      });
+      } else if (state_geometry[state] == g_circ) {
+        double radius = std::sqrt((field.cellx[j] - x_cent) * (field.cellx[j] - x_cent) +
+                                  (field.celly[k] - y_cent) * (field.celly[k] - y_cent));
+        if (radius <= state_radius[state]) {
+          field.energy0(x, y) = state_energy[state];
+          field.density0(x, y) = state_density[state];
+          for (int kt = k; kt <= k + 1; ++kt) {
+            for (int jt = j; jt <= j + 1; ++jt) {
+              field.xvel0(jt, kt) = state_xvel[state];
+              field.yvel0(jt, kt) = state_yvel[state];
+            }
+          }
+        }
+      } else if (state_geometry[state] == g_point) {
+        if (field.vertexx[j] == x_cent && field.vertexy[k] == y_cent) {
+          field.energy0(x, y) = state_energy[state];
+          field.density0(x, y) = state_density[state];
+          for (int kt = k; kt <= k + 1; ++kt) {
+            for (int jt = j; jt <= j + 1; ++jt) {
+              field.xvel0(jt, kt) = state_xvel[state];
+              field.yvel0(jt, kt) = state_yvel[state];
+            }
+          }
+        }
+      }
     });
   }
 }

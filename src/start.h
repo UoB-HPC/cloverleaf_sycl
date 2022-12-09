@@ -23,7 +23,6 @@
 #include "comms.h"
 #include "definitions.h"
 
-std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config &config,
-                                        const cl::sycl::device &device);
+std::unique_ptr<global_variables> start(parallel_ &parallel, const global_config &config, const sycl::device &device);
 
 #endif

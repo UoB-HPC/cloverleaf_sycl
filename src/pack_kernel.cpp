@@ -24,10 +24,10 @@
 #include "pack_kernel.h"
 #include "sycl_utils.hpp"
 
-void clover_pack_message_left(queue &q, int x_min, int x_max, int y_min, int y_max,
-                              clover::Buffer<double, 2> &field_buffer,
-                              clover::Buffer<double, 1> &left_snd_buffer_buffer, int cell_data, int vertex_data,
-                              int x_face_data, int y_face_data, int depth, int field_type, int buffer_offset) {
+void clover_pack_message_left(sycl::queue &queue, int x_min, int x_max, int y_min, int y_max,
+                              clover::Buffer<double, 2> field, clover::Buffer<double, 1> left_snd, int cell_data,
+                              int vertex_data, int x_face_data, int y_face_data, int depth, int field_type,
+                              int buffer_offset) {
 
   // Pack
 
@@ -53,23 +53,18 @@ void clover_pack_message_left(queue &q, int x_min, int x_max, int y_min, int y_m
 
   // DO k=y_min-depth,y_max+y_inc+depth
 
-  clover::execute(q, [&](handler &h) {
-    auto field = field_buffer.access<R>(h);
-    auto left_snd_buffer = left_snd_buffer_buffer.access<W>(h);
-    clover::par_ranged<class APPEND_LN(clover_pack_message_left)>(
-        h, {y_min - depth + 1, y_max + y_inc + depth + 2}, [=](id<1> k) {
-          for (int j = 0; j < depth; ++j) {
-            size_t index = buffer_offset + j + (k.get(0) + depth - 1) * depth;
-            left_snd_buffer[index] = field[x_min + x_inc - 1 + j + 2][k.get(0)];
-          }
-        });
+  clover::par_ranged1(queue, Range1d{y_min - depth + 1, y_max + y_inc + depth + 2}, [=](int k) {
+    for (int j = 0; j < depth; ++j) {
+      size_t index = buffer_offset + j + (k + depth - 1) * depth;
+      left_snd[index] = field(x_min + x_inc - 1 + j + 2, k);
+    }
   });
 }
 
-void clover_unpack_message_left(queue &q, int x_min, int x_max, int y_min, int y_max,
-                                clover::Buffer<double, 2> &field_buffer,
-                                clover::Buffer<double, 1> &left_rcv_buffer_buffer, int cell_data, int vertex_data,
-                                int x_face_data, int y_face_data, int depth, int field_type, int buffer_offset) {
+void clover_unpack_message_left(sycl::queue &queue, int x_min, int x_max, int y_min, int y_max,
+                                clover::Buffer<double, 2> field, clover::Buffer<double, 1> left_rcv, int cell_data,
+                                int vertex_data, int x_face_data, int y_face_data, int depth, int field_type,
+                                int buffer_offset) {
 
   // Upnack
 
@@ -91,23 +86,18 @@ void clover_unpack_message_left(queue &q, int x_min, int x_max, int y_min, int y
 
   // DO k=y_min-depth,y_max+y_inc+depth
 
-  clover::execute(q, [&](handler &h) {
-    auto field = field_buffer.access<W>(h);
-    auto left_rcv_buffer = left_rcv_buffer_buffer.access<R>(h);
-    clover::par_ranged<class APPEND_LN(clover_unpack_message_left)>(
-        h, {y_min - depth + 1, y_max + y_inc + depth + 2}, [=](id<1> k) {
-          for (int j = 0; j < depth; ++j) {
-            size_t index = buffer_offset + j + (k.get(0) + depth - 1) * depth;
-            field[x_min - j][k.get(0)] = left_rcv_buffer[index];
-          }
-        });
+  clover::par_ranged1(queue, Range1d{y_min - depth + 1, y_max + y_inc + depth + 2}, [=](int k) {
+    for (int j = 0; j < depth; ++j) {
+      size_t index = buffer_offset + j + (k + depth - 1) * depth;
+      field(x_min - j, k) = left_rcv[index];
+    }
   });
 }
 
-void clover_pack_message_right(queue &q, int x_min, int x_max, int y_min, int y_max,
-                               clover::Buffer<double, 2> &field_buffer,
-                               clover::Buffer<double, 1> &right_snd_buffer_buffer, int cell_data, int vertex_data,
-                               int x_face_data, int y_face_data, int depth, int field_type, int buffer_offset) {
+void clover_pack_message_right(sycl::queue &queue, int x_min, int x_max, int y_min, int y_max,
+                               clover::Buffer<double, 2> field, clover::Buffer<double, 1> right_snd, int cell_data,
+                               int vertex_data, int x_face_data, int y_face_data, int depth, int field_type,
+                               int buffer_offset) {
 
   // Pack
 
@@ -126,24 +116,21 @@ void clover_pack_message_right(queue &q, int x_min, int x_max, int y_min, int y_
   if (field_type == y_face_data) {
     y_inc = 1;
   }
+
   // DO k=y_min-depth,y_max+y_inc+depth
-  clover::execute(q, [&](handler &h) {
-    auto field = field_buffer.access<R>(h);
-    auto right_snd_buffer = right_snd_buffer_buffer.access<W>(h);
-    clover::par_ranged<class APPEND_LN(clover_pack_message_right)>(
-        h, {y_min - depth + 1, y_max + y_inc + depth + 2}, [=](id<1> k) {
-          for (int j = 0; j < depth; ++j) {
-            size_t index = buffer_offset + j + (k.get(0) + depth - 1) * depth;
-            right_snd_buffer[index] = field[x_max + 1 - j][k.get(0)];
-          }
-        });
+
+  clover::par_ranged1(queue, Range1d{y_min - depth + 1, y_max + y_inc + depth + 2}, [=](int k) {
+    for (int j = 0; j < depth; ++j) {
+      size_t index = buffer_offset + j + (k + depth - 1) * depth;
+      right_snd[index] = field(x_max + 1 - j, k);
+    }
   });
 }
 
-void clover_unpack_message_right(queue &q, int x_min, int x_max, int y_min, int y_max,
-                                 clover::Buffer<double, 2> &field_buffer,
-                                 clover::Buffer<double, 1> &right_rcv_buffer_buffer, int cell_data, int vertex_data,
-                                 int x_face_data, int y_face_data, int depth, int field_type, int buffer_offset) {
+void clover_unpack_message_right(sycl::queue &queue, int x_min, int x_max, int y_min, int y_max,
+                                 clover::Buffer<double, 2> field, clover::Buffer<double, 1> right_rcv, int cell_data,
+                                 int vertex_data, int x_face_data, int y_face_data, int depth, int field_type,
+                                 int buffer_offset) {
 
   // Upnack
 
@@ -169,23 +156,18 @@ void clover_unpack_message_right(queue &q, int x_min, int x_max, int y_min, int 
 
   // DO k=y_min-depth,y_max+y_inc+depth
 
-  clover::execute(q, [&](handler &h) {
-    auto field = field_buffer.access<W>(h);
-    auto right_rcv_buffer = right_rcv_buffer_buffer.access<R>(h);
-    clover::par_ranged<class APPEND_LN(clover_unpack_message_right)>(
-        h, {y_min - depth + 1, y_max + y_inc + depth + 2}, [=](id<1> k) {
-          for (int j = 0; j < depth; ++j) {
-            size_t index = buffer_offset + j + (k.get(0) + depth - 1) * depth;
-            field[x_max + x_inc + j + 2][k.get(0)] = right_rcv_buffer[index];
-          }
-        });
+  clover::par_ranged1(queue, Range1d{y_min - depth + 1, y_max + y_inc + depth + 2}, [=](int k) {
+    for (int j = 0; j < depth; ++j) {
+      size_t index = buffer_offset + j + (k + depth - 1) * depth;
+      field(x_max + x_inc + j + 2, k) = right_rcv[index];
+    }
   });
 }
 
-void clover_pack_message_top(queue &q, int x_min, int x_max, int y_min, int y_max,
-                             clover::Buffer<double, 2> &field_buffer, clover::Buffer<double, 1> &top_snd_buffer_buffer,
-                             int cell_data, int vertex_data, int x_face_data, int y_face_data, int depth,
-                             int field_type, int buffer_offset) {
+void clover_pack_message_top(sycl::queue &queue, int x_min, int x_max, int y_min, int y_max,
+                             clover::Buffer<double, 2> field, clover::Buffer<double, 1> top_snd, int cell_data,
+                             int vertex_data, int x_face_data, int y_face_data, int depth, int field_type,
+                             int buffer_offset) {
 
   // Pack
 
@@ -207,22 +189,18 @@ void clover_pack_message_top(queue &q, int x_min, int x_max, int y_min, int y_ma
 
   for (int k = 0; k < depth; ++k) {
     // DO j=x_min-depth,x_max+x_inc+depth
-    clover::execute(q, [&](handler &h) {
-      auto field = field_buffer.access<R>(h);
-      auto top_snd_buffer = top_snd_buffer_buffer.access<W>(h);
-      clover::par_ranged<class APPEND_LN(clover_pack_message_top)>(
-          h, {x_min - depth + 1, x_max + x_inc + depth + 2}, [=](id<1> j) {
-            size_t index = buffer_offset + k + (j.get(0) + depth - 1) * depth;
-            top_snd_buffer[index] = field[j.get(0)][y_max + 1 - k];
-          });
+
+    clover::par_ranged1(queue, Range1d{x_min - depth + 1, x_max + x_inc + depth + 2}, [=](int j) {
+      size_t index = buffer_offset + k + (j + depth - 1) * depth;
+      top_snd[index] = field(j, y_max + 1 - k);
     });
   }
 }
 
-void clover_unpack_message_top(queue &q, int x_min, int x_max, int y_min, int y_max,
-                               clover::Buffer<double, 2> &field_buffer,
-                               clover::Buffer<double, 1> &top_rcv_buffer_buffer, int cell_data, int vertex_data,
-                               int x_face_data, int y_face_data, int depth, int field_type, int buffer_offset) {
+void clover_unpack_message_top(sycl::queue &queue, int x_min, int x_max, int y_min, int y_max,
+                               clover::Buffer<double, 2> field, clover::Buffer<double, 1> top_rcv, int cell_data,
+                               int vertex_data, int x_face_data, int y_face_data, int depth, int field_type,
+                               int buffer_offset) {
 
   // Unpack
 
@@ -249,22 +227,17 @@ void clover_unpack_message_top(queue &q, int x_min, int x_max, int y_min, int y_
   for (int k = 0; k < depth; ++k) {
     // DO j=x_min-depth,x_max+x_inc+depth
 
-    clover::execute(q, [&](handler &h) {
-      auto field = field_buffer.access<W>(h);
-      auto top_rcv_buffer = top_rcv_buffer_buffer.access<R>(h);
-      clover::par_ranged<class APPEND_LN(clover_unpack_message_top)>(
-          h, {x_min - depth + 1, x_max + x_inc + depth + 2}, [=](id<1> j) {
-            size_t index = buffer_offset + k + (j.get(0) + depth - 1) * depth;
-            field[j.get(0)][y_max + y_inc + k + 2] = top_rcv_buffer[index];
-          });
+    clover::par_ranged1(queue, Range1d{x_min - depth + 1, x_max + x_inc + depth + 2}, [=](int j) {
+      size_t index = buffer_offset + k + (j + depth - 1) * depth;
+      field(j, y_max + y_inc + k + 2) = top_rcv[index];
     });
   }
 }
 
-void clover_pack_message_bottom(queue &q, int x_min, int x_max, int y_min, int y_max,
-                                clover::Buffer<double, 2> &field_buffer,
-                                clover::Buffer<double, 1> &bottom_snd_buffer_buffer, int cell_data, int vertex_data,
-                                int x_face_data, int y_face_data, int depth, int field_type, int buffer_offset) {
+void clover_pack_message_bottom(sycl::queue &queue, int x_min, int x_max, int y_min, int y_max,
+                                clover::Buffer<double, 2> field, clover::Buffer<double, 1> bottom_snd, int cell_data,
+                                int vertex_data, int x_face_data, int y_face_data, int depth, int field_type,
+                                int buffer_offset) {
 
   // Pack
 
@@ -291,22 +264,17 @@ void clover_pack_message_bottom(queue &q, int x_min, int x_max, int y_min, int y
   for (int k = 0; k < depth; ++k) {
     // DO j=x_min-depth,x_max+x_inc+depth
 
-    clover::execute(q, [&](handler &h) {
-      auto field = field_buffer.access<R>(h);
-      auto bottom_snd_buffer = bottom_snd_buffer_buffer.access<W>(h);
-      clover::par_ranged<class APPEND_LN(clover_pack_message_bottom)>(
-          h, {x_min - depth + 1, x_max + x_inc + depth + 2}, [=](id<1> j) {
-            size_t index = buffer_offset + k + (j.get(0) + depth - 1) * depth;
-            bottom_snd_buffer[index] = field[j.get(0)][y_min + y_inc - 1 + k + 2];
-          });
+    clover::par_ranged1(queue, Range1d{x_min - depth + 1, x_max + x_inc + depth + 2}, [=](int j) {
+      size_t index = buffer_offset + k + (j + depth - 1) * depth;
+      bottom_snd[index] = field(j, y_min + y_inc - 1 + k + 2);
     });
   }
 }
 
-void clover_unpack_message_bottom(queue &q, int x_min, int x_max, int y_min, int y_max,
-                                  clover::Buffer<double, 2> &field_buffer,
-                                  clover::Buffer<double, 1> &bottom_rcv_buffer_buffer, int cell_data, int vertex_data,
-                                  int x_face_data, int y_face_data, int depth, int field_type, int buffer_offset) {
+void clover_unpack_message_bottom(sycl::queue &queue, int x_min, int x_max, int y_min, int y_max,
+                                  clover::Buffer<double, 2> field, clover::Buffer<double, 1> bottom_rcv, int cell_data,
+                                  int vertex_data, int x_face_data, int y_face_data, int depth, int field_type,
+                                  int buffer_offset) {
 
   // Unpack
 
@@ -328,14 +296,10 @@ void clover_unpack_message_bottom(queue &q, int x_min, int x_max, int y_min, int
 
   for (int k = 0; k < depth; ++k) {
     // DO j=x_min-depth,x_max+x_inc+depth
-    clover::execute(q, [&](handler &h) {
-      auto field = field_buffer.access<W>(h);
-      auto bottom_rcv_buffer = bottom_rcv_buffer_buffer.access<R>(h);
-      clover::par_ranged<class APPEND_LN(clover_unpack_message_top)>(
-          h, {x_min - depth + 1, x_max + x_inc + depth + 2}, [=](id<1> j) {
-            size_t index = buffer_offset + k + (j.get(0) + depth - 1) * depth;
-            field[j.get(0)][y_min - k] = bottom_rcv_buffer[index];
-          });
+
+    clover::par_ranged1(queue, Range1d{x_min - depth + 1, x_max + x_inc + depth + 2}, [=](int j) {
+      size_t index = buffer_offset + k + (j + depth - 1) * depth;
+      field(j, y_min - k) = bottom_rcv[index];
     });
   }
 }

@@ -25,36 +25,24 @@
 //  @author Wayne Gaudin
 //  @details Copies all of the final end of step filed data to the begining of
 //  step data, ready for the next timestep.
-void reset_field_kernel(queue &q, int x_min, int x_max, int y_min, int y_max,
-                        clover::Buffer<double, 2> &density0_buffer, clover::Buffer<double, 2> &density1_buffer,
-                        clover::Buffer<double, 2> &energy0_buffer, clover::Buffer<double, 2> &energy1_buffer,
-                        clover::Buffer<double, 2> &xvel0_buffer, clover::Buffer<double, 2> &xvel1_buffer,
-                        clover::Buffer<double, 2> &yvel0_buffer, clover::Buffer<double, 2> &yvel1_buffer) {
+void reset_field_kernel(sycl::queue &queue, int x_min, int x_max, int y_min, int y_max,
+                        clover::Buffer<double, 2> density0, clover::Buffer<double, 2> density1,
+                        clover::Buffer<double, 2> energy0, clover::Buffer<double, 2> energy1,
+                        clover::Buffer<double, 2> xvel0, clover::Buffer<double, 2> xvel1,
+                        clover::Buffer<double, 2> yvel0, clover::Buffer<double, 2> yvel1) {
 
-  clover::execute(q, [&](handler &h) {
-    auto density0 = density0_buffer.access<W>(h);
-    auto density1 = density1_buffer.access<R>(h);
-    auto energy0 = energy0_buffer.access<W>(h);
-    auto energy1 = energy1_buffer.access<R>(h);
-    // DO k=y_min,y_max
-    //   DO j=x_min,x_max
-    clover::par_ranged<class reset_field_1>(h, {x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](id<2> idx) {
-      density0[idx] = density1[idx];
-      energy0[idx] = energy1[idx];
-    });
+  // DO k=y_min,y_max
+  //   DO j=x_min,x_max
+  clover::par_ranged2(queue, Range2d{x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [=](int i, int j) {
+    density0(i, j) = density1(i, j);
+    energy0(i, j) = energy1(i, j);
   });
 
-  clover::execute(q, [&](handler &h) {
-    auto xvel1 = xvel1_buffer.access<R>(h);
-    auto yvel0 = yvel0_buffer.access<W>(h);
-    auto yvel1 = yvel1_buffer.access<R>(h);
-    auto xvel0 = xvel0_buffer.access<W>(h);
-    // DO k=y_min,y_max+1
-    //   DO j=x_min,x_max+1
-    clover::par_ranged<class reset_field_2>(h, {x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](id<2> idx) {
-      xvel0[idx] = xvel1[idx];
-      yvel0[idx] = yvel1[idx];
-    });
+  // DO k=y_min,y_max+1
+  //   DO j=x_min,x_max+1
+  clover::par_ranged2(queue, Range2d{x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [=](int i, int j) {
+    xvel0(i, j) = xvel1(i, j);
+    yvel0(i, j) = yvel1(i, j);
   });
 }
 

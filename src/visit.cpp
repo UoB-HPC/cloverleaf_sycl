@@ -22,6 +22,7 @@
 #include "timer.h"
 #include "update_halo.h"
 #include "viscosity.h"
+#include <cmath>
 
 #include <iomanip>
 #include <sstream>
@@ -113,7 +114,7 @@ void visit(global_variables &globals, parallel_ &parallel) {
       u << "DIMENSIONS " << nxv << " " << nyv << " 1" << std::endl;
       u << "X_COORDINATES " << nxv << " double" << std::endl;
 
-      auto hm_vertexx = globals.chunk.tiles[tile].field.vertexx.access<R>();
+      auto hm_vertexx = globals.chunk.tiles[tile].field.vertexx;
 
       for (int j = globals.chunk.tiles[tile].info.t_xmin + 1; j <= globals.chunk.tiles[tile].info.t_xmax + 1 + 1; ++j) {
         u << hm_vertexx[j] << std::endl;
@@ -121,7 +122,7 @@ void visit(global_variables &globals, parallel_ &parallel) {
 
       u << "Y_COORDINATES " << nyv << " double" << std::endl;
 
-      auto hm_vertexy = globals.chunk.tiles[tile].field.vertexy.access<R>();
+      auto hm_vertexy = globals.chunk.tiles[tile].field.vertexy;
 
       for (int k = globals.chunk.tiles[tile].info.t_ymin + 1; k <= globals.chunk.tiles[tile].info.t_ymax + 1 + 1; ++k) {
         u << hm_vertexy[k] << std::endl;
@@ -134,41 +135,41 @@ void visit(global_variables &globals, parallel_ &parallel) {
       u << "FIELD FieldData 4" << std::endl;
       u << "density 1 " << nxc * nyc << " double" << std::endl;
 
-      auto hm_density0 = globals.chunk.tiles[tile].field.density0.access<R>();
+      auto hm_density0 = globals.chunk.tiles[tile].field.density0;
 
       for (int k = globals.chunk.tiles[tile].info.t_ymin + 1; k <= globals.chunk.tiles[tile].info.t_ymax + 1; ++k) {
         for (int j = globals.chunk.tiles[tile].info.t_xmin + 1; j <= globals.chunk.tiles[tile].info.t_xmax + 1; ++j) {
-          u << std::scientific << std::setprecision(3) << hm_density0[j][k] << std::endl;
+          u << std::scientific << std::setprecision(3) << hm_density0(j, k) << std::endl;
         }
       }
 
       u << "energy 1 " << nxc * nyc << " double" << std::endl;
 
-      auto hm_energy0 = globals.chunk.tiles[tile].field.energy0.access<R>();
+      auto hm_energy0 = globals.chunk.tiles[tile].field.energy0;
 
       for (int k = globals.chunk.tiles[tile].info.t_ymin + 1; k <= globals.chunk.tiles[tile].info.t_ymax + 1; ++k) {
         for (int j = globals.chunk.tiles[tile].info.t_xmin + 1; j <= globals.chunk.tiles[tile].info.t_xmax + 1; ++j) {
-          u << std::scientific << std::setprecision(3) << hm_energy0[j][k] << std::endl;
+          u << std::scientific << std::setprecision(3) << hm_energy0(j, k) << std::endl;
         }
       }
 
       u << "pressure 1 " << nxc * nyc << " double" << std::endl;
 
-      auto hm_pressure = globals.chunk.tiles[tile].field.pressure.access<R>();
+      auto hm_pressure = globals.chunk.tiles[tile].field.pressure;
 
       for (int k = globals.chunk.tiles[tile].info.t_ymin + 1; k <= globals.chunk.tiles[tile].info.t_ymax + 1; ++k) {
         for (int j = globals.chunk.tiles[tile].info.t_xmin + 1; j <= globals.chunk.tiles[tile].info.t_xmax + 1; ++j) {
-          u << std::scientific << std::setprecision(3) << hm_pressure[j][k] << std::endl;
+          u << std::scientific << std::setprecision(3) << hm_pressure(j, k) << std::endl;
         }
       }
 
       u << "viscosity 1 " << nxc * nyc << " double" << std::endl;
 
-      auto hm_viscosity = globals.chunk.tiles[tile].field.viscosity.access<R>();
+      auto hm_viscosity = globals.chunk.tiles[tile].field.viscosity;
 
       for (int k = globals.chunk.tiles[tile].info.t_ymin + 1; k <= globals.chunk.tiles[tile].info.t_ymax + 1; ++k) {
         for (int j = globals.chunk.tiles[tile].info.t_xmin + 1; j <= globals.chunk.tiles[tile].info.t_xmax + 1; ++j) {
-          double temp = (sycl::fabs(hm_viscosity[j][k]) > 0.00000001) ? hm_viscosity[j][k] : 0.0;
+          double temp = (sycl::fabs(hm_viscosity(j, k)) > 0.00000001) ? hm_viscosity(j, k) : 0.0;
           u << std::scientific << std::setprecision(3) << temp << std::endl;
         }
       }
@@ -177,23 +178,23 @@ void visit(global_variables &globals, parallel_ &parallel) {
       u << "FIELD FieldData 2" << std::endl;
       u << "x_vel 1 " << nxv * nyv << " double" << std::endl;
 
-      auto hm_xvel0 = globals.chunk.tiles[tile].field.xvel0.access<R>();
+      auto hm_xvel0 = globals.chunk.tiles[tile].field.xvel0;
 
       for (int k = globals.chunk.tiles[tile].info.t_ymin + 1; k <= globals.chunk.tiles[tile].info.t_ymax + 1 + 1; ++k) {
         for (int j = globals.chunk.tiles[tile].info.t_xmin + 1; j <= globals.chunk.tiles[tile].info.t_xmax + 1 + 1;
              ++j) {
-          double temp = (sycl::fabs(hm_xvel0[j][k]) > 0.00000001) ? hm_xvel0[j][k] : 0.0;
+          double temp = (sycl::fabs(hm_xvel0(j, k)) > 0.00000001) ? hm_xvel0(j, k) : 0.0;
           u << std::scientific << std::setprecision(3) << temp << std::endl;
         }
       }
       u << "y_vel 1 " << nxv * nyv << " double" << std::endl;
 
-      auto hm_yvel0 = globals.chunk.tiles[tile].field.yvel0.access<R>();
+      auto hm_yvel0 = globals.chunk.tiles[tile].field.yvel0;
 
       for (int k = globals.chunk.tiles[tile].info.t_ymin + 1; k <= globals.chunk.tiles[tile].info.t_ymax + 1 + 1; ++k) {
         for (int j = globals.chunk.tiles[tile].info.t_xmin + 1; j <= globals.chunk.tiles[tile].info.t_xmax + 1 + 1;
              ++j) {
-          double temp = (sycl::fabs(hm_yvel0[j][k]) > 0.00000001) ? hm_yvel0[j][k] : 0.0;
+          double temp = (sycl::fabs(hm_yvel0(j, k)) > 0.00000001) ? hm_yvel0(j, k) : 0.0;
           u << std::scientific << std::setprecision(3) << temp << std::endl;
         }
       }

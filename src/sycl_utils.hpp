@@ -24,65 +24,38 @@
 #include <iostream>
 #include <utility>
 
-// #define SYCL_DEBUG // enable for debugging SYCL related things, also syncs kernel calls
+#define SYCL_DEBUG // enable for debugging SYCL related things, also syncs kernel calls
+
 #define SYNC_KERNELS // enable for fully synchronous (e.g queue.wait_and_throw()) kernel calls
+
 // #define SYCL_FLIP_2D // enable for flipped id<2> indices from SYCL default
 
 // this namespace houses all SYCL related abstractions
 namespace clover {
 
-// abstracts away sycl::accessor
-template <typename T, int N, sycl::access::mode mode> struct Accessor {
-  typedef sycl::accessor<T, N, mode, sycl::access::target::device> Type;
-  typedef sycl::accessor<T, N, mode, sycl::access::target::host_buffer> HostType;
+template <typename T, int N> struct Buffer {};
 
-  inline static Type from(sycl::buffer<T, N> &b, sycl::handler &cgh) {
-    return b.template get_access<mode, sycl::access::target::device>(cgh);
-  }
-
-  inline static Type from(sycl::buffer<T, N> &b, sycl::handler &cgh, sycl::range<N> accessRange,
-                          sycl::id<N> accessOffset) {
-    return b.template get_access<mode, sycl::access::target::device>(cgh, accessRange, accessOffset);
-  }
-
-  inline static HostType access_host(sycl::buffer<T, N> &b) { return b.template get_access<mode>(); }
+template <typename T> struct Buffer<T, 1> {
+  size_t size;
+  T *data;
+  explicit Buffer(size_t size, sycl::queue &q) : size(size), data(sycl::malloc_shared<T>(size, q)) {}
+  T &operator[](size_t i) const { return data[i]; }
 };
 
-// abstracts away sycl::buffer
-template <typename T, int N> struct Buffer {
-
-  sycl::buffer<T, N> buffer;
-
-  // delegates to the corresponding buffer constructor
-  explicit Buffer(sycl::range<N> range) : buffer(range) {}
-
-  explicit Buffer(T *src, sycl::range<N> range) : buffer(src, range) {}
-
-  // delegates to the corresponding buffer constructor
-  template <typename Iterator> explicit Buffer(Iterator begin, Iterator end) : buffer(begin, end) {}
-
-  // delegates to accessor.get_access<mode>(handler)
-  template <sycl::access::mode mode> inline typename Accessor<T, N, mode>::Type access(sycl::handler &cgh) {
-    return Accessor<T, N, mode>::from(buffer, cgh);
-  }
-
-  // delegates to accessor.get_access<mode>(handler)
-  template <sycl::access::mode mode>
-  inline typename Accessor<T, N, mode>::Type access(sycl::handler &cgh, sycl::range<N> accessRange,
-                                                    sycl::id<N> accessOffset) {
-    return Accessor<T, N, mode>::from(buffer, cgh, accessRange, accessOffset);
-  }
-
-  // delegates to accessor.get_access<mode>()
-  // **for host buffers only**
-  template <sycl::access::mode mode> inline typename Accessor<T, N, mode>::HostType access() {
-    return Accessor<T, N, mode>::access_host(buffer);
-  }
-
-  template <sycl::access::mode mode> inline T *access_ptr(size_t count) {
-    return buffer.template get_access<mode>(count).get_pointer();
-  }
+template <typename T> struct Buffer<T, 2> {
+  size_t sizeX, sizeY;
+  T *data;
+  Buffer(size_t sizeX, size_t sizeY, sycl::queue &q)
+      : sizeX(sizeX), sizeY(sizeY), data(sycl::malloc_shared<T>(sizeX * sizeY, q)) {}
+  T &operator()(size_t i, size_t j) const { return data[j + i * sizeY]; }
 };
+
+template <typename T> void free(sycl::queue &q, T &&b) { sycl::free(b.data, q); }
+
+template <typename T, typename... Ts> void free(sycl::queue &q, T &&t, Ts &&...ts) {
+  free(q, t);
+  free(q, std::forward<Ts>(ts)...);
+}
 
 struct Range1d {
   const size_t from, to;
@@ -120,53 +93,42 @@ struct Range2d {
   }
 };
 
-// safely offset an id<2> by j and k
-static inline sycl::id<2> offset(const sycl::id<2> idx, const int j, const int k) {
-  int jj = static_cast<int>(idx[0]) + j;
-  int kk = static_cast<int>(idx[1]) + k;
-#ifdef SYCL_DEBUG
-  // XXX only use on runtime that provides assertions, eg: CPU
-  assert(jj >= 0);
-  assert(kk >= 0);
+//// safely offset an id<2> by j and k
+// static inline sycl::id<2> offset(const sycl::id<2> idx, const int j, const int k) {
+//   int jj = static_cast<int>(idx[0]) + j;
+//   int kk = static_cast<int>(idx[1]) + k;
+// #ifdef SYCL_DEBUG
+//   // XXX only use on runtime that provides assertions, eg: CPU
+//   assert(jj >= 0);
+//   assert(kk >= 0);
+// #endif
+//   return sycl::id<2>(jj, kk);
+// }
+
+template <class F> constexpr void par_ranged1(sycl::queue &q, const Range1d &range, F functor) {
+  auto event = q.parallel_for(sycl::range<1>(range.size), [=](sycl::id<1> idx) { functor(range.from + idx[0]); });
+#ifdef SYNC_KERNELS
+  event.wait_and_throw();
 #endif
-  return sycl::id<2>(jj, kk);
 }
 
-// delegates to parallel_for, handles flipping if enabled
-template <typename nameT, class functorT>
-static inline void par_ranged(sycl::handler &cgh, const Range1d &range, functorT functor) {
-  cgh.parallel_for<nameT>(sycl::range<1>(range.size), [=](sycl::id<1> idx) {
-    idx = sycl::id<1>(idx.get(0) + range.from);
-    functor(idx);
-  });
-}
-
-// delegates to parallel_for, handles flipping if enabled
-template <typename nameT, class functorT>
-static inline void par_ranged(sycl::handler &cgh, const Range2d &range, functorT functor) {
+template <class F> constexpr void par_ranged2(sycl::queue &q, const Range2d &range, F functor) {
 #ifdef SYCL_FLIP_2D
-  cgh.parallel_for<nameT>(sycl::range<2>(range.sizeY, range.sizeX), sycl::id<2>(range.fromY, range.fromX),
-                          [=](sycl::id<2> idx) { functor(sycl::id<2>(idx[1], idx[0])); });
+  auto event = q.parallel_for(sycl::range<2>(range.sizeY, range.sizeX),
+                              [=](sycl::id<2> idx) { functor(range.fromY + idx[1], range.fromX + idx[0]); });
 #else
-  cgh.parallel_for<nameT>(sycl::range<2>(range.sizeX, range.sizeY), [=](sycl::id<2> idx) {
-    idx = sycl::id<2>(idx.get(0) + range.fromX, idx.get(1) + range.fromY);
-    functor(idx);
-  });
+  auto event = q.parallel_for(sycl::range<2>(range.sizeX, range.sizeY),
+                              [=](sycl::id<2> idx) { functor(range.fromX + idx[0], range.fromY + idx[1]); });
+#endif
+
+#ifdef SYNC_KERNELS
+  event.wait_and_throw();
 #endif
 }
 
-// delegates to queue.submit(cgf), handles blocking submission if enable
-template <typename T> static void execute(sycl::queue &queue, T cgf) {
-  try {
-    queue.submit(cgf);
-#if defined(SYCL_DEBUG) || defined(SYNC_KERNELS)
-    queue.wait_and_throw();
-#endif
-  } catch (sycl::exception &e) {
-    std::cerr << "[SYCL] Exception : `" << e.what() << "`" << std::endl;
-    throw e;
-  }
-}
 } // namespace clover
+
+using clover::Range1d;
+using clover::Range2d;
 
 #endif // CLOVERLEAF_SYCL_SYCL_UTILS_HPP
