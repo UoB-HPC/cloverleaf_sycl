@@ -552,9 +552,17 @@ void clover_send_recv_message_left(global_variables &globals, clover::Buffer<dou
 
   int left_task = globals.chunk.chunk_neighbours[chunk_left] - 1;
 
-  MPI_Isend(globals.chunk.left_snd.data, total_size, MPI_DOUBLE, left_task, tag_send, MPI_COMM_WORLD, &req_send);
+  globals.queue.submit([&](sycl::handler &h) {
+    h.host_task([=, &req_send]() {
+      MPI_Isend(left_snd.data, total_size, MPI_DOUBLE, left_task, tag_send, MPI_COMM_WORLD, &req_send);
+    });
+  });
 
-  MPI_Irecv(globals.chunk.left_rcv.data, total_size, MPI_DOUBLE, left_task, tag_recv, MPI_COMM_WORLD, &req_recv);
+  globals.queue.submit([&](sycl::handler &h) {
+    h.host_task([=, &req_recv]() {
+      MPI_Irecv(left_rcv.data, total_size, MPI_DOUBLE, left_task, tag_recv, MPI_COMM_WORLD, &req_recv);
+    });
+  });
 }
 
 void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS], int tile, int depth,
@@ -732,9 +740,17 @@ void clover_send_recv_message_right(global_variables &globals, clover::Buffer<do
 
   int right_task = globals.chunk.chunk_neighbours[chunk_right] - 1;
 
-  MPI_Isend(globals.chunk.right_snd.data, total_size, MPI_DOUBLE, right_task, tag_send, MPI_COMM_WORLD, &req_send);
+  globals.queue.submit([&](sycl::handler &h) {
+    h.host_task([=, &req_send]() {
+      MPI_Isend(right_snd.data, total_size, MPI_DOUBLE, right_task, tag_send, MPI_COMM_WORLD, &req_send);
+    });
+  });
 
-  MPI_Irecv(globals.chunk.right_rcv.data, total_size, MPI_DOUBLE, right_task, tag_recv, MPI_COMM_WORLD, &req_recv);
+  globals.queue.submit([&](sycl::handler &h) {
+    h.host_task([=, &req_recv]() {
+      MPI_Irecv(right_rcv.data, total_size, MPI_DOUBLE, right_task, tag_recv, MPI_COMM_WORLD, &req_recv);
+    });
+  });
 }
 
 void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS], int tile, int depth,
@@ -912,9 +928,18 @@ void clover_send_recv_message_top(global_variables &globals, clover::Buffer<doub
 
   int top_task = globals.chunk.chunk_neighbours[chunk_top] - 1;
 
+  globals.queue.submit([&](sycl::handler &h) {
+    h.host_task([=, &req_send]() {
+      MPI_Isend(top_snd.data, total_size, MPI_DOUBLE, top_task, tag_send, MPI_COMM_WORLD, &req_send);
+    });
+  });
   MPI_Isend(globals.chunk.top_snd.data, total_size, MPI_DOUBLE, top_task, tag_send, MPI_COMM_WORLD, &req_send);
 
-  MPI_Irecv(globals.chunk.top_rcv.data, total_size, MPI_DOUBLE, top_task, tag_recv, MPI_COMM_WORLD, &req_recv);
+  globals.queue.submit([&](sycl::handler &h) {
+    h.host_task([=, &req_recv]() {
+      MPI_Irecv(top_rcv.data, total_size, MPI_DOUBLE, top_task, tag_recv, MPI_COMM_WORLD, &req_recv);
+    });
+  });
 }
 
 void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], int tile, int depth,
@@ -1092,9 +1117,17 @@ void clover_send_recv_message_bottom(global_variables &globals, clover::Buffer<d
 
   int bottom_task = globals.chunk.chunk_neighbours[chunk_bottom] - 1;
 
-  MPI_Isend(globals.chunk.bottom_snd.data, total_size, MPI_DOUBLE, bottom_task, tag_send, MPI_COMM_WORLD, &req_send);
+  globals.queue.submit([&](sycl::handler &h) {
+    h.host_task([=, &req_send]() {
+      MPI_Isend(bottom_snd.data, total_size, MPI_DOUBLE, bottom_task, tag_send, MPI_COMM_WORLD, &req_send);
+    });
+  });
 
-  MPI_Irecv(globals.chunk.bottom_rcv.data, total_size, MPI_DOUBLE, bottom_task, tag_recv, MPI_COMM_WORLD, &req_recv);
+  globals.queue.submit([&](sycl::handler &h) {
+    h.host_task([=, &req_recv]() {
+      MPI_Irecv(bottom_rcv.data, total_size, MPI_DOUBLE, bottom_task, tag_recv, MPI_COMM_WORLD, &req_recv);
+    });
+  });
 }
 
 void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS], int tile, int depth,
