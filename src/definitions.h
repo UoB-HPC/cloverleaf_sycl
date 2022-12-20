@@ -265,8 +265,8 @@ struct chunk_type {
   const int left, right, bottom, top;
   const int left_boundary, right_boundary, bottom_boundary, top_boundary;
 
-  clover::Buffer<double, 1> left_rcv_buffer, right_rcv_buffer, bottom_rcv_buffer, top_rcv_buffer;
-  clover::Buffer<double, 1> left_snd_buffer, right_snd_buffer, bottom_snd_buffer, top_snd_buffer;
+//  clover::Buffer<double, 1> left_rcv_buffer, right_rcv_buffer, bottom_rcv_buffer, top_rcv_buffer;
+//  clover::Buffer<double, 1> left_snd_buffer, right_snd_buffer, bottom_snd_buffer, top_snd_buffer;
 
   std::vector<tile_type> tiles;
 
@@ -275,11 +275,7 @@ struct chunk_type {
              const int rightBoundary, const int bottomBoundary, const int topBoundary, const int tiles_per_chunk)
       : chunk_neighbours(chunkNeighbours), task(task), x_min(xMin), y_min(yMin), x_max(xMax), y_max(yMax), left(left),
         right(right), bottom(bottom), top(top), left_boundary(leftBoundary), right_boundary(rightBoundary),
-        bottom_boundary(bottomBoundary), top_boundary(topBoundary), left_rcv_buffer(range<1>(10 * 2 * (yMax + 5))),
-        right_rcv_buffer(range<1>(10 * 2 * (yMax + 5))), bottom_rcv_buffer(range<1>(10 * 2 * (xMax + 5))),
-        top_rcv_buffer(range<1>(10 * 2 * (xMax + 5))), left_snd_buffer(range<1>(10 * 2 * (yMax + 5))),
-        right_snd_buffer(range<1>(10 * 2 * (yMax + 5))), bottom_snd_buffer(range<1>(10 * 2 * (xMax + 5))),
-        top_snd_buffer(range<1>(10 * 2 * (xMax + 5))) {}
+        bottom_boundary(bottomBoundary), top_boundary(topBoundary) {}
 };
 
 // Collection of globally defined variables
