@@ -242,8 +242,8 @@ struct chunk_type {
   const int left, right, bottom, top;
   const int left_boundary, right_boundary, bottom_boundary, top_boundary;
 
-  clover::Buffer<double, 1> left_rcv, right_rcv, bottom_rcv, top_rcv;
-  clover::Buffer<double, 1> left_snd, right_snd, bottom_snd, top_snd;
+//  clover::Buffer<double, 1> left_rcv, right_rcv, bottom_rcv, top_rcv;
+//  clover::Buffer<double, 1> left_snd, right_snd, bottom_snd, top_snd;
 
   std::vector<tile_type> tiles;
 
@@ -253,10 +253,7 @@ struct chunk_type {
              sycl::queue &q)
       : chunk_neighbours(chunkNeighbours), task(task), x_min(xMin), y_min(yMin), x_max(xMax), y_max(yMax), left(left),
         right(right), bottom(bottom), top(top), left_boundary(leftBoundary), right_boundary(rightBoundary),
-        bottom_boundary(bottomBoundary), top_boundary(topBoundary), left_rcv(10 * 2 * (yMax + 5), q),
-        right_rcv(10 * 2 * (yMax + 5), q), bottom_rcv(10 * 2 * (xMax + 5), q), top_rcv(10 * 2 * (xMax + 5), q),
-        left_snd(10 * 2 * (yMax + 5), q), right_snd(10 * 2 * (yMax + 5), q), bottom_snd(10 * 2 * (xMax + 5), q),
-        top_snd(10 * 2 * (xMax + 5), q) {}
+        bottom_boundary(bottomBoundary), top_boundary(topBoundary) {}
 };
 
 // Collection of globally defined variables

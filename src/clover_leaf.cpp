@@ -79,10 +79,7 @@ int main(int argc, char *argv[]) {
   config->queue.wait_and_throw();
   MPI_Finalize();
 
-  clover::free(config->queue,                                                                                    //
-               config->chunk.left_rcv, config->chunk.right_rcv, config->chunk.bottom_rcv, config->chunk.top_rcv, //
-               config->chunk.left_snd, config->chunk.right_snd, config->chunk.bottom_snd, config->chunk.top_snd  //
-  );
+
   for (tile_type &t : config->chunk.tiles) {
     clover::free(config->queue,
                  t.field.density0, t.field.density1, t.field.energy0, t.field.energy1, t.field.pressure,
