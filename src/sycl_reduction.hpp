@@ -44,9 +44,9 @@ template <typename T, typename U, typename C> struct local_reducer {
 template <typename nameT, size_t dimension, class RangeTpe, class LocalType, class LocalAllocator = std::nullptr_t,
           class Empty = std::nullptr_t, class Functor = std::nullptr_t, class BinaryOp = std::nullptr_t,
           class Finaliser = std::nullptr_t, class RangeLengthFn = std::nullptr_t, class RangeIdFn = std::nullptr_t>
-static inline void par_reduce_nd_impl(sycl::queue &q, RangeTpe range, sycl::buffer<LocalType, 1> result,
-                                      RangeLengthFn lengthFn, RangeIdFn rangeIdFn, LocalAllocator allocator,
-                                      const LocalType identity, Functor functor, BinaryOp combiner) {
+static inline void par_reduce_nd_impl(sycl::queue &q, RangeTpe range, RangeLengthFn lengthFn, RangeIdFn rangeIdFn,
+                                      LocalAllocator allocator, Empty empty, Functor functor, BinaryOp combiner,
+                                      Finaliser finaliser) {
 
   auto dev = q.get_device();
 
@@ -58,39 +58,57 @@ static inline void par_reduce_nd_impl(sycl::queue &q, RangeTpe range, sycl::buff
 
   } else {
     dot_num_groups = dev.get_info<sycl::info::device::max_compute_units>() * 4;
-    // TODO: not sure about this, max reduction wg_size = 512
     dot_wgsize = dev.get_info<sycl::info::device::max_work_group_size>();
-    dot_wgsize = dot_wgsize > 512 ? 512 : dot_wgsize;
   }
 
   size_t N = lengthFn(range);
   dot_num_groups = std::min(N, dot_num_groups);
+
 #ifdef SYCL_DEBUG
   std::cout << "RD: dot_wgsize=" << dot_wgsize << " dot_num_groups:" << dot_num_groups << " N=" << N << "\n";
 #endif
 
   q.submit([=](sycl::handler &h) mutable {
     auto ctx = allocator(h, dot_wgsize);
-    auto reduction = sycl::reduction(result, h, identity, combiner);
-    h.parallel_for<nameT>(sycl::nd_range<1>(dot_num_groups * dot_wgsize, dot_wgsize), reduction,
-                          [=](sycl::nd_item<1> item, auto &red_sum) {
-
-#ifdef USE_PRE_SYCL121R3
-                            size_t i = item.get_global(0);
-                            size_t li = item.get_local(0);
-#else
-						size_t i = item.get_global_id(0);
-						size_t li = item.get_local_id(0);
-#endif
-
+    h.parallel_for<nameT>(sycl::nd_range<1>(dot_num_groups * dot_wgsize, dot_wgsize),
+                          [=](sycl::nd_item<1> item) {
+                            size_t i = item.get_global_id(0);
+                            size_t li = item.get_local_id(0);
                             size_t global_size = item.get_global_range()[0];
 
+                            empty(ctx, sycl::id<1>(li));
                             for (; i < N; i += global_size) {
-                              functor(ctx, rangeIdFn(sycl::id<1>(i), range), red_sum);
+                              functor(ctx, sycl::id<1>(li), rangeIdFn(sycl::id<1>(i), range));
+                            }
+
+                            size_t local_size = item.get_local_range()[0]; // 8
+                            for (size_t offset = local_size / 2; offset > 0; offset /= 2) {
+                              item.barrier(sycl::access::fence_space::local_space);
+                              if (li < offset) {
+                                combiner(ctx, sycl::id<1>(li), sycl::id<1>(li + offset));
+                              }
+                            }
+
+                            if (li == 0) {
+                              finaliser(ctx, item.get_group(0), sycl::id<1>(0));
                             }
                           });
   });
 
+  q.submit([=](sycl::handler &h) mutable {
+    auto ctx = allocator(h, dot_num_groups);
+    h.parallel_for<class final_reduction>(sycl::nd_range<1>(1, 1), [=](auto) {
+      auto zero = sycl::id<1>(0);
+      empty(ctx, zero); // local[0] = empty
+      for (size_t i = 0; i < dot_num_groups; ++i) {
+        ctx.drain(sycl::id<1>(i), sycl::id<1>(i));
+      }
+      for (size_t i = 1; i < dot_num_groups; ++i) {
+        combiner(ctx, zero, sycl::id<1>(i)); // local[0] = local[0] |+| xs[i]
+      }
+      finaliser(ctx, 0, zero); // xs[0] = local[0]
+    });
+  });
 #ifdef SYNC_KERNELS
   q.wait_and_throw();
 #endif
@@ -99,30 +117,15 @@ static inline void par_reduce_nd_impl(sycl::queue &q, RangeTpe range, sycl::buff
 #endif
 }
 
-// applies a 1d reduction
 template <typename nameT, class LocalType, class LocalAllocator = std::nullptr_t, class Empty = std::nullptr_t,
           class Functor = std::nullptr_t, class BinaryOp = std::nullptr_t, class Finaliser = std::nullptr_t>
-static inline void par_reduce_1d(sycl::queue &q, const clover::Range1d &range, sycl::buffer<LocalType, 1> result,
-                                 LocalAllocator allocator, const LocalType identity, Functor functor,
-                                 BinaryOp combiner) {
-#ifdef SYCL_DEBUG
-  std::cout << "par_reduce_1d " << range << "\n";
-#endif
-  par_reduce_nd_impl<nameT, 1, clover::Range1d, LocalType, LocalAllocator, Empty, Functor, BinaryOp, Finaliser>(
-      q, range, result, [](clover::Range1d r) { return r.size; },
-      [](sycl::id<1> gid, clover::Range1d r) { return r.from + gid[0]; }, allocator, identity, functor, combiner);
-}
-
-template <typename nameT, class LocalType, class LocalAllocator = std::nullptr_t, class Empty = std::nullptr_t,
-          class Functor = std::nullptr_t, class BinaryOp = std::nullptr_t, class Finaliser = std::nullptr_t>
-static inline void par_reduce_2d(sycl::queue &q, const clover::Range1d &range, sycl::buffer<LocalType, 1> result,
-                                 LocalAllocator allocator, const LocalType identity, Functor functor,
-                                 BinaryOp combiner) {
+static inline void par_reduce_2d(sycl::queue &q, const clover::Range2d &range, LocalAllocator allocator,
+                                 Empty empty, Functor functor, BinaryOp combiner, Finaliser finaliser) {
 #ifdef SYCL_DEBUG
   std::cout << "par_reduce_2d " << range << "\n";
 #endif
   par_reduce_nd_impl<nameT, 2, clover::Range2d, LocalType, LocalAllocator, Empty, Functor, BinaryOp, Finaliser>(
-      q, range, result, [](clover::Range2d r) { return r.sizeX * r.sizeY; },
+      q, range, [](clover::Range2d r) { return r.sizeX * r.sizeY; },
       [](sycl::id<1> gid, clover::Range2d r) {
 #ifdef SYCL_FLIP_2D
         const size_t x = r.fromX + (gid[0] % (r.sizeY));
@@ -134,8 +137,23 @@ static inline void par_reduce_2d(sycl::queue &q, const clover::Range1d &range, s
         return sycl::id<2>(x, y);
 #endif
       },
-      allocator, identity, functor, combiner);
+      allocator, empty, functor, combiner, finaliser);
+}
+
+// applies a 1d reduction
+template <typename nameT, class LocalType, class LocalAllocator = std::nullptr_t, class Empty = std::nullptr_t,
+          class Functor = std::nullptr_t, class BinaryOp = std::nullptr_t, class Finaliser = std::nullptr_t>
+static inline void par_reduce_1d(sycl::queue &q, const clover::Range1d &range, LocalAllocator allocator,
+                                 Empty empty, Functor functor, BinaryOp combiner, Finaliser finaliser) {
+#ifdef SYCL_DEBUG
+  std::cout << "par_reduce_1d " << range << "\n";
+#endif
+  par_reduce_nd_impl<nameT, 1, clover::Range1d, LocalType, LocalAllocator, Empty, Functor, BinaryOp, Finaliser>(
+      q, range, [](clover::Range1d r) { return r.size; },
+      [](sycl::id<1> gid, clover::Range1d r) { return r.from + gid[0]; }, allocator, empty, functor, combiner,
+      finaliser);
 }
 
 } // namespace clover
+
 #endif // CLOVERLEAF_SYCL_SYCL_REDUCTION_HPP

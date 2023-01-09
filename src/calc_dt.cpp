@@ -27,7 +27,7 @@
 //  condition, the velocity gradient and the velocity divergence. A safety
 //  factor is used to ensure numerical stability.
 
-#define SPLIT
+//#define USE_SYCL2020_REDUCTION
 
 void calc_dt_kernel(queue &q, int x_min, int x_max, int y_min, int y_max, double dtmin, double dtc_safe,
                     double dtu_safe, double dtv_safe, double dtdiv_safe, clover::Buffer<double, 2> xarea,
@@ -49,12 +49,9 @@ void calc_dt_kernel(queue &q, int x_min, int x_max, int y_min, int y_max, double
 
   auto policy = clover::Range2d(x_min + 1, y_min + 1, x_max + 2, y_max + 2);
 
-#ifdef SPLIT
-
-  clover::Buffer<double, 1> result(range<1>(policy.sizeX * policy.sizeY));
-
+#ifdef USE_SYCL2020_REDUCTION
+  clover::Buffer<double, 1> minResults(1);
   clover::execute(q, [&](handler &h) {
-    auto out = result.access<W>(h);
     auto xarea_ = xarea.access<R>(h);
     auto yarea_ = yarea.access<R>(h);
     auto celldx_ = celldx.access<R>(h);
@@ -66,74 +63,57 @@ void calc_dt_kernel(queue &q, int x_min, int x_max, int y_min, int y_max, double
     auto xvel0_ = xvel0.access<R>(h);
     auto yvel0_ = yvel0.access<R>(h);
 
-    clover::par_ranged<class APPEND_LN(advec_mom_x1)>(h, policy, [=](id<2> idx) {
-      double dsx = celldx_[idx[0]];
-      double dsy = celldy_[idx[1]];
+    auto policy = clover::Range2d(x_min + 1, y_min + 1, x_max + 2, y_max + 2);
 
-      double cc = soundspeed_[idx] * soundspeed_[idx];
-      cc = cc + 2.0 * viscosity_a_[idx] / density0_[idx];
-      cc = sycl::fmax(sycl::sqrt(cc), g_small);
+    h.parallel_for(                                 //
+        sycl::range<2>(policy.sizeX, policy.sizeY), //
+        sycl::reduction(minResults.buffer, h, dt_min_val, sycl::minimum<>(),
+                        sycl::property::reduction::initialize_to_identity()), //
+        [=](sycl::id<2> idxNoOffset, auto &acc) {
+          const auto idx = clover::offset(idxNoOffset, policy.fromX, policy.fromY);
 
-      double dtct = dtc_safe * sycl::fmin(dsx, dsy) / cc;
+          double dsx = celldx_[idx[0]];
+          double dsy = celldy_[idx[1]];
 
-      double div = 0.0;
+          double cc = soundspeed_[idx] * soundspeed_[idx];
+          cc = cc + 2.0 * viscosity_a_[idx] / density0_[idx];
+          cc = sycl::fmax(sycl::sqrt(cc), g_small);
 
-      double dv1 = (xvel0_[idx] + xvel0_[clover::offset(idx, 0, 1)]) * xarea_[idx];
-      double dv2 =
-          (xvel0_[clover::offset(idx, 1, 0)] + xvel0_[clover::offset(idx, 1, 1)]) * xarea_[clover::offset(idx, 1, 0)];
+          double dtct = dtc_safe * sycl::fmin(dsx, dsy) / cc;
 
-      div = div + dv2 - dv1;
+          double div = 0.0;
 
-      double dtut = dtu_safe * 2.0 * volume_[idx] /
-                    sycl::fmax(sycl::fmax(sycl::fabs(dv1), sycl::fabs(dv2)), g_small * volume_[idx]);
+          double dv1 = (xvel0_[idx] + xvel0_[clover::offset(idx, 0, 1)]) * xarea_[idx];
+          double dv2 = (xvel0_[clover::offset(idx, 1, 0)] + xvel0_[clover::offset(idx, 1, 1)]) *
+                       xarea_[clover::offset(idx, 1, 0)];
 
-      dv1 = (yvel0_[idx] + yvel0_[clover::offset(idx, 1, 0)]) * yarea_[idx];
-      dv2 = (yvel0_[clover::offset(idx, 0, 1)] + yvel0_[clover::offset(idx, 1, 1)]) * yarea_[clover::offset(idx, 0, 1)];
+          div = div + dv2 - dv1;
 
-      div = div + dv2 - dv1;
+          double dtut = dtu_safe * 2.0 * volume_[idx] /
+                        sycl::fmax(sycl::fmax(sycl::fabs(dv1), sycl::fabs(dv2)), g_small * volume_[idx]);
 
-      double dtvt = dtv_safe * 2.0 * volume_[idx] /
-                    sycl::fmax(sycl::fmax(sycl::fabs(dv1), sycl::fabs(dv2)), g_small * volume_[idx]);
+          dv1 = (yvel0_[idx] + yvel0_[clover::offset(idx, 1, 0)]) * yarea_[idx];
+          dv2 = (yvel0_[clover::offset(idx, 0, 1)] + yvel0_[clover::offset(idx, 1, 1)]) *
+                yarea_[clover::offset(idx, 0, 1)];
 
-      div = div / (2.0 * volume_[idx]);
+          div = div + dv2 - dv1;
 
-      double dtdivt;
-      if (div < -g_small) {
-        dtdivt = dtdiv_safe * (-1.0 / div);
-      } else {
-        dtdivt = g_big;
-      }
+          double dtvt = dtv_safe * 2.0 * volume_[idx] /
+                        sycl::fmax(sycl::fmax(sycl::fabs(dv1), sycl::fabs(dv2)), g_small * volume_[idx]);
 
-      double mins = sycl::fmin(dtct, sycl::fmin(dtut, sycl::fmin(dtvt, sycl::fmin(dtdivt, g_big))));
+          div = div / (2.0 * volume_[idx]);
 
-      size_t idx1d = (idx[0] - policy.fromX) * policy.sizeY + (idx[1] - policy.fromY);
-
-      out[idx1d] = mins;
-    });
+          double dtdivt;
+          if (div < -g_small) {
+            dtdivt = dtdiv_safe * (-1.0 / div);
+          } else {
+            dtdivt = g_big;
+          }
+          acc.combine(sycl::fmin(dtct, sycl::fmin(dtut, sycl::fmin(dtvt, sycl::fmin(dtdivt, g_big)))));
+        });
   });
-
-  struct captures {
-    clover::Accessor<double, 1, R>::Type data;
-  };
-  typedef clover::local_reducer<double, double, captures> ctx;
-
-  const double id = g_big;
-
-  double r = g_big;
-  clover::Buffer<double, 1> result_red(&r, range<1>(1));
-
-  clover::par_reduce_1d<class dt_kernel_reduce, double>(
-      q, clover::Range1d(0u, policy.sizeX * policy.sizeY), result_red.buffer,
-      [=](handler &h, size_t &size) mutable { return ctx(h, size, {result.access<R>(h)}, result.buffer); }, id,
-      [](const ctx &ctx, sycl::id<1> idx, auto &red_sum) { red_sum.combine(ctx.actual.data[idx]); }, sycl::minimum<>());
-
-  {
-    auto res = result_red.access<R>();
-    dt_min_val = res[0];
-  }
-
+  dt_min_val = minResults.access<R>()[0];
 #else
-
   struct captures {
     clover::Accessor<double, 2, R>::Type xarea;
     clover::Accessor<double, 2, R>::Type yarea;
@@ -147,24 +127,21 @@ void calc_dt_kernel(queue &q, int x_min, int x_max, int y_min, int y_max, double
     clover::Accessor<double, 2, R>::Type yvel0;
   };
 
-  typedef clover::local_reducer<double, double, captures> ctx;
+  using Reducer = clover::local_reducer<double, double, captures>;
 
   clover::Buffer<double, 1> result(range<1>(policy.sizeX * policy.sizeY));
 
-  double r = g_big;
-  clover::Buffer<double, 1> result_red(&r, range<1>(1));
-
   clover::par_reduce_2d<class dt_kernel_reduce, double>(
-      q, policy, result_red,
+      q, policy,
       [=](handler &h, size_t &size) mutable {
-        return ctx(h, size,
-                   {xarea.access<R>(h), yarea.access<R>(h), celldx.access<R>(h), celldy.access<R>(h),
-                    volume.access<R>(h), density0.access<R>(h), viscosity_a.access<R>(h), soundspeed.access<R>(h),
-                    xvel0.access<R>(h), yvel0.access<R>(h)},
-                   result.buffer);
+        return Reducer(h, size,
+                       {xarea.access<R>(h), yarea.access<R>(h), celldx.access<R>(h), celldy.access<R>(h),
+                        volume.access<R>(h), density0.access<R>(h), viscosity_a.access<R>(h), soundspeed.access<R>(h),
+                        xvel0.access<R>(h), yvel0.access<R>(h)},
+                       result.buffer);
       },
-      g_big,
-      [dtc_safe, dtv_safe, dtu_safe, dtdiv_safe](ctx ctx, id<2> idx, auto &red_sum) {
+      [](const Reducer &ctx, id<1> lidx) { ctx.local[lidx] = g_big; },
+      [dtc_safe, dtv_safe, dtu_safe, dtdiv_safe](Reducer ctx, id<1> lidx, id<2> idx) {
         double dsx = ctx.actual.celldx[idx[0]];
         double dsy = ctx.actual.celldy[idx[1]];
 
@@ -204,14 +181,12 @@ void calc_dt_kernel(queue &q, int x_min, int x_max, int y_min, int y_max, double
         }
 
         double mins = sycl::fmin(dtct, sycl::fmin(dtut, sycl::fmin(dtvt, sycl::fmin(dtdivt, g_big))));
-        red_sum.combine(mins);
+        ctx.local[lidx] = sycl::fmin(ctx.local[lidx], mins);
       },
-      sycl::minimum<double>());
+      [](const Reducer &ctx, id<1> idx, id<1> idy) { ctx.local[idx] = sycl::fmin(ctx.local[idx], ctx.local[idy]); },
+      [](const Reducer &ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
 
-  {
-    auto res = result_red.access<R>();
-    dt_min_val = res[0];
-  }
+  dt_min_val = result.access<R>()[0];
 
 #endif
 

@@ -67,6 +67,12 @@ int main(int argc, char *argv[]) {
               << "Kokkos Version" << std::endl
               << "Task Count " << parallel.max_task << std::endl
               << std::endl;
+
+#ifdef USE_SYCL2020_REDUCTION
+    std::cout  << "Using SYCL2020 reduction"<< std::endl;
+#else
+    std::cout  << "Using manual SYCL reduction "<< std::endl;
+#endif
   }
 
   std::unique_ptr<global_variables> config = initialise(parallel, std::vector<std::string>(argv + 1, argv + argc));

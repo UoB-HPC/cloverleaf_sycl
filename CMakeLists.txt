@@ -145,6 +145,10 @@ if (DEFINED USE_PRE_SYCL121R3)
     add_definitions(-DUSE_PRE_SYCL121R3)
 endif ()
 
+if (USE_SYCL2020_REDUCTION)
+    add_definitions(-DUSE_SYCL2020_REDUCTION)
+endif ()
+
 
 set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer ${CXX_EXTRA_FLAGS})
 set(RELEASE_OPTIONS -O3   ${CXX_EXTRA_FLAGS})
