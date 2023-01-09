@@ -306,16 +306,40 @@ void advec_mom_driver(global_variables &globals, int tile, int which_vel, int di
 
   tile_type &t = globals.chunk.tiles[tile];
   if (which_vel == 1) {
-    advec_mom_kernel(globals.queue, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax, t.field.xvel1,
-                     t.field.mass_flux_x, t.field.vol_flux_x, t.field.mass_flux_y, t.field.vol_flux_y, t.field.volume,
-                     t.field.density1, t.field.work_array1, t.field.work_array2, t.field.work_array3,
-                     t.field.work_array4, t.field.work_array5, t.field.work_array6, t.field.celldx, t.field.celldy,
+    advec_mom_kernel(globals.queue, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax,
+                     t.field.xvel1,       //
+                     t.field.mass_flux_x, //
+                     t.field.vol_flux_x,  //
+                     t.field.mass_flux_y, //
+                     t.field.vol_flux_y,  //
+                     t.field.volume,      //
+                     t.field.density1,    //
+                     t.field.work_array1, //
+                     t.field.work_array2, //
+                     t.field.work_array3, //
+                     t.field.work_array4, //
+                     t.field.work_array5, //
+                     t.field.work_array6, //
+                     t.field.celldx,      //
+                     t.field.celldy,      //
                      which_vel, sweep_number, direction);
   } else {
-    advec_mom_kernel(globals.queue, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax, t.field.yvel1,
-                     t.field.mass_flux_x, t.field.vol_flux_x, t.field.mass_flux_y, t.field.vol_flux_y, t.field.volume,
-                     t.field.density1, t.field.work_array1, t.field.work_array2, t.field.work_array3,
-                     t.field.work_array4, t.field.work_array5, t.field.work_array6, t.field.celldx, t.field.celldy,
+    advec_mom_kernel(globals.queue, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax,
+                     t.field.yvel1,       //
+                     t.field.mass_flux_x, //
+                     t.field.vol_flux_x,  //
+                     t.field.mass_flux_y, //
+                     t.field.vol_flux_y,  //
+                     t.field.volume,      //
+                     t.field.density1,    //
+                     t.field.work_array1, //
+                     t.field.work_array2, //
+                     t.field.work_array3, //
+                     t.field.work_array4, //
+                     t.field.work_array5, //
+                     t.field.work_array6, //
+                     t.field.celldx,      //
+                     t.field.celldy,      //
                      which_vel, sweep_number, direction);
   }
 }

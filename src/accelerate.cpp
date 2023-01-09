@@ -78,10 +78,17 @@ void accelerate(global_variables &globals) {
 
     clover::execute(globals.queue, [&](handler &h) {
       accelerate_kernel(h, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax, globals.dt,
-                        t.field.xarea.access<R>(h), t.field.yarea.access<R>(h), t.field.volume.access<R>(h),
-                        t.field.density0.access<R>(h), t.field.pressure.access<R>(h), t.field.viscosity.access<R>(h),
-                        t.field.xvel0.access<R>(h), t.field.yvel0.access<R>(h), t.field.xvel1.access<RW>(h),
-                        t.field.yvel1.access<RW>(h));
+                        t.field.xarea.access<R>(h),     //
+                        t.field.yarea.access<R>(h),     //
+                        t.field.volume.access<R>(h),    //
+                        t.field.density0.access<R>(h),  //
+                        t.field.pressure.access<R>(h),  //
+                        t.field.viscosity.access<R>(h), //
+                        t.field.xvel0.access<R>(h),     //
+                        t.field.yvel0.access<R>(h),     //
+                        t.field.xvel1.access<RW>(h),    //
+                        t.field.yvel1.access<RW>(h)     //
+      );
     });
   }
 

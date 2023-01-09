@@ -70,9 +70,15 @@ void reset_field(global_variables &globals) {
 
     tile_type &t = globals.chunk.tiles[tile];
     reset_field_kernel(globals.queue, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax,
-
-                       t.field.density0, t.field.density1, t.field.energy0, t.field.energy1, t.field.xvel0,
-                       t.field.xvel1, t.field.yvel0, t.field.yvel1);
+                       t.field.density0, //
+                       t.field.density1, //
+                       t.field.energy0,  //
+                       t.field.energy1,  //
+                       t.field.xvel0,    //
+                       t.field.xvel1,    //
+                       t.field.yvel0,    //
+                       t.field.yvel1     //
+    );
   }
 
   if (globals.profiler_on) globals.profiler.reset += timer() - kernel_time;

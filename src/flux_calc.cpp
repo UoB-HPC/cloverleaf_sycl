@@ -56,9 +56,15 @@ void flux_calc(global_variables &globals) {
 
       tile_type &t = globals.chunk.tiles[tile];
       flux_calc_kernel(h, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax, globals.dt,
-                       t.field.xarea.access<R>(h), t.field.yarea.access<R>(h), t.field.xvel0.access<R>(h),
-                       t.field.yvel0.access<R>(h), t.field.xvel1.access<R>(h), t.field.yvel1.access<R>(h),
-                       t.field.vol_flux_x.access<W>(h), t.field.vol_flux_y.access<W>(h));
+                       t.field.xarea.access<R>(h),      //
+                       t.field.yarea.access<R>(h),      //
+                       t.field.xvel0.access<R>(h),      //
+                       t.field.yvel0.access<R>(h),      //
+                       t.field.xvel1.access<R>(h),      //
+                       t.field.yvel1.access<R>(h),      //
+                       t.field.vol_flux_x.access<W>(h), //
+                       t.field.vol_flux_y.access<W>(h)  //
+      );
     }
   });
 

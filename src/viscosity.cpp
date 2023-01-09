@@ -93,9 +93,15 @@ void viscosity(global_variables &globals) {
   for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
     tile_type &t = globals.chunk.tiles[tile];
     clover::execute(globals.queue, [&](handler &h) {
-      viscosity_kernel(h, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax, t.field.celldx.access<R>(h),
-                       t.field.celldy.access<R>(h), t.field.density0.access<R>(h), t.field.pressure.access<R>(h),
-                       t.field.viscosity.access<W>(h), t.field.xvel0.access<R>(h), t.field.yvel0.access<R>(h));
+      viscosity_kernel(h, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax,
+                       t.field.celldx.access<R>(h),    //
+                       t.field.celldy.access<R>(h),    //
+                       t.field.density0.access<R>(h),  //
+                       t.field.pressure.access<R>(h),  //
+                       t.field.viscosity.access<W>(h), //
+                       t.field.xvel0.access<R>(h),     //
+                       t.field.yvel0.access<R>(h)      //
+      );
     });
   }
 }

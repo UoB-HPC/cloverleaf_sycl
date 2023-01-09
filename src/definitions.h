@@ -210,21 +210,48 @@ struct field_type {
   clover::Buffer<double, 2> xarea;
   clover::Buffer<double, 2> yarea;
 
+  // timestep (idg -> viscosity -> dt) -> pdV -> accel -> pdV (pdv, idg, revert) -> flux -> adv (adv_cell, adv_mon)  -> reset
+
+  //
+  // OK:  idg, viscosity, pdv, revert
+  // Bad: accel, flux, adv_mon, adv_cell, reset
+
   explicit field_type(const size_t xrange, const size_t yrange)
-      : density0(range<2>(xrange, yrange)), density1(range<2>(xrange, yrange)), energy0(range<2>(xrange, yrange)),
-        energy1(range<2>(xrange, yrange)), pressure(range<2>(xrange, yrange)), viscosity(range<2>(xrange, yrange)),
-        soundspeed(range<2>(xrange, yrange)), xvel0(range<2>(xrange + 1, yrange + 1)),
-        xvel1(range<2>(xrange + 1, yrange + 1)), yvel0(range<2>(xrange + 1, yrange + 1)),
-        yvel1(range<2>(xrange + 1, yrange + 1)), vol_flux_x(range<2>(xrange + 1, yrange)),
-        mass_flux_x(range<2>(xrange + 1, yrange)), vol_flux_y(range<2>(xrange, yrange + 1)),
-        mass_flux_y(range<2>(xrange, yrange + 1)), work_array1(range<2>(xrange + 1, yrange + 1)),
-        work_array2(range<2>(xrange + 1, yrange + 1)), work_array3(range<2>(xrange + 1, yrange + 1)),
-        work_array4(range<2>(xrange + 1, yrange + 1)), work_array5(range<2>(xrange + 1, yrange + 1)),
-        work_array6(range<2>(xrange + 1, yrange + 1)), work_array7(range<2>(xrange + 1, yrange + 1)),
-        cellx(range<1>(xrange)), celldx(range<1>(xrange)), celly(range<1>(yrange)), celldy(range<1>(yrange)),
-        vertexx(range<1>(xrange + 1)), vertexdx(range<1>(xrange + 1)), vertexy(range<1>(yrange + 1)),
-        vertexdy(range<1>(yrange + 1)), volume(range<2>(xrange, yrange)), xarea(range<2>(xrange + 1, yrange)),
-        yarea(range<2>(xrange, yrange + 1)) {}
+      //                                               //    --timestep--              --pdV--                   --pdV--
+      : density0(range<2>(xrange, yrange)),            // [ idg           _ ]    [ pdv idg revert ]  accel  [ pdv idg revert ]      |          reset
+        density1(range<2>(xrange, yrange)),            // [ idg           _ ]    [ pdv idg revert ]         [ pdv idg revert ]      | adv_mom  reset
+        energy0(range<2>(xrange, yrange)),             // [ idg viscosity _ ]    [ pdv idg revert ]         [ pdv idg revert ]      |          reset
+        energy1(range<2>(xrange, yrange)),             // [ idg           _ ]    [ pdv idg revert ]         [ pdv idg revert ]      |          reset
+        pressure(range<2>(xrange, yrange)),            // [ idg viscosity _ ]    [ pdv idg        ]  accel  [ pdv idg        ]      |
+        viscosity(range<2>(xrange, yrange)),           // [               _ ]    [ pdv            ]  accel  [ pdv            ]      |
+        soundspeed(range<2>(xrange, yrange)),          // [ idg           _ ]    [     idg        ]         [     idg        ]      |
+        xvel0(range<2>(xrange + 1, yrange + 1)),       // [     viscosity _ ]    [ pdv            ]  accel  [ pdv            ] flux |          reset
+        xvel1(range<2>(xrange + 1, yrange + 1)),       // [     viscosity _ ]    [ pdv            ]  accel  [ pdv            ] flux | adv_mom  reset
+        yvel0(range<2>(xrange + 1, yrange + 1)),       // [               _ ]    [ pdv            ]  accel  [ pdv            ] flux |          reset
+        yvel1(range<2>(xrange + 1, yrange + 1)),       // [               _ ]    [ pdv            ]  accel  [ pdv            ] flux | adv_mom  reset
+        vol_flux_x(range<2>(xrange + 1, yrange)),      // [               _ ]    [                ]         [                ] flux | adv_mom
+        mass_flux_x(range<2>(xrange + 1, yrange)),     // [               _ ]    [                ]         [                ]      | adv_mom
+        vol_flux_y(range<2>(xrange, yrange + 1)),      // [               _ ]    [                ]         [                ] flux | adv_mom
+        mass_flux_y(range<2>(xrange, yrange + 1)),     // [               _ ]    [                ]         [                ]      | adv_mom
+        work_array1(range<2>(xrange + 1, yrange + 1)), // [               _ ]    [ pdv            ]         [ pdv            ]      | adv_mom
+        work_array2(range<2>(xrange + 1, yrange + 1)), // [               _ ]    [                ]         [                ]      | adv_mom
+        work_array3(range<2>(xrange + 1, yrange + 1)), // [               _ ]    [                ]         [                ]      | adv_mom
+        work_array4(range<2>(xrange + 1, yrange + 1)), // [               _ ]    [                ]         [                ]      | adv_mom
+        work_array5(range<2>(xrange + 1, yrange + 1)), // [               _ ]    [                ]         [                ]      | adv_mom
+        work_array6(range<2>(xrange + 1, yrange + 1)), // [               _ ]    [                ]         [                ]      | adv_mom
+        work_array7(range<2>(xrange + 1, yrange + 1)), // [               _ ]    [                ]         [                ]      |
+        cellx(range<1>(xrange)),                       // [               _ ]    [                ]         [                ]      |
+        celldx(range<1>(xrange)),                      // [     viscosity _ ]    [                ]         [                ]      | adv_mom
+        celly(range<1>(yrange)),                       // [               _ ]    [                ]         [                ]      |
+        celldy(range<1>(yrange)),                      // [     viscosity _ ]    [                ]         [                ]      | adv_mom
+        vertexx(range<1>(xrange + 1)),                 // [               _ ]    [                ]         [                ]      |
+        vertexdx(range<1>(xrange + 1)),                // [               _ ]    [                ]         [                ]      |
+        vertexy(range<1>(yrange + 1)),                 // [               _ ]    [                ]         [                ]      |
+        vertexdy(range<1>(yrange + 1)),                // [               _ ]    [                ]         [                ]      |
+        volume(range<2>(xrange, yrange)),              // [               _ ]    [ pdv            ]  accel  [ pdv            ]      | adv_mom
+        xarea(range<2>(xrange + 1, yrange)),           // [               _ ]    [ pdv            ]  accel  [ pdv            ] flux |
+        yarea(range<2>(xrange, yrange + 1)             // [               _ ]    [ pdv            ]  accel  [ pdv            ] flux |
+        ) {}
 };
 
 struct tile_info {
@@ -265,8 +292,8 @@ struct chunk_type {
   const int left, right, bottom, top;
   const int left_boundary, right_boundary, bottom_boundary, top_boundary;
 
-//  clover::Buffer<double, 1> left_rcv_buffer, right_rcv_buffer, bottom_rcv_buffer, top_rcv_buffer;
-//  clover::Buffer<double, 1> left_snd_buffer, right_snd_buffer, bottom_snd_buffer, top_snd_buffer;
+  //  clover::Buffer<double, 1> left_rcv_buffer, right_rcv_buffer, bottom_rcv_buffer, top_rcv_buffer;
+  //  clover::Buffer<double, 1> left_snd_buffer, right_snd_buffer, bottom_snd_buffer, top_snd_buffer;
 
   std::vector<tile_type> tiles;
 

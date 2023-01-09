@@ -139,11 +139,21 @@ void PdV(global_variables &globals, bool predict) {
     for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
       tile_type &t = globals.chunk.tiles[tile];
       PdV_kernel(h, predict, t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax, globals.dt,
-                 t.field.xarea.access<R>(h), t.field.yarea.access<R>(h), t.field.volume.access<R>(h),
-                 t.field.density0.access<R>(h), t.field.density1.access<W>(h), t.field.energy0.access<R>(h),
-                 t.field.energy1.access<W>(h), t.field.pressure.access<R>(h), t.field.viscosity.access<R>(h),
-                 t.field.xvel0.access<R>(h), t.field.xvel1.access<R>(h), t.field.yvel0.access<R>(h),
-                 t.field.yvel1.access<R>(h), t.field.work_array1.access<R>(h));
+                 t.field.xarea.access<R>(h),      //
+                 t.field.yarea.access<R>(h),      //
+                 t.field.volume.access<R>(h),     //
+                 t.field.density0.access<R>(h),   //
+                 t.field.density1.access<W>(h),   //
+                 t.field.energy0.access<R>(h),    //
+                 t.field.energy1.access<W>(h),    //
+                 t.field.pressure.access<R>(h),   //
+                 t.field.viscosity.access<R>(h),  //
+                 t.field.xvel0.access<R>(h),      //
+                 t.field.xvel1.access<R>(h),      //
+                 t.field.yvel0.access<R>(h),      //
+                 t.field.yvel1.access<R>(h),      //
+                 t.field.work_array1.access<R>(h) //
+      );
     }
   });
 
