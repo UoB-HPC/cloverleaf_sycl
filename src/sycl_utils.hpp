@@ -150,7 +150,7 @@ static inline void par_ranged(sycl::handler &cgh, const Range2d &range, functorT
 #else
   cgh.parallel_for<nameT>(sycl::range<1>(range.sizeX * range.sizeY), [=](sycl::id<1> id) {
     auto x = (id[0] % range.sizeX) + range.fromX;
-    auto y = (id[0] / range.sizeY) + range.fromY;
+    auto y = (id[0] / range.sizeX) + range.fromY;
     functor(sycl::id<2>(x, y));
   });
 #endif
