@@ -149,9 +149,15 @@ static inline void par_ranged(sycl::handler &cgh, const Range2d &range, functorT
                           [=](sycl::id<2> idx) { functor(sycl::id<2>(idx[1], idx[0])); });
 #else
   const size_t minBlockSize = 32;
-  const size_t roundedX = ((range.sizeX + minBlockSize - 1) / minBlockSize) * minBlockSize;
-  cgh.parallel_for<nameT>(sycl::range<2>(roundedX, range.sizeY), [=](sycl::id<2> idx) {
+  const size_t roundedX = range.sizeX % minBlockSize == 0
+                              ? range.sizeX //
+                              : ((range.sizeX + minBlockSize - 1) / minBlockSize) * minBlockSize;
+  const size_t roundedY = range.sizeY % minBlockSize == 0
+                              ? range.sizeY //
+                              : ((range.sizeY + minBlockSize - 1) / minBlockSize) * minBlockSize;
+  cgh.parallel_for<nameT>(sycl::range<2>(roundedX, roundedY), [=](sycl::id<2> idx) {
     if (idx.get(0) >= range.sizeX) return;
+    if (idx.get(1) >= range.sizeY) return;
     idx = sycl::id<2>(idx.get(0) + range.fromX, idx.get(1) + range.fromY);
     functor(idx);
   });
