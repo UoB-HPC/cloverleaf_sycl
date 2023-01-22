@@ -148,9 +148,10 @@ static inline void par_ranged(sycl::handler &cgh, const Range2d &range, functorT
   cgh.parallel_for<nameT>(sycl::range<2>(range.sizeY, range.sizeX), sycl::id<2>(range.fromY, range.fromX),
                           [=](sycl::id<2> idx) { functor(sycl::id<2>(idx[1], idx[0])); });
 #else
-  cgh.parallel_for<nameT>(sycl::range<2>(range.sizeX, range.sizeY), [=](sycl::id<2> idx) {
-    idx = sycl::id<2>(idx.get(0) + range.fromX, idx.get(1) + range.fromY);
-    functor(idx);
+  cgh.parallel_for<nameT>(sycl::range<1>(range.sizeX * range.sizeY), [=](sycl::id<1> id) {
+    auto x = (id[0] % range.sizeX) + range.fromX;
+    auto y = (id[0] / range.sizeY) + range.fromY;
+    functor(sycl::id<2>(x, y));
   });
 #endif
 }
