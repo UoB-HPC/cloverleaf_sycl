@@ -64,9 +64,17 @@ int main(int argc, char *argv[]) {
   if (parallel.boss) {
     std::cout << std::endl
               << "Clover Version " << g_version << std::endl
-              << "Kokkos Version" << std::endl
               << "Task Count " << parallel.max_task << std::endl
               << std::endl;
+#if RANGE2D_MODE == RANGE2D_NORMAL
+    std::cout  << "Using RANGE2D_NORMAL"<< std::endl;
+#elif RANGE2D_MODE == RANGE2D_LINEAR
+    std::cout  << "Using RANGE2D_LINEAR"<< std::endl;
+#elif RANGE2D_MODE == RANGE2D_ROUND
+    std::cout  << "Using RANGE2D_ROUND"<< std::endl;
+#else
+  #error "Unsupported RANGE2D_MODE"
+#endif
   }
 
   std::unique_ptr<global_variables> config = initialise(parallel, std::vector<std::string>(argv + 1, argv + argc));

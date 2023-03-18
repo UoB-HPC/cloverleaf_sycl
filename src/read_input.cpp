@@ -249,7 +249,7 @@ void read_input(std::ifstream &g_in, parallel_ &parallel, global_config &globals
         }
       }
     }
-    g_out << std::endl;
+    if (parallel.boss)  g_out << std::endl;
   }
 
   if (parallel.boss) {

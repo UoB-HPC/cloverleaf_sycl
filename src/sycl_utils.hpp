@@ -25,10 +25,7 @@
 #include <utility>
 
 #define SYCL_DEBUG // enable for debugging SYCL related things, also syncs kernel calls
-
 #define SYNC_KERNELS // enable for fully synchronous (e.g queue.wait_and_throw()) kernel calls
-
-// #define SYCL_FLIP_2D // enable for flipped id<2> indices from SYCL default
 
 // this namespace houses all SYCL related abstractions
 namespace clover {
@@ -112,18 +109,47 @@ template <class F> constexpr void par_ranged1(sycl::queue &q, const Range1d &ran
 #endif
 }
 
-template <class F> constexpr void par_ranged2(sycl::queue &q, const Range2d &range, F functor) {
-#ifdef SYCL_FLIP_2D
-  auto event = q.parallel_for(sycl::range<2>(range.sizeY, range.sizeX),
-                              [=](sycl::id<2> idx) { functor(range.fromY + idx[1], range.fromX + idx[0]); });
-#else
-  auto event = q.parallel_for(sycl::range<2>(range.sizeX, range.sizeY),
-                              [=](sycl::id<2> idx) { functor(range.fromX + idx[0], range.fromY + idx[1]); });
+// delegates to parallel_for, handles flipping if enabled
+template <class functorT>
+static inline void par_ranged2(sycl::queue &q, const Range2d &range, functorT functor) {
+
+#define RANGE2D_NORMAL 0x01
+#define RANGE2D_LINEAR 0x02
+#define RANGE2D_ROUND 0x04
+
+#ifndef RANGE2D_MODE
+  #error "RANGE2D_MODE not set"
 #endif
 
-#ifdef SYNC_KERNELS
-  event.wait_and_throw();
+
+#if RANGE2D_MODE == RANGE2D_NORMAL
+  auto event = q.parallel_for(sycl::range<2>(range.sizeX, range.sizeY), [=](sycl::id<2> idx) {
+    functor(idx[0] + range.fromX, idx[1] + range.fromY);
+  });
+#elif RANGE2D_MODE == RANGE2D_LINEAR
+  auto event = q.parallel_for(sycl::range<1>(range.sizeX * range.sizeY), [=](sycl::id<1> id) {
+    auto x = (id[0] % range.sizeX) + range.fromX;
+    auto y = (id[0] / range.sizeX) + range.fromY;
+    functor(x, y);
+  });
+#elif RANGE2D_MODE == RANGE2D_ROUND
+  const size_t minBlockSize = 32;
+  const size_t roundedX = range.sizeX % minBlockSize == 0
+                              ? range.sizeX //
+                              : ((range.sizeX + minBlockSize - 1) / minBlockSize) * minBlockSize;
+  const size_t roundedY = range.sizeY % minBlockSize == 0
+                              ? range.sizeY //
+                              : ((range.sizeY + minBlockSize - 1) / minBlockSize) * minBlockSize;
+  auto event = q.parallel_for(sycl::range<2>(roundedX, roundedY), [=](sycl::id<2> idx) {
+    if (idx[0] >= range.sizeX) return;
+    if (idx[1] >= range.sizeY) return;
+    functor(idx[0] + range.fromX, idx[1] + range.fromY);
+  });
+#else
+  #error "Unsupported RANGE2D_MODE"
 #endif
+// It's an error to not sync with USM
+event.wait_and_throw();
 }
 
 } // namespace clover
