@@ -64,7 +64,6 @@ int main(int argc, char *argv[]) {
   if (parallel.boss) {
     std::cout << std::endl
               << "Clover Version " << g_version << std::endl
-              << "Kokkos Version" << std::endl
               << "Task Count " << parallel.max_task << std::endl
               << std::endl;
 
@@ -72,6 +71,16 @@ int main(int argc, char *argv[]) {
     std::cout  << "Using SYCL2020 reduction"<< std::endl;
 #else
     std::cout  << "Using manual SYCL reduction "<< std::endl;
+#endif
+
+#if RANGE2D_MODE == RANGE2D_NORMAL
+    std::cout  << "Using RANGE2D_NORMAL"<< std::endl;
+#elif RANGE2D_MODE == RANGE2D_LINEAR
+    std::cout  << "Using RANGE2D_LINEAR"<< std::endl;
+#elif RANGE2D_MODE == RANGE2D_ROUND
+    std::cout  << "Using RANGE2D_ROUND"<< std::endl;
+#else
+  #error "Unsupported RANGE2D_MODE"
 #endif
   }
 

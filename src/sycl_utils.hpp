@@ -26,7 +26,6 @@
 
 // #define SYCL_DEBUG // enable for debugging SYCL related things, also syncs kernel calls
 #define SYNC_KERNELS // enable for fully synchronous (e.g queue.wait_and_throw()) kernel calls
-// #define SYCL_FLIP_2D // enable for flipped id<2> indices from SYCL default
 
 // this namespace houses all SYCL related abstractions
 namespace clover {
@@ -144,10 +143,28 @@ static inline void par_ranged(sycl::handler &cgh, const Range1d &range, functorT
 // delegates to parallel_for, handles flipping if enabled
 template <typename nameT, class functorT>
 static inline void par_ranged(sycl::handler &cgh, const Range2d &range, functorT functor) {
-#ifdef SYCL_FLIP_2D
-  cgh.parallel_for<nameT>(sycl::range<2>(range.sizeY, range.sizeX), sycl::id<2>(range.fromY, range.fromX),
-                          [=](sycl::id<2> idx) { functor(sycl::id<2>(idx[1], idx[0])); });
-#else
+
+#define RANGE2D_NORMAL 0x01
+#define RANGE2D_LINEAR 0x02
+#define RANGE2D_ROUND 0x04
+
+#ifndef RANGE2D_MODE
+  #error "RANGE2D_MODE not set"
+#endif
+
+
+#if RANGE2D_MODE == RANGE2D_NORMAL
+  cgh.parallel_for<nameT>(sycl::range<2>(range.sizeX, range.sizeY), [=](sycl::id<2> idx) {
+    idx = sycl::id<2>(idx[0] + range.fromX, idx[1] + range.fromY);
+    functor(idx);
+  });
+#elif RANGE2D_MODE == RANGE2D_LINEAR
+  cgh.parallel_for<nameT>(sycl::range<1>(range.sizeX * range.sizeY), [=](sycl::id<1> id) {
+    auto x = (id[0] % range.sizeX) + range.fromX;
+    auto y = (id[0] / range.sizeX) + range.fromY;
+    functor(sycl::id<2>(x, y));
+  });
+#elif RANGE2D_MODE == RANGE2D_ROUND
   const size_t minBlockSize = 32;
   const size_t roundedX = range.sizeX % minBlockSize == 0
                               ? range.sizeX //
@@ -156,19 +173,13 @@ static inline void par_ranged(sycl::handler &cgh, const Range2d &range, functorT
                               ? range.sizeY //
                               : ((range.sizeY + minBlockSize - 1) / minBlockSize) * minBlockSize;
   cgh.parallel_for<nameT>(sycl::range<2>(roundedX, roundedY), [=](sycl::id<2> idx) {
-    if (idx.get(0) >= range.sizeX) return;
-    if (idx.get(1) >= range.sizeY) return;
-    idx = sycl::id<2>(idx.get(0) + range.fromX, idx.get(1) + range.fromY);
+    if (idx[0] >= range.sizeX) return;
+    if (idx[1] >= range.sizeY) return;
+    idx = sycl::id<2>(idx[0] + range.fromX, idx[1] + range.fromY);
     functor(idx);
   });
-
-
-  cgh.parallel_for<nameT>(sycl::range<1>(range.sizeX * range.sizeY), [=](sycl::id<1> id) {
-    auto x = (id[0] % range.sizeX) + range.fromX;
-    auto y = (id[0] / range.sizeX) + range.fromY;
-    functor(sycl::id<2>(x, y));
-  });
-
+#else
+  #error "Unsupported RANGE2D_MODE"
 #endif
 }
 

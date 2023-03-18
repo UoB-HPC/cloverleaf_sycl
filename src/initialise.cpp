@@ -173,7 +173,6 @@ std::unique_ptr<global_variables> initialise(parallel_ &parallel, const std::vec
 
   if (parallel.boss) {
     g_out << "Clover Version " << g_version << std::endl
-          << "Kokkos Version" << std::endl
           << "Task Count " << parallel.max_task << std::endl
           << std::endl;
 
@@ -197,12 +196,12 @@ std::unique_ptr<global_variables> initialise(parallel_ &parallel, const std::vec
     printSimple(devices[i], i);
 
   std::cout << "Using SYCL device: " << std::endl;
-  std::cout << "Device    : " << selectedDevice.get_info<sycl::info::device::name>() << std::endl;
-  std::cout << "\tType    : " << deviceName(selectedDevice.get_info<sycl::info::device::device_type>()) << std::endl;
-  std::cout << "\tProfile : " << selectedDevice.get_info<cl::sycl::info::device::profile>() << std::endl;
-  std::cout << "\tVersion : " << selectedDevice.get_info<cl::sycl::info::device::version>() << std::endl;
-  std::cout << "\tVendor  : " << selectedDevice.get_info<cl::sycl::info::device::vendor>() << std::endl;
-  std::cout << "\tDriver  : " << selectedDevice.get_info<cl::sycl::info::device::driver_version>() << std::endl;
+  std::cout << "Device    : " << selectedDevice.get_info<sycl::info::device::name>()
+            << "\n\tType    : " << deviceName(selectedDevice.get_info<sycl::info::device::device_type>())
+            << "\n\tProfile : " << selectedDevice.get_info<cl::sycl::info::device::profile>()
+            << "\n\tVersion : " << selectedDevice.get_info<cl::sycl::info::device::version>()
+            << "\n\tVendor  : " << selectedDevice.get_info<cl::sycl::info::device::vendor>()
+            << "\n\tDriver  : " << selectedDevice.get_info<cl::sycl::info::device::driver_version>() << std::endl;
 
   std::ifstream g_in;
   // if (parallel.boss) {

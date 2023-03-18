@@ -7,6 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
+
 if (SYCL_RUNTIME)
 
     list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
@@ -43,17 +44,17 @@ if (SYCL_RUNTIME)
         if (NOT DPCPP_BIN)
             message(STATUS "DPCPP_BIN unspecified, using dpcpp on path")
             set(CMAKE_CXX_COMPILER "dpcpp")
-        else()
-            if(NOT CMAKE_CXX_COMPILER)
-            set(CMAKE_CXX_COMPILER ${DPCPP_BIN})
+        else ()
+            if (NOT CMAKE_CXX_COMPILER)
+                set(CMAKE_CXX_COMPILER ${DPCPP_BIN})
+            endif ()
+
+            if (DPCPP_INCLUDE)
+                include_directories(${DPCPP_INCLUDE})
+            endif ()
+
+            add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
         endif ()
-
-        if(DPCPP_INCLUDE)
-            include_directories(${DPCPP_INCLUDE})
-        endif()
-
-        add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
-        endif()
         set(EXTRA_FLAGS -pedantic)
     else ()
         message(FATAL_ERROR "SYCL_RUNTIME unsupported, must be one of HIPSYCL|HIPSYCL-NEXT|COMPUTECPP|DPCPP, got ${SYCL_RUNTIME}")
@@ -142,16 +143,20 @@ target_compile_options(clover_leaf
 
 
 if (DEFINED USE_PRE_SYCL121R3)
-    add_definitions(-DUSE_PRE_SYCL121R3)
+    target_compile_definitions(clover_leaf PRIVATE -DUSE_PRE_SYCL121R3)
 endif ()
 
 if (USE_SYCL2020_REDUCTION)
-    add_definitions(-DUSE_SYCL2020_REDUCTION)
+    target_compile_definitions(clover_leaf PRIVATE -DUSE_SYCL2020_REDUCTION)
+endif ()
+
+if (USE_RANGE2D_MODE)
+    target_compile_definitions(clover_leaf PRIVATE -DRANGE2D_MODE=${USE_RANGE2D_MODE})
 endif ()
 
 
 set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer ${CXX_EXTRA_FLAGS})
-set(RELEASE_OPTIONS -O3   ${CXX_EXTRA_FLAGS})
+set(RELEASE_OPTIONS -O3 ${CXX_EXTRA_FLAGS})
 
 target_link_libraries(clover_leaf PUBLIC ${MPI_C_LIB})
 
