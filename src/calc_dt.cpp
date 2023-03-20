@@ -106,6 +106,7 @@ void calc_dt_kernel(sycl::queue &queue, int x_min, int x_max, int y_min, int y_m
       .wait_and_throw();
   queue.wait_and_throw();
   dt_min_val = minResults[0];
+  clover::free(queue, minResults);
 
   dtl_control = static_cast<int>(10.01 * (jk_control - static_cast<int>(jk_control)));
   jk_control = jk_control - (jk_control - (int)(jk_control));

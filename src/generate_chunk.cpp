@@ -27,7 +27,6 @@
 #include "generate_chunk.h"
 #include "sycl_utils.hpp"
 
-
 void generate_chunk(const int tile, global_variables &globals) {
 
   // Need to copy the host array of state input data into a device array
@@ -130,4 +129,10 @@ void generate_chunk(const int tile, global_variables &globals) {
       }
     });
   }
+
+  clover::free(globals.queue,                                  //
+               state_density, state_energy,                    //
+               state_xvel, state_yvel,                         //
+               state_xmin, state_xmax, state_ymin, state_ymax, //
+               state_radius, state_geometry);
 }

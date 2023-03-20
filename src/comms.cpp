@@ -474,6 +474,12 @@ void clover_exchange(global_variables &globals, int fields[NUM_FIELDS], const in
       }
     }
   }
+
+  clover::free(globals.queue,                      //
+               left_rcv_buffer, left_snd_buffer,   //
+               right_rcv_buffer, right_snd_buffer, //
+               top_rcv_buffer, top_snd_buffer,     //
+               bottom_rcv_buffer, bottom_snd_buffer);
 }
 
 void clover_pack_left(global_variables &globals, clover::Buffer<double, 1> &left_snd_buffer, int tile,
