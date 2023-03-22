@@ -160,8 +160,8 @@ static inline void par_ranged(sycl::handler &cgh, const Range2d &range, functorT
   });
 #elif RANGE2D_MODE == RANGE2D_LINEAR
   cgh.parallel_for<nameT>(sycl::range<1>(range.sizeX * range.sizeY), [=](sycl::id<1> id) {
-    auto x = (id[0] % range.sizeX) + range.fromX;
-    auto y = (id[0] / range.sizeX) + range.fromY;
+    const auto x = (id[0] / range.sizeY) + range.fromX;
+    const auto y = (id[0] % range.sizeY) + range.fromY;
     functor(sycl::id<2>(x, y));
   });
 #elif RANGE2D_MODE == RANGE2D_ROUND

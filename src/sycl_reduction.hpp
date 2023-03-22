@@ -127,8 +127,8 @@ static inline void par_reduce_2d(sycl::queue &q, const clover::Range2d &range, L
   par_reduce_nd_impl<nameT, 2, clover::Range2d, LocalType, LocalAllocator, Empty, Functor, BinaryOp, Finaliser>(
       q, range, [](clover::Range2d r) { return r.sizeX * r.sizeY; },
       [](sycl::id<1> gid, clover::Range2d r) {
-        const size_t x = r.fromX + (gid[0] % (r.sizeX));
-        const size_t y = r.fromY + (gid[0] / (r.sizeX));
+        const auto x = (gid[0] / r.sizeY) + r.fromX;
+        const auto y = (gid[0] % r.sizeY) + r.fromY;
         return sycl::id<2>(x, y);
       },
       allocator, empty, functor, combiner, finaliser);
