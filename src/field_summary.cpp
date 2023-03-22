@@ -121,6 +121,8 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
   globals.queue.wait_and_throw();
   auto [vol, mass, ie, ke, press] = summaryResults[0];
 
+  clover::free(globals.queue, summaryResults);
+
   clover_sum(vol);
   clover_sum(mass);
   clover_sum(ie);
