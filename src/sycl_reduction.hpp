@@ -58,7 +58,10 @@ static inline void par_reduce_nd_impl(sycl::queue &q, RangeTpe range, RangeLengt
 
   } else {
     dot_num_groups = dev.get_info<sycl::info::device::max_compute_units>() * 4;
-    dot_wgsize = dev.get_info<sycl::info::device::max_work_group_size>();
+    // TODO max wg size is 1024 on NV but it fails with an CUDA_ERROR_LAUNCH_OUT_OF_RESOURCES with used directly.
+    //  The same works on HIP so something isn't quite right here. Halving it seems to workaround this but not ideal.
+    //  This issue *appears* to be independent of the local memory size. Might be a bug in CUDA PI.
+    dot_wgsize = dev.get_info<sycl::info::device::max_work_group_size>() / 2;
   }
 
   size_t N = lengthFn(range);
