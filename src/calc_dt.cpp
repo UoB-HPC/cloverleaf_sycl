@@ -65,12 +65,19 @@ void calc_dt_kernel(queue &q, int x_min, int x_max, int y_min, int y_max, double
 
     auto policy = clover::Range2d(x_min + 1, y_min + 1, x_max + 2, y_max + 2);
 
-    h.parallel_for(                                 //
-        sycl::range<2>(policy.sizeX, policy.sizeY), //
+    // FIXME maxThreadPerBlock = N with nd_range launch is a workaround for https://github.com/intel/llvm/issues/8414
+    //  A normal non-nd_range launch blows the register budget as the thread-per-block is passed directly to CUDA PI.
+    //  It's unclear how this workaround would affect other platforms.
+    size_t maxThreadPerBlock = 512;
+    size_t localX = std::ceil(double(policy.sizeX) / double(maxThreadPerBlock));
+    size_t localY = std::ceil(double(policy.sizeY) / double(maxThreadPerBlock));
+
+    h.parallel_for(                                                                                    //
+        sycl::nd_range<2>(sycl::range<2>(policy.sizeX, policy.sizeY), sycl::range<2>(localX, localY)), //
         sycl::reduction(minResults.buffer, h, dt_min_val, sycl::minimum<>(),
                         sycl::property::reduction::initialize_to_identity()), //
-        [=](sycl::id<2> idxNoOffset, auto &acc) {
-          const auto idx = clover::offset(idxNoOffset, policy.fromX, policy.fromY);
+        [=](sycl::nd_item<2> idxNoOffset, auto &acc) {
+          const auto idx = clover::offset(idxNoOffset.get_global_id(), policy.fromX, policy.fromY);
 
           double dsx = celldx_[idx[0]];
           double dsy = celldy_[idx[1]];
