@@ -96,7 +96,7 @@ void build_field(global_variables &globals) {
 
     //		Kokkos::MDRangePolicy <Kokkos::Rank<2>> loop_bounds_1({0, 0}, {xrange + 1, yrange + 1});
 
-    clover::execute(globals.queue, [&](cl::sycl::handler &h) {
+    clover::execute(globals.queue, [&](sycl::handler &h) {
       auto work_array1 = field.work_array1.access<W>(h);
       auto work_array2 = field.work_array2.access<W>(h);
       auto work_array3 = field.work_array3.access<W>(h);
@@ -125,7 +125,7 @@ void build_field(global_variables &globals) {
       });
     });
 
-    clover::execute(globals.queue, [&](cl::sycl::handler &h) {
+    clover::execute(globals.queue, [&](sycl::handler &h) {
       auto density0 = field.density0.access<W>(h);
       auto density1 = field.density1.access<W>(h);
       auto energy0 = field.energy0.access<W>(h);
@@ -147,7 +147,7 @@ void build_field(global_variables &globals) {
       });
     });
 
-    clover::execute(globals.queue, [&](cl::sycl::handler &h) {
+    clover::execute(globals.queue, [&](sycl::handler &h) {
       auto vol_flux_x = field.vol_flux_x.access<W>(h);
       auto mass_flux_x = field.mass_flux_x.access<W>(h);
       auto xarea = field.xarea.access<W>(h);
@@ -159,7 +159,7 @@ void build_field(global_variables &globals) {
       });
     });
 
-    clover::execute(globals.queue, [&](cl::sycl::handler &h) {
+    clover::execute(globals.queue, [&](sycl::handler &h) {
       auto vol_flux_y = field.vol_flux_y.access<W>(h);
       auto mass_flux_y = field.mass_flux_y.access<W>(h);
       auto yarea = field.yarea.access<W>(h);
@@ -171,7 +171,7 @@ void build_field(global_variables &globals) {
       });
     });
 
-    clover::execute(globals.queue, [&](cl::sycl::handler &h) {
+    clover::execute(globals.queue, [&](sycl::handler &h) {
       auto cellx = field.cellx.access<W>(h);
       auto celldx = field.celldx.access<W>(h);
       // (t_xmin-2:t_xmax+2) inclusive
@@ -181,7 +181,7 @@ void build_field(global_variables &globals) {
       });
     });
 
-    clover::execute(globals.queue, [&](cl::sycl::handler &h) {
+    clover::execute(globals.queue, [&](sycl::handler &h) {
       auto celly = field.celly.access<W>(h);
       auto celldy = field.celldy.access<W>(h);
       // (t_ymin-2:t_ymax+2) inclusive
@@ -191,7 +191,7 @@ void build_field(global_variables &globals) {
       });
     });
 
-    clover::execute(globals.queue, [&](cl::sycl::handler &h) {
+    clover::execute(globals.queue, [&](sycl::handler &h) {
       auto vertexx = field.vertexx.access<W>(h);
       auto vertexdx = field.vertexdx.access<W>(h);
       // (t_xmin-2:t_xmax+3) inclusive
@@ -201,7 +201,7 @@ void build_field(global_variables &globals) {
       });
     });
 
-    clover::execute(globals.queue, [&](cl::sycl::handler &h) {
+    clover::execute(globals.queue, [&](sycl::handler &h) {
       auto vertexy = field.vertexy.access<W>(h);
       auto vertexdy = field.vertexdy.access<W>(h);
       // (t_ymin-2:t_ymax+3) inclusive

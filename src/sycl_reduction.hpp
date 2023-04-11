@@ -25,6 +25,8 @@
 #include <iostream>
 #include <utility>
 
+using namespace cl;
+
 namespace clover {
 
 template <typename T, typename U, typename C> struct local_reducer {

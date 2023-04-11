@@ -42,6 +42,8 @@
 
 #define APPEND_LN(base) PP_CAT(base, __LINE__) // appends line number to the given base name
 
+using namespace cl;
+
 using sycl::accessor;
 using sycl::buffer;
 using sycl::handler;

@@ -26,7 +26,7 @@ if (SYCL_RUNTIME)
             message(FATAL_ERROR "HIPSYCL_INSTALL_DIR is undefined")
         endif ()
         set(hipSYCL_DIR ${HIPSYCL_INSTALL_DIR}/lib/cmake/hipSYCL)
-        add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
+        #        add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
         find_package(hipSYCL CONFIG REQUIRED)
         set(EXTRA_FLAGS -Wno-sign-compare -Wno-stringop-truncation)
     elseif (${SYCL_RUNTIME} STREQUAL "COMPUTECPP")
@@ -152,6 +152,14 @@ endif ()
 
 if (USE_RANGE2D_MODE)
     target_compile_definitions(clover_leaf PRIVATE -DRANGE2D_MODE=${USE_RANGE2D_MODE})
+endif ()
+
+if (NOT DEFINED USE_HOSTTASK)
+    set(USE_HOSTTASK ON)
+endif ()
+
+if (USE_HOSTTASK)
+    target_compile_definitions(clover_leaf PRIVATE -DUSE_HOSTTASK)
 endif ()
 
 

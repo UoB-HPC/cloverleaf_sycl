@@ -136,8 +136,8 @@ RunConfig parseArgs(const std::vector<sycl::device> &devices, const std::vector<
           std::cout << "Unable to parse/select device index `" << param << "`:" << e.what() << std::endl;
           std::cout << "Attempting to match device with substring  `" << param << "`" << std::endl;
 
-          auto matching = std::find_if(devices.begin(), devices.end(), [param](const cl::sycl::device &device) {
-            return device.get_info<cl::sycl::info::device::name>().find(param) != std::string::npos;
+          auto matching = std::find_if(devices.begin(), devices.end(), [param](const sycl::device &device) {
+            return device.get_info<sycl::info::device::name>().find(param) != std::string::npos;
           });
           if (matching != devices.end()) {
             config.device = *matching;
@@ -198,10 +198,10 @@ std::unique_ptr<global_variables> initialise(parallel_ &parallel, const std::vec
   std::cout << "Using SYCL device: " << std::endl;
   std::cout << "Device    : " << selectedDevice.get_info<sycl::info::device::name>()
             << "\n\tType    : " << deviceName(selectedDevice.get_info<sycl::info::device::device_type>())
-            << "\n\tProfile : " << selectedDevice.get_info<cl::sycl::info::device::profile>()
-            << "\n\tVersion : " << selectedDevice.get_info<cl::sycl::info::device::version>()
-            << "\n\tVendor  : " << selectedDevice.get_info<cl::sycl::info::device::vendor>()
-            << "\n\tDriver  : " << selectedDevice.get_info<cl::sycl::info::device::driver_version>() << std::endl;
+            << "\n\tProfile : " << selectedDevice.get_info<sycl::info::device::profile>()
+            << "\n\tVersion : " << selectedDevice.get_info<sycl::info::device::version>()
+            << "\n\tVendor  : " << selectedDevice.get_info<sycl::info::device::vendor>()
+            << "\n\tDriver  : " << selectedDevice.get_info<sycl::info::device::driver_version>() << std::endl;
 
   std::ifstream g_in;
   // if (parallel.boss) {
