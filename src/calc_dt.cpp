@@ -68,7 +68,7 @@ void calc_dt_kernel(queue &q, int x_min, int x_max, int y_min, int y_max, double
     // FIXME maxThreadPerBlock = N with nd_range launch is a workaround for https://github.com/intel/llvm/issues/8414
     //  A normal non-nd_range launch blows the register budget as the thread-per-block is passed directly to CUDA PI.
     //  It's unclear how this workaround would affect other platforms.
-    size_t maxThreadPerBlock = 512;
+    size_t maxThreadPerBlock = 256;
     size_t localX = std::ceil(double(policy.sizeX) / double(maxThreadPerBlock));
     size_t localY = std::ceil(double(policy.sizeY) / double(maxThreadPerBlock));
 
