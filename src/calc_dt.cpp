@@ -72,8 +72,13 @@ void calc_dt_kernel(queue &q, int x_min, int x_max, int y_min, int y_max, double
     size_t localX = std::ceil(double(policy.sizeX) / double(maxThreadPerBlock));
     size_t localY = std::ceil(double(policy.sizeY) / double(maxThreadPerBlock));
 
+    auto uniformLocalX = policy.sizeX % localX == 0 ? localX : policy.sizeX + (localX - policy.sizeX % localX);
+    auto uniformLocalY = policy.sizeY % localY == 0 ? localY : policy.sizeY + (localY - policy.sizeY % localY);
+    uniformLocalX = uniformLocalX >= policy.sizeX ? 1 : uniformLocalX;
+    uniformLocalY = uniformLocalY >= policy.sizeY ? 1 : uniformLocalY;
+
     h.parallel_for(                                                                                    //
-        sycl::nd_range<2>(sycl::range<2>(policy.sizeX, policy.sizeY), sycl::range<2>(localX, localY)), //
+        sycl::nd_range<2>(sycl::range<2>(policy.sizeX, policy.sizeY), sycl::range<2>(uniformLocalX, uniformLocalY)), //
         sycl::reduction(minResults.buffer, h, dt_min_val, sycl::minimum<>(),
                         sycl::property::reduction::initialize_to_identity()), //
         [=](sycl::nd_item<2> idxNoOffset, auto &acc) {
