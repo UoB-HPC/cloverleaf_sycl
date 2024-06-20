@@ -1,3 +1,6 @@
+> [!WARNING]  
+> Superseded by <https://github.com/UoB-HPC/CloverLeaf>, which contains a SYCL implementation, along with many other models.
+
 # A SYCL port of CloverLeaf
 
 This is a port of [CloverLeaf](https://github.com/UoB-HPC/cloverleaf_kokkos) from MPI+Kokkos to MPI+SYCL.
